@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.news.bot.wf.mapper.FissureMapper">
+    <!--批量插入裂隙-->
+    <insert id="batchInsert">
+        INSERT INTO fissure (
+        id, activation, expiry,
+        node, mission_type,mission_type_key,enemy, enemy_key,
+        node_key, tier, tier_num, eta, is_storm, is_hard
+        ) VALUES
+        <foreach collection="list" item="f" separator=",">
+            (
+            #{f.id}, #{f.activation}, #{f.expiry},
+            #{f.node}, #{f.missionType}, #{f.missionTypeKey} ,#{f.enemy}, #{f.enemyKey},
+            #{f.nodeKey}, #{f.tier}, #{f.tierNum}, #{f.eta}, #{f.isStorm}, #{f.isHard}
+            )
+        </foreach>
+    </insert>
+
+
+    <!--条件查询裂隙-->
+    <select id="selectByKey" resultType="com.news.bot.wf.pojo.Fissure">
+        SELECT *
+        FROM fissure
+        <where>
+            <choose>
+                <when test="key == '裂隙' or key == '裂缝'">
+                    is_storm = false AND is_hard = false
+                </when>
+                <when test="key == '钢铁裂隙' or key == '钢铁裂缝'">
+                    is_storm = false AND is_hard = true
+                </when>
+                <when test="key == '九重天'">
+                    is_storm = true
+                </when>
+                <when test="key == '生存' or key=='防御'  or key=='歼灭' or key=='中断' or key=='挖掘' or key=='救援' ">
+                    mission_type = #{key} AND is_storm = false
+                </when>
+                <otherwise>
+                    mission_type = #{key}
+                </otherwise>
+            </choose>
+        </where>
+    </select>
+
+
+    <insert id="fissureStatistic">
+        INSERT IGNORE INTO fissure_statistic (
+        id, activation, expiry,
+        node, mission_type,mission_type_key, enemy, enemy_key,
+        node_key, tier, tier_num,  eta, is_storm, is_hard
+        ) VALUES
+        <foreach collection="list" item="f" separator=",">
+            (
+            #{f.id}, #{f.activation}, #{f.expiry},
+            #{f.node}, #{f.missionType}, #{f.missionTypeKey} ,  #{f.enemy}, #{f.enemyKey},
+            #{f.nodeKey}, #{f.tier}, #{f.tierNum}, #{f.eta}, #{f.isStorm}, #{f.isHard}
+            )
+        </foreach>
+    </insert>
+
+    <delete id="deleteFissureTask">
+        DELETE FROM fissure_task
+        WHERE
+        group_id = #{fissureTask.groupId}
+        AND user_id = #{fissureTask.userId}
+
+        <if test="fissureTask.node != null and fissureTask.node != ''">
+            AND node = #{fissureTask.node}
+        </if>
+
+        <if test="fissureTask.tier != null and fissureTask.tier != ''">
+            AND tier = #{fissureTask.tier}
+        </if>
+
+        <if test="fissureTask.missionType != null and fissureTask.missionType != ''">
+            AND mission_type = #{fissureTask.missionType}
+        </if>
+
+        <if test="fissureTask.isHard != null">
+            AND is_hard = #{fissureTask.isHard}
+        </if>
+
+        <!-- 强制参与 is_persist 匹配，即使为 false -->
+        <if test="fissureTask.isPersist != null or fissureTask.isPersist == false">
+            AND is_persist = #{fissureTask.isPersist}
+        </if>
+    </delete>
+
+    <select id="selectFissureTaskByUserOrGroup" resultType="com.news.bot.wf.pojo.FissureTask">
+        SELECT *
+        FROM fissure_task
+        WHERE
+        (user_id = #{event.userId} AND group_id = #{event.groupId})
+        OR (group_id = #{event.groupId} AND is_persist = true)
+    </select>
+
+</mapper>

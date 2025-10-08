@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.news.bot.mapper.GroupPermissionMapper">
+
+    <delete id="delete">
+        # noinspection SqlWithoutWhere
+        DELETE FROM group_permission
+        <where>
+            <if test="groupPermission.groupId != null and groupPermission.groupId != 0">
+                group_id = #{groupPermission.groupId}
+            </if>
+            <if test="groupPermission.permission != null and groupPermission.permission != ''">
+                AND permission = #{groupPermission.permission}
+            </if>
+        </where>
+    </delete>
+
+</mapper>
