@@ -27,4 +27,9 @@ public class UserTplServiceImpl implements UserTplService {
         userTplMapper.update(userTpl);
     }
 
+    @Override
+    public void delete(UserTpl userTpl){
+        userTplMapper.delete(userTpl);
+    }
+
 }

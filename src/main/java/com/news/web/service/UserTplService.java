@@ -9,4 +9,6 @@ public interface UserTplService {
     UserTpl selectByUserId(Long userId);
 
     void update(UserTpl userTpl);
+
+    void delete(UserTpl userTpl);
 }

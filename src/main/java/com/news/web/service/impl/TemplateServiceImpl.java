@@ -1,5 +1,8 @@
 package com.news.web.service.impl;
 
+import com.news.bot.wf.pojo.Fissure;
+import com.news.bot.wf.service.FissureService;
+import com.news.bot.wf.utils.FissuresUtil;
 import com.news.bot.wf.utils.HtmlToImageUtil;
 import com.news.web.service.TemplateService;
 import lombok.extern.slf4j.Slf4j;
@@ -9,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -30,6 +34,13 @@ public class TemplateServiceImpl implements TemplateService {
      */
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
+
+    /**
+     * 裂隙服务实例
+     */
+    @Autowired
+    private FissureService fissureService;
+
 
     /**
      * 预定义的模板名称列表
@@ -63,8 +74,12 @@ public class TemplateServiceImpl implements TemplateService {
                     continue;
                 }
 
+                // 获取所有裂隙数据并按层级分组
+                List<Fissure> allFissures = fissureService.selectByKey("裂隙");
+                Map<String, List<Fissure>> groupedFissures = FissuresUtil.groupFissuresByTier(allFissures);
+
                 Map<String, Object> data = new HashMap<>();
-                data.put("data", new HashMap<>());
+                data.put("data", groupedFissures);
 
                 String imageBase64 = htmlToImageUtil.renderToBase64(templateName, data, width);
                 stringRedisTemplate.opsForValue().set(cacheKey, imageBase64, Duration.ofMinutes(30));

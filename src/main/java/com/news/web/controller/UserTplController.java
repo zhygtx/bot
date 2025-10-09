@@ -34,4 +34,9 @@ public class UserTplController {
         return Result.success("修改成功");
     }
 
+    @RequestMapping("/delete")
+    public Result<String> delete(@RequestBody UserTpl userTpl){
+        userTplService.delete(userTpl);
+        return Result.success("删除成功");
+    }
 }

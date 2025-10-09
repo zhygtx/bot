@@ -16,7 +16,7 @@ public class TemplatePreRenderTask {
     /**
      * 定时预渲染所有模板（每1小时执行一次）
      */
-    @Scheduled(fixedRate = 60 * 60 * 1000)
+    @Scheduled(initialDelay = 10 * 1000,fixedRate = 60 * 60 * 1000)
     public void preRenderAllTemplates() {
         try {
             log.info("开始预渲染所有模板...");
