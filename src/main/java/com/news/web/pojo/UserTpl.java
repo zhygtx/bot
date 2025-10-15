@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Data
 public class UserTpl {
+    private String id;
     private Long userId;
     private Long groupId;
     private String templateName;

@@ -6,6 +6,8 @@ public interface UserTplService {
 
     int insert(UserTpl userTpl);
 
+    Boolean hasUserTpl(String id);
+
     UserTpl selectByUserId(Long userId);
 
     void update(UserTpl userTpl);

@@ -15,6 +15,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.news.web.utils.TemplateUtil.TEMPLATE_NAMES;
+
 /**
  * 模板服务实现类
  * 提供模板渲染为图片的功能，并支持缓存机制
@@ -41,14 +43,6 @@ public class TemplateServiceImpl implements TemplateService {
     @Autowired
     private FissureService fissureService;
 
-
-    /**
-     * 预定义的模板名称列表
-     */
-    private static final Map<String, String> TEMPLATE_NAMES = new HashMap<>() {{
-        put("fissure", "裂隙模板");
-        put("fissure_test", "测试裂隙模板");
-    }};
 
     /**
      * 获取所有模板渲染后的图片

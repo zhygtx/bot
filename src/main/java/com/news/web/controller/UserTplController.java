@@ -18,6 +18,9 @@ public class UserTplController {
 
     @RequestMapping("/insert")
     public Result<String> insert(@RequestBody UserTpl userTpl){
+        if (userTplService.hasUserTpl(userTpl.getId())){
+            return Result.error("您已添加该模板");
+        }
         userTplService.insert(userTpl);
         return Result.success("添加成功");
     }

@@ -5,6 +5,7 @@ import com.news.web.pojo.User;
 import com.news.web.service.UserService;
 import com.news.web.utils.JwtUtil;
 import com.news.web.utils.Md5Util;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
@@ -18,6 +19,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 @RestController
 @RequestMapping("/user")
 public class UserController {
@@ -50,7 +52,7 @@ public class UserController {
         }
         Map<String, Object> map = new HashMap<>();
         map.put("username", user.getUsername());
-        map.put("id", user.getId());
+        map.put("userId", user.getUserId());
         map.put("refreshTime", LocalDateTime.now().toString()); // 加入刷新时间用于控制缓存更新
 
         String token = JwtUtil.genToken(map);
@@ -80,14 +82,14 @@ public class UserController {
         String oldPwd = params.get("old_pwd");
         String new_pwd = params.get("new_pwd");
         Map<String, Object> map = JwtUtil.parseToken(token);
-        Integer id = (Integer) map.get("id");
+        Integer userId = (Integer) map.get("userId");
         String username = (String) map.get("username");
         User user1 = userService.selectByName(username);
         if (!Md5Util.getMD5String(oldPwd).equals(user1.getPassword())) {
             return Result.error("原密码错误");
         }
         User user = new User();
-        user.setId(id);
+        user.setUserId(userId);
         user.setPassword(Md5Util.getMD5String(new_pwd));
         userService.updatePwd(user);
         return Result.success();
