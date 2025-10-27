@@ -3,6 +3,8 @@ package com.news.web.mapper;
 import com.news.web.pojo.UserTpl;
 import org.apache.ibatis.annotations.*;
 
+import java.util.List;
+
 @Mapper
 public interface UserTplMapper {
 
@@ -13,7 +15,7 @@ public interface UserTplMapper {
     Boolean hasUserTpl(@Param("id") String id);
 
     @Select("select * from user_tpl where user_id=#{userId}")
-    UserTpl selectByUserId(Long userId);
+    List<UserTpl> selectByUserId(Long userId);
 
     @Update("update user_tpl set template_name=#{templateName} where user_id=#{userId} and group_id=#{groupId}")
     void update(UserTpl userTpl);

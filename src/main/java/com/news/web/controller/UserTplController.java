@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/userTpl")
 public class UserTplController {
@@ -26,8 +28,8 @@ public class UserTplController {
     }
 
     @RequestMapping("/selectByUserId")
-    public Result<UserTpl> selectByUserId(Long userId){
-        UserTpl userTpl = userTplService.selectByUserId(userId);
+    public Result<List<UserTpl>> selectByUserId(Long userId){
+        List<UserTpl> userTpl = userTplService.selectByUserId(userId);
         return Result.success(userTpl);
     }
 

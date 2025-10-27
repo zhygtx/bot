@@ -5,6 +5,8 @@ import com.news.web.pojo.UserTpl;
 import com.news.web.service.UserTplService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 import java.util.Map;
 import static com.news.web.utils.TemplateUtil.TEMPLATE_NAMES;
 
@@ -32,7 +34,7 @@ public class UserTplServiceImpl implements UserTplService {
     }
 
     @Override
-    public UserTpl selectByUserId(Long userId){
+    public List<UserTpl> selectByUserId(Long userId){
         return userTplMapper.selectByUserId(userId);
     }
 
