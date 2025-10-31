@@ -3,25 +3,34 @@ package com.news.bot.wf.task;
 import com.mikuac.shiro.core.Bot;
 import com.mikuac.shiro.core.BotContainer;
 import com.news.bot.config.BotConfig;
+import com.news.bot.task.BaseScheduledTask;
 import com.news.bot.wf.pojo.Fissure;
 import com.news.bot.wf.pojo.FissureTask;
 import com.news.bot.wf.service.FissureService;
 import com.news.bot.wf.utils.FissureTaskUtil;
 import com.news.bot.wf.utils.FissuresUtil;
-import com.news.bot.wf.utils.WMUtil;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
 @Slf4j
-public class FissureUpdateTask {
+public class FissureUpdateTask extends BaseScheduledTask{
+
+    public FissureUpdateTask() {
+        super("裂隙更新", "裂隙更新", Duration.ofMinutes(1));
+    }
+
+    @Override
+    public void task() {
+        updateFissureData();
+    }
 
     @Autowired
     private FissuresUtil fissuresUtil;
@@ -36,20 +45,16 @@ public class FissureUpdateTask {
     @Autowired
     private BotConfig botConfig;
 
-    /**
-     * 每隔 1 分钟执行一次
-     */
-    @Scheduled(fixedRate = 60000)
     public void updateFissureData() {
-        System.out.println("---------------------------------------------------------------------------------------");
         long botId = botConfig.getBotId();
         Bot bot = botContainer.robots.get(botId);
 
-        log.info("开始更新裂隙数据...");
+        log.debug("--------------------------------------------------");
+        log.debug("开始更新裂隙数据...");
 
         fissuresUtil.getAndConvertFissuresAsync()
                 .thenApply(json -> {
-                    log.info("获取到原始JSON数据，长度: {}", json.length());
+                    log.debug("获取到原始JSON数据，长度: {}", json.length());
                     try {
                         List<Fissure> fissures = fissuresUtil.parseFissures(json);
                         log.info("成功解析裂隙数据，共 {} 条", fissures.size());
@@ -61,7 +66,7 @@ public class FissureUpdateTask {
                 })
                 .thenAccept(fissures -> {
                     try {
-                        log.info("进入数据处理阶段");
+                        log.debug("进入数据处理阶段");
 
                         if (fissures == null || fissures.isEmpty()) {
                             log.warn("未获取到任何裂隙数据");
@@ -70,7 +75,7 @@ public class FissureUpdateTask {
 
                         try{
                             fissuresUtil.setEta(fissures);
-                            log.info("设置裂隙数据 ETA 完成");
+                            log.debug("设置裂隙数据 ETA 完成");
                         }
                         catch (Exception e) {
                             log.warn("设置裂隙数据 ETA 时发生错误", e);
@@ -78,7 +83,7 @@ public class FissureUpdateTask {
 
                         // 获取当前数据库中所有裂隙 ID
                         List<String> dbIds = fissureService.getActiveIds();
-                        log.info("当前数据库中已存在的裂隙数量：{}", dbIds.size());
+                        log.debug("当前数据库中已存在的裂隙数量：{}", dbIds.size());
 
 
                         // 找出新数据中不存在于数据库中的 ID，即新增数据
@@ -87,7 +92,7 @@ public class FissureUpdateTask {
                                 .toList();
 
                         if (newFissures.isEmpty()){
-                            log.info("无新增裂隙数据");
+                            log.debug("无新增裂隙数据");
                         } else {
                             String fissureInfo = newFissures.stream()
                                     .map(f -> f.getNode()+ f.getTier() +f.getMissionType()+"  "+f.getEta())
@@ -97,22 +102,22 @@ public class FissureUpdateTask {
 
                         // 清空老数据
                         fissureService.clearFissures();
-                        log.info("旧数据清空完成");
+                        log.debug("旧数据清空完成");
 
                         // 插入全部获取道的数据
-                        log.info("开始插入数据，共 {} 条", fissures.size());
+                        log.debug("开始插入数据，共 {} 条", fissures.size());
                         fissureService.batchInsertFissures(fissures);
-                        log.info("数据插入完成");
+                        log.debug("数据插入完成");
 
                         // 存储到统计表（仅新数据）与裂隙推送
                         if (!newFissures.isEmpty()) {
-                            log.info("开始统计新增裂隙数据，共 {} 条", newFissures.size());
+                            log.debug("开始统计新增裂隙数据，共 {} 条", newFissures.size());
                             fissureService.fissureStatistic(newFissures);
-                            log.info("新增裂隙数据统计完成");
-                            log.info("裂隙统计数据添加完成，新增{} 条数据", newFissures.size());
+                            log.debug("新增裂隙数据统计完成");
+                            log.debug("裂隙统计数据添加完成，新增{} 条数据", newFissures.size());
                             notifyMatchingGroups(bot, newFissures);
                         } else {
-                            log.info("无新增裂隙数据需要处理");
+                            log.debug("无新增裂隙数据需要处理");
                         }
                     } catch (Exception e) {
                         log.error("处理裂隙数据时发生错误", e);
@@ -130,10 +135,10 @@ public class FissureUpdateTask {
      */
     private void notifyMatchingGroups(Bot bot, List<Fissure> fissures) {
         try {
-            log.info("开始通知匹配的群组，新增裂隙数: {}", fissures.size());
+            log.debug("开始通知匹配的群组，新增裂隙数: {}", fissures.size());
             // 获取所有裂隙任务
             List<FissureTask> allTasks = fissureService.selectAllFissureTasks();
-            log.info("获取到所有裂隙任务，共 {} 个", allTasks.size());
+            log.debug("获取到所有裂隙任务，共 {} 个", allTasks.size());
 
             // 存储群组推送数据
             Map<Long, Map<Fissure, Set<Long>>> groupPushData = new HashMap<>();
@@ -171,7 +176,7 @@ public class FissureUpdateTask {
                 FissureTaskUtil.sendFissureMessage(bot, groupPushData);
                 log.info("群组通知完成");
             } else {
-                log.info("无匹配到的群组任务");
+                log.debug("无匹配到的群组任务");
             }
 
             // 处理私聊推送
@@ -199,7 +204,7 @@ public class FissureUpdateTask {
 
                 log.info("私聊通知完成");
             } else {
-                log.info("无匹配到的私聊任务");
+                log.debug("无匹配到的私聊任务");
             }
         } catch (Exception e) {
             log.error("通知匹配群组时发生错误", e);

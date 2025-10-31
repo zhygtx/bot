@@ -39,5 +39,5 @@
     </root>
 
     <!-- 特定包的日志级别配置 -->
-    <logger name="com.news" level="warn" />
+    <logger name="com.news.bot.wf.task.FissureUpdateTask" level="warn" />
 </configuration>

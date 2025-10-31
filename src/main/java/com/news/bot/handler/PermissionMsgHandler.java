@@ -17,7 +17,7 @@ import java.util.regex.Matcher;
 @Slf4j
 @Component
 @Shiro
-public class PrivateMsgHandler {
+public class PermissionMsgHandler {
 
     @Autowired
     private GroupPermissionService groupPermissionService;
@@ -69,6 +69,4 @@ public class PrivateMsgHandler {
             log.error("删除权限失败：{}",e.getMessage());
         }
     }
-
-
 }
