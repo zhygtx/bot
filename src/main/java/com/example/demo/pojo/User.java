@@ -1,0 +1,68 @@
+package com.example.demo.pojo;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+
+/**
+ * 用户信息
+ */
+@NoArgsConstructor
+@AllArgsConstructor
+@Data
+public class User {
+    /**
+     * 用户ID
+     */
+    private String userId;
+
+    /**
+     * 用户名
+     */
+    private String userName;
+
+    /**
+     * 用户账号
+     */
+    private String userAccount;
+
+    /**
+     * 密码
+     */
+    private String userPwd;
+
+    /**
+     * QQ号
+     */
+    private Long userQQ;
+
+    /**
+     * 用户邮箱
+     */
+    private String email;
+
+    /**
+     * 用户所拥有的机器人的ID
+     */
+    private String botId;
+
+    /**
+     * 用户权限(给予管理员时手动填写，默认空时为普通用户)
+     */
+    private String userRole;
+
+    /**
+     * 创建时间
+     */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime createTime;
+
+    /**
+     * 最后修改时间
+     */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime updateTime;
+}
