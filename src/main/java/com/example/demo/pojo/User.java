@@ -17,27 +17,27 @@ public class User {
     /**
      * 用户ID
      */
-    private String userId;
+    private String id;
 
     /**
      * 用户名
      */
-    private String userName;
+    private String name;
 
     /**
      * 用户账号
      */
-    private String userAccount;
+    private String account;
 
     /**
      * 密码
      */
-    private String userPwd;
+    private String pwd;
 
     /**
      * QQ号
      */
-    private Long userQQ;
+    private Long QQ;
 
     /**
      * 用户邮箱
