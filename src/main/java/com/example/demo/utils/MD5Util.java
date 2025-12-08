@@ -1,5 +1,6 @@
 package com.example.demo.utils;
 
+import com.example.demo.interceptor.ExcludeFromMD5;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -44,7 +45,6 @@ public class MD5Util {
      * @throws NoSuchAlgorithmException 没有MD5算法异常
      */
     public static String calculateClassMD5(Object classObject) throws NoSuchAlgorithmException {
-
         MessageDigest md = MessageDigest.getInstance("MD5");
         StringBuilder content = new StringBuilder();
 
@@ -53,6 +53,10 @@ public class MD5Util {
 
         Field[] fields = classObject.getClass().getDeclaredFields();
         for (Field field : fields) {
+            // 跳过被ExcludeFromMD5注解标记的字段
+            if (field.isAnnotationPresent(ExcludeFromMD5.class)) {
+                continue;
+            }
             try {
                 field.setAccessible(true);
                 Object value = field.get(classObject);
@@ -65,6 +69,7 @@ public class MD5Util {
         md.update(content.toString().getBytes());
         return bytesToHex(md.digest());
     }
+
 
 
 

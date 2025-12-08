@@ -1,42 +1,36 @@
 package com.example.demo.pojo.task;
 
+import com.example.demo.interceptor.ExcludeFromMD5;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigInteger;
 
 /**
- * 任务触发规则
+ * 触发任务规则实体
  */
-@Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Data
+@Builder
 public class Role {
 
     /**
-     * 触发规则ID，UUID
+     * 任务规则ID，UUID
      */
+    @ExcludeFromMD5
     private String id;
 
     /**
-     * 触发规则名称
-     */
-    private String name;
-
-    /**
-     * 机器人QQ
-     */
-    private Long botQQ;
-
-    /**
-     * 所属用户ID
+     * 所属用户ID，UUID
      */
     private String userId;
 
     /**
      * 触发规则MD5值
      */
+    @ExcludeFromMD5
     private String MD5;
 
     /**
@@ -52,12 +46,12 @@ public class Role {
     /**
      * 是否启用
      */
-    private boolean isEnable;
+    private boolean isEnable = false;
 
     /**
      * 是否提取正则表达式后续文本
      */
-    private boolean isExtract;
+    private boolean isExtract = false;
 
     /**
      * 匹配模式，正则匹配与文本等于匹配
@@ -66,4 +60,5 @@ public class Role {
         REGEX,
         TEXT
     }
+
 }

@@ -1,7 +1,6 @@
 package com.example.demo.pojo.task;
 
 import lombok.*;
-import java.util.Map;
 
 /**
  * 动作消息实体 支持多种动作类型并可链式执行
@@ -17,6 +16,16 @@ public class Action {
     private String id;
 
     /**
+     * 所属规则ID
+     */
+    private String roleId;
+
+    /**
+     * 是否需要@触发的用户
+     */
+    private boolean needAt = false;
+
+    /**
      * 动作类型，文本/图片/脚本/HTTP 调用等
      */
     private ActionType actionType;
@@ -25,6 +34,11 @@ public class Action {
      * 动作消息相关数据id（根据 type 解析）
      */
     private String dataId;
+
+    /**
+     * 是否进行消息拼接
+     */
+    private boolean isConcat = false;
 
     /**
      * 动作执行优先级，越小越先执行
