@@ -30,4 +30,17 @@ public class MessageHandler {
         log.info("[群消息][BOT:{}] 群号: {}, 发送者: {}, 消息内容: {}",
                 bot.getSelfId(), event.getGroupId(), event.getUserId(), event.getMessage());
     }
+
+    /**
+     * 处理私聊消息事件
+     * 当机器人收到私聊消息时会调用此方法
+     * @param bot   Bot实例，用于与服务器通信
+     * @param event 私聊消息事件对象，包含消息详细信息
+     */
+    @PrivateMessageHandler
+    public void privateMessage(Bot bot, PrivateMessageEvent event) {
+        // 打印私聊消息到控制台
+        log.info("[私聊消息][BOT:{}] 发送者: {}, 消息内容: {}",
+                bot.getSelfId(), event.getUserId(), event.getMessage());
+    }
 }
