@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.regex.Pattern;
+
 
 /**
  * 触发任务规则实体
@@ -34,14 +36,14 @@ public class Role {
     private String MD5;
 
     /**
-     * 匹配方式，正则匹配与文本等于匹配
+     * 匹配类型
      */
     private MatchMode matchMode;
 
     /**
-     * 匹配内容
+     * 正则表达式内容
      */
-    private String matchContent;
+    private String regex;
 
     /**
      * 是否启用
@@ -54,11 +56,35 @@ public class Role {
     private boolean isExtract = false;
 
     /**
+     * 提取文本位置
+     */
+    private int extractPosition;
+
+    /**
      * 匹配模式，正则匹配与文本等于匹配
      */
     private enum MatchMode {
         REGEX,
-        TEXT
+        IMAGE,
+        MODULAR
     }
 
+
+
+    /**
+     * 预编译的Pattern对象
+     */
+    @ExcludeFromMD5
+    private transient Pattern pattern;
+
+    /**
+     * 获取预编译的Pattern对象
+     * @return Pattern对象
+     */
+    public Pattern getPattern() {
+        if (pattern == null && regex != null && !regex.isEmpty()) {
+            pattern = Pattern.compile(regex);
+        }
+        return pattern;
+    }
 }

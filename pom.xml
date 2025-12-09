@@ -149,6 +149,13 @@
             <artifactId>spring-boot-starter-thymeleaf</artifactId>
         </dependency>
 
+        <!-- 添加到pom.xml的dependencies部分 -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-context</artifactId>
+            <version>4.0.0</version>
+        </dependency>
+
         <!--thymeleaf依赖-->
         <dependency>
             <groupId>org.thymeleaf</groupId>
