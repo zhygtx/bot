@@ -1,5 +1,8 @@
 package com.example.demo.core.processor;
 
+import com.example.demo.core.manager.ActionManager;
+import com.example.demo.core.manager.RoleManager;
+import com.example.demo.core.manager.ScopeManager;
 import com.example.demo.pojo.msg.GroupMsg;
 import com.mikuac.shiro.common.utils.MsgUtils;
 import org.springframework.stereotype.Component;
@@ -9,6 +12,19 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class TaskProcessor {
+
+     private final ScopeManager scopeManager;
+
+     private final RoleManager roleManager;
+
+     private final ActionManager actionManager;
+
+    public TaskProcessor(ScopeManager scopeManager, RoleManager roleManager, ActionManager actionManager) {
+        this.scopeManager = scopeManager;
+        this.roleManager = roleManager;
+        this.actionManager = actionManager;
+    }
+
 
     public String taskProcess(GroupMsg groupMsg) {
         return MsgUtils.builder()
