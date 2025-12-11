@@ -61,12 +61,11 @@ public class Role {
     private int extractPosition;
 
     /**
-     * 匹配模式，正则匹配与文本等于匹配
+     * 匹配类型
      */
     private enum MatchMode {
-        REGEX,
-        IMAGE,
-        MODULAR
+        text,
+        image
     }
 
 

@@ -58,6 +58,6 @@ public class Scope {
         ALL,
         ADMIN,
         OWNER,
-        USER
+        MEMBER
     }
 }
