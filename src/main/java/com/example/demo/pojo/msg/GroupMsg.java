@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 群消息实体
@@ -27,6 +28,11 @@ public class GroupMsg {
     private Long userId;
 
     /**
+     * 是否@了Bot
+     */
+    private boolean isAt = false;
+
+    /**
      * 发送者用户权限
      */
     private String userRole;
@@ -44,5 +50,5 @@ public class GroupMsg {
     /**
      * 群消息内容
      */
-    private List<String> content;
+    private Map<Integer, Map<String, Object>> content;
 }

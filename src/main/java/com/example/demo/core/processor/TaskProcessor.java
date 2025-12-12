@@ -33,7 +33,8 @@ public class TaskProcessor {
                 .text("用户权限"+groupMsg.getUserRole()+"\n")
                 .text("BotID"+groupMsg.getBotId()+"\n")
                 .text("消息类型"+groupMsg.getType()+"\n")
-                .text("消息内容"+groupMsg.getContent())
+                .text("消息内容"+groupMsg.getContent()+"\n")
+                .text("是否@Bot"+groupMsg.isAt()+"\n")
                 .build();
     }
 }
