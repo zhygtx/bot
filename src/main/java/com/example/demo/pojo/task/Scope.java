@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
+import java.util.Set;
 
 /**
  * 任务触发域实体类
@@ -44,17 +44,22 @@ public class Scope {
     /**
      * 所拥有的触发规则
      */
-    private List<Role> roles;
+    private Set<Role> roles;
 
     /**
      * 作用用户所需权限
      */
-    private ScopeUserRole scopeUserRole;
+    private GroupRole userRole;
+
+    /**
+     * 所需Bot权限
+     */
+    private GroupRole botRole;
 
     /**
      * 作用用户权限枚举
      */
-    public enum ScopeUserRole {
+    public enum GroupRole {
         ALL,
         ADMIN,
         OWNER,

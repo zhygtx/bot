@@ -1,9 +1,8 @@
-package com.example.demo.service.impl;
+package com.example.demo.service.task.impl;
 
-import com.example.demo.service.BotService;
+import com.example.demo.service.task.BotService;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -13,9 +12,9 @@ import java.util.Set;
 public class BotServiceImpl implements BotService {
 
     @Override
-    public Set<Long> getBotQQs() {
+    public Set<Long> getAllBotQQs() {
         // TODO: Mapper获取机器人QQ
-        return Set.of(1874743565L, 3845884126L);
+        return Set.of(3845884126L);
     }
 
 }

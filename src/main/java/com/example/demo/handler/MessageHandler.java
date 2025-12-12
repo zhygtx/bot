@@ -3,7 +3,7 @@ package com.example.demo.handler;
 import com.example.demo.core.processor.MessageProcessor;
 import com.example.demo.core.processor.TaskProcessor;
 import com.example.demo.pojo.msg.GroupMsg;
-import com.example.demo.service.BotService;
+import com.example.demo.service.task.BotService;
 import com.mikuac.shiro.annotation.GroupMessageHandler;
 import com.mikuac.shiro.annotation.PrivateMessageHandler;
 import com.mikuac.shiro.annotation.common.Shiro;
@@ -46,7 +46,7 @@ public class MessageHandler {
         // 打印群消息到控制台
         log.info("[群消息][BOT:{}] 群号: {}, 发送者: {}, 消息内容: {}",
                 bot.getSelfId(), event.getGroupId(), event.getUserId(), event.getMessage());
-        if (!botService.getBotQQs().contains(bot.getSelfId())){
+        if (!botService.getAllBotQQs().contains(event.getUserId())){
             GroupMsg groupMsg = messageProcessor.groupProcess(bot, event);
             String result = taskProcessor.taskProcess(groupMsg);
             if (result!=null){

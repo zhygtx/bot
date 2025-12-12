@@ -1,6 +1,5 @@
-package com.example.demo.service;
+package com.example.demo.service.task;
 
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -12,6 +11,6 @@ public interface BotService {
      * 获取所有机器人QQ
      * @return 机器人QQ列表
      */
-    Set<Long> getBotQQs();
+    Set<Long> getAllBotQQs();
 
 }

@@ -30,6 +30,11 @@ public class Role {
     private String userId;
 
     /**
+     * 所属作用域ID，UUID
+     */
+    private String scopeId;
+
+    /**
      * 触发规则MD5值
      */
     @ExcludeFromMD5
