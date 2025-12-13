@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Set;
 import java.util.regex.Pattern;
 
 
@@ -51,6 +52,11 @@ public class Role {
     private String regex;
 
     /**
+     * 关联的动作内容
+     */
+    private Set<Action> action;
+
+    /**
      * 是否启用
      */
     private boolean isEnable = false;
@@ -63,7 +69,7 @@ public class Role {
     /**
      * 提取文本位置
      */
-    private int extractPosition;
+    private Integer extractPosition;
 
     /**
      * 匹配类型

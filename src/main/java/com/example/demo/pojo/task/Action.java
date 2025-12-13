@@ -21,6 +21,11 @@ public class Action {
     private String roleId;
 
     /**
+     * 所属用户ID
+     */
+    private String userId;
+
+    /**
      * 是否需要@触发的用户
      */
     private boolean needAt = false;
