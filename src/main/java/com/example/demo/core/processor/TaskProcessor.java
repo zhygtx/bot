@@ -4,8 +4,11 @@ import com.example.demo.core.manager.ActionManager;
 import com.example.demo.core.manager.RoleManager;
 import com.example.demo.core.manager.ScopeManager;
 import com.example.demo.pojo.msg.GroupMsg;
+import com.example.demo.pojo.task.Role;
 import com.mikuac.shiro.common.utils.MsgUtils;
 import org.springframework.stereotype.Component;
+
+import java.util.Set;
 
 /**
  * 任务处理类,负责调度各模块的处理逻辑
@@ -27,6 +30,9 @@ public class TaskProcessor {
 
 
     public String taskProcess(GroupMsg groupMsg) {
+
+        Set<Role> roles = scopeManager.getRoles(groupMsg);
+
         return MsgUtils.builder()
                 .text("群号"+groupMsg.getGroupId()+"\n")
                 .text("用户"+groupMsg.getUserId()+"\n")
