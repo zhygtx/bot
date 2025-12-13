@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -60,9 +62,32 @@ public class Scope {
      * 作用用户权限枚举
      */
     public enum GroupRole {
-        ALL,
-        ADMIN,
-        OWNER,
-        MEMBER
+        all,
+        owner,
+        admin,
+        member;
+
+        private static final Map<GroupRole, Integer> ROLE_LEVELS = new HashMap<>();
+        private static final Map<String, Integer> STRING_ROLE_LEVELS = new HashMap<>();
+
+        static {
+            ROLE_LEVELS.put(all, 4);
+            ROLE_LEVELS.put(owner, 3);
+            ROLE_LEVELS.put(admin, 2);
+            ROLE_LEVELS.put(member, 1);
+
+            for (Map.Entry<GroupRole, Integer> entry : ROLE_LEVELS.entrySet()) {
+                STRING_ROLE_LEVELS.put(entry.getKey().name(), entry.getValue());
+            }
+        }
+
+        public boolean hasPermission(String role) {
+            Integer requiredLevel = STRING_ROLE_LEVELS.get(role.toLowerCase());
+            if (requiredLevel == null) {
+                return false;
+            }
+            return ROLE_LEVELS.get(this) >= requiredLevel;
+        }
     }
+
 }

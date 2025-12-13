@@ -31,13 +31,14 @@ public class ScopeEngine implements ScopeManager {
         Set<Role> roles = new HashSet<>();
         for (Scope scope : scopes){
             if (Objects.equals(scope.getBotQQ(), groupMsg.getBotId())
-                && scope.isAt()==groupMsg.isAt()
-                && scope.getUserRole().toString().equals(groupMsg.getUserRole())
-                && scope.getBotRole().toString().equals(botCoreEvent.getBotGroupRoles(groupMsg.getBotId()).get(groupMsg.getGroupId()))
+                && (scope.isAt()==groupMsg.isAt()|| !scope.isAt())
+                && scope.getUserRole().hasPermission(groupMsg.getUserRole())
+                && scope.getBotRole().hasPermission(botCoreEvent.getBotGroupRoles(groupMsg.getBotId()).get(groupMsg.getGroupId()))
                 ){
                 roles.addAll(scope.getRoles());
             }
         }
+        roles.removeIf(role -> !role.isEnable());
         return roles;
     }
 
