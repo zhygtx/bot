@@ -42,10 +42,10 @@ public class ActionEngine implements ActionManager {
                 try {
                     //处理相关动作
                     switch (action.getActionType()){
-                        case TEXT:
+                        case text:
                             handleText(action, text, groupMsg);
                             break;
-                        case IMAGE:
+                        case image:
                             //图片处理逻辑
                             break;
                         default:

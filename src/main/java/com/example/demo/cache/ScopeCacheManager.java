@@ -9,7 +9,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
-import java.util.Set;
+import java.util.List;
 
 @Slf4j
 @Component
@@ -25,10 +25,10 @@ public class ScopeCacheManager {
     // 提供外部访问缓存的方法
     // 使用线程安全的集合存储缓存
     @Getter
-    private volatile Set<Scope> cachedScopes = Collections.emptySet();
+    private volatile List<Scope> cachedScopes = Collections.emptyList();
 
     // 定时刷新Scope缓存
-    @Scheduled(fixedDelay = 60_000, initialDelay = 10_000)
+    @Scheduled(fixedDelay = 60_000, initialDelay = 3_000)
     public void refreshCache() {
         try {
             this.cachedScopes = scopeService.getAllScopes();

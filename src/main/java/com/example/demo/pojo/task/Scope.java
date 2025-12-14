@@ -6,8 +6,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * 任务触发域实体类
@@ -56,7 +56,7 @@ public class Scope {
     /**
      * 所拥有的触发规则
      */
-    private transient Set<Role> roles;
+    private transient List<Role> roles;
 
     /**
      * 作用用户权限枚举

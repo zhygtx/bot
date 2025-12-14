@@ -19,7 +19,7 @@ public class RoleEngine implements RoleManager {
      * @return 获取到的需要执行的动作
      */
     @Override
-    public Map<String, List<Action>> getActions(Set<Role> roles, GroupMsg groupMsg){
+    public Map<String, List<Action>> getActions(List<Role> roles, GroupMsg groupMsg){
         Map<String, List<Action>> actions = new HashMap<>();
 
         // 过滤掉动作为空的类型

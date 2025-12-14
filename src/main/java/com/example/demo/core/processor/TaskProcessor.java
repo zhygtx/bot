@@ -10,7 +10,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * 任务处理类,负责调度各模块的处理逻辑
@@ -34,7 +33,7 @@ public class TaskProcessor {
     public List<String> taskProcess(GroupMsg groupMsg) {
 
         // 获取作用域中获取到的具体规则
-        Set<Role> roles = scopeManager.getRoles(groupMsg);
+        List<Role> roles = scopeManager.getRoles(groupMsg);
 
         //获取需要执行的动作
         Map<String, List<Action>> actions = roleManager.getActions(roles, groupMsg);

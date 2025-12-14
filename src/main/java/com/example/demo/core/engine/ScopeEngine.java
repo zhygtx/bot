@@ -9,9 +9,9 @@ import com.example.demo.pojo.task.Scope;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 @Component
 public class ScopeEngine implements ScopeManager {
@@ -31,13 +31,13 @@ public class ScopeEngine implements ScopeManager {
      * @return 作用域中获取到的具体规则
      */
     @Override
-    public Set<Role> getRoles(GroupMsg groupMsg){
-        Set<Scope> scopes = scopeCacheManager.getCachedScopes();
+    public List<Role> getRoles(GroupMsg groupMsg){
+        List<Scope> scopes = scopeCacheManager.getCachedScopes();
 
         // 过滤掉没有规则的域
         scopes.removeIf(scope -> scope.getRoles() == null|| scope.getRoles().isEmpty());
 
-        Set<Role> roles = new HashSet<>();
+        List<Role> roles = new ArrayList<>();
         for (Scope scope : scopes){
             if (Objects.equals(scope.getBotQQ(), groupMsg.getBotId())
                 && (scope.isAt()==groupMsg.isAt()|| !scope.isAt())

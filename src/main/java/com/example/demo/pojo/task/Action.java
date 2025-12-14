@@ -51,7 +51,7 @@ public class Action {
     private int seq = 0;
 
     public enum ActionType {
-        TEXT,IMAGE,ALBUM,TEMPLATE
+        text,image
     }
 
     /**
