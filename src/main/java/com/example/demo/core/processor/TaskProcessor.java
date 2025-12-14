@@ -39,6 +39,7 @@ public class TaskProcessor {
         //获取需要执行的动作
         Map<String, List<Action>> actions = roleManager.getActions(roles, groupMsg);
 
-        return actionManager.executeActions(actions);
+        //执行相关动作与构建发送内容
+        return actionManager.executeActions(actions,groupMsg);
     }
 }

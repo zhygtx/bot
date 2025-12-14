@@ -44,11 +44,6 @@ public class Scope {
     private boolean isAt = true;
 
     /**
-     * 所拥有的触发规则
-     */
-    private Set<Role> roles;
-
-    /**
      * 作用用户所需权限
      */
     private GroupRole userRole;
@@ -57,6 +52,11 @@ public class Scope {
      * 所需Bot权限
      */
     private GroupRole botRole;
+
+    /**
+     * 所拥有的触发规则
+     */
+    private transient Set<Role> roles;
 
     /**
      * 作用用户权限枚举

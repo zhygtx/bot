@@ -54,9 +54,6 @@ public class Action {
         TEXT,IMAGE,ALBUM,TEMPLATE
     }
 
-
-
-
     /**
      * 提取的文本内容
      */

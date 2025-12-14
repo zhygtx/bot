@@ -52,11 +52,6 @@ public class Role {
     private String regex;
 
     /**
-     * 关联的动作内容
-     */
-    private List<Action> action;
-
-    /**
      * 是否启用
      */
     private boolean isEnable = false;
@@ -79,7 +74,10 @@ public class Role {
         image
     }
 
-
+    /**
+     * 关联的动作内容
+     */
+    private transient List<Action> action;
 
     /**
      * 预编译的Pattern对象

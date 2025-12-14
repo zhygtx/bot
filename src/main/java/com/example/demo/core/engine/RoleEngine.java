@@ -33,7 +33,9 @@ public class RoleEngine implements RoleManager {
         for (Role role : roles){
             switch (role.getMatchMode()){
                 case text :
-                    matchText(role, groupMsg, actions);
+                    if (groupMsg.getType().contains("text")){
+                        matchText(role, groupMsg, actions);
+                    }
                     break;
                 case image :
                 default:
@@ -61,11 +63,15 @@ public class RoleEngine implements RoleManager {
                     .sorted(Comparator.comparingInt(Action::getSeq))
                     .toList();
 
-            if (role.isExtract()){
-                String extractText = firstText.substring(role.getExtractPosition());
-                // 设置提取的文本
-                roleActions.forEach(action ->
-                        action.setExtractText(extractText));
+            if (role.isExtract() && role.getExtractPosition() != null) {
+                int position = role.getExtractPosition();
+                // 确保位置在有效范围内
+                if (position >= 0 && position <= firstText.length()) {
+                    // 提取文本
+                    String extractText = firstText.substring(position);
+                    // 设置所有动作中所提取的文本
+                    roleActions.forEach(action -> action.setExtractText(extractText));
+                }
             }
 
             actions.put(role.getId(), roleActions);

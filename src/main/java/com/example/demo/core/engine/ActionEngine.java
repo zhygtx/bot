@@ -2,6 +2,7 @@ package com.example.demo.core.engine;
 
 import com.example.demo.core.engine.executor.TextExecutor;
 import com.example.demo.core.manager.ActionManager;
+import com.example.demo.pojo.msg.GroupMsg;
 import com.example.demo.pojo.task.Action;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,10 +26,11 @@ public class ActionEngine implements ActionManager {
     /**
      * 执行动作
      * @param actions 动作列表
+     * @param groupMsg 群消息对象
      * @return 执行结果
      */
     @Override
-    public List<String> executeActions(Map<String, List<Action>> actions) {
+    public List<String> executeActions(Map<String,List<Action>> actions, GroupMsg groupMsg) {
 
         List<String> result = new ArrayList<>();
         //遍历所有动作
@@ -41,7 +43,7 @@ public class ActionEngine implements ActionManager {
                     //处理相关动作
                     switch (action.getActionType()){
                         case TEXT:
-                            handleText(action, text);
+                            handleText(action, text, groupMsg);
                             break;
                         case IMAGE:
                             //图片处理逻辑
@@ -65,9 +67,10 @@ public class ActionEngine implements ActionManager {
      * 处理文本动作
      * @param action 动作对象
      * @param text 存储返回消息的列表
+     * @param groupMsg 群消息对象
      */
-    private void handleText(Action action ,List<String> text){
-        String msg = textExecutor.getText(action.getDataId(), action.getExtractText());
+    private void handleText(Action action ,List<String> text, GroupMsg groupMsg){
+        String msg = textExecutor.getText(action, groupMsg);
         if (msg == null){
             return;
         }
