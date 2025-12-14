@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Set;
+import java.util.List;
 import java.util.regex.Pattern;
 
 
@@ -54,7 +54,7 @@ public class Role {
     /**
      * 关联的动作内容
      */
-    private Set<Action> action;
+    private List<Action> action;
 
     /**
      * 是否启用
@@ -74,7 +74,7 @@ public class Role {
     /**
      * 匹配类型
      */
-    private enum MatchMode {
+    public enum MatchMode {
         text,
         image
     }

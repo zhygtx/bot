@@ -25,9 +25,18 @@ public class ScopeEngine implements ScopeManager {
         this.botCoreEvent = botCoreEvent;
     }
 
+    /**
+     * 获取作用域中获取到的具体规则
+     * @param groupMsg 群消息对象
+     * @return 作用域中获取到的具体规则
+     */
     @Override
     public Set<Role> getRoles(GroupMsg groupMsg){
         Set<Scope> scopes = scopeCacheManager.getCachedScopes();
+
+        // 过滤掉没有规则的域
+        scopes.removeIf(scope -> scope.getRoles() == null|| scope.getRoles().isEmpty());
+
         Set<Role> roles = new HashSet<>();
         for (Scope scope : scopes){
             if (Objects.equals(scope.getBotQQ(), groupMsg.getBotId())
@@ -38,7 +47,10 @@ public class ScopeEngine implements ScopeManager {
                 roles.addAll(scope.getRoles());
             }
         }
+
+        // 过滤掉没有启用的规则
         roles.removeIf(role -> !role.isEnable());
+
         return roles;
     }
 

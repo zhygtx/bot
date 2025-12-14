@@ -4,10 +4,13 @@ import com.example.demo.core.manager.ActionManager;
 import com.example.demo.core.manager.RoleManager;
 import com.example.demo.core.manager.ScopeManager;
 import com.example.demo.pojo.msg.GroupMsg;
+import com.example.demo.pojo.task.Action;
 import com.example.demo.pojo.task.Role;
 import com.mikuac.shiro.common.utils.MsgUtils;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -31,7 +34,11 @@ public class TaskProcessor {
 
     public String taskProcess(GroupMsg groupMsg) {
 
+        // 获取作用域中获取到的具体规则
         Set<Role> roles = scopeManager.getRoles(groupMsg);
+
+        //获取需要执行的动作
+        Map<String, List<Action>> actions = roleManager.getActions(roles, groupMsg);
 
         return MsgUtils.builder()
                 .text("群号"+groupMsg.getGroupId()+"\n")

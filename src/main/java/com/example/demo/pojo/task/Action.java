@@ -41,7 +41,7 @@ public class Action {
     private String dataId;
 
     /**
-     * 是否进行消息拼接
+     * 是否将动作链进行消息拼接
      */
     private boolean isConcat = false;
 
@@ -53,4 +53,12 @@ public class Action {
     public enum ActionType {
         TEXT,IMAGE,ALBUM,TEMPLATE
     }
+
+
+
+
+    /**
+     * 提取的文本内容
+     */
+    private transient String extractText;
 }
