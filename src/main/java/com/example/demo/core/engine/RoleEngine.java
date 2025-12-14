@@ -6,7 +6,11 @@ import com.example.demo.pojo.task.Action;
 import com.example.demo.pojo.task.Role;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Component
@@ -57,7 +61,10 @@ public class RoleEngine implements RoleManager {
         Integer firstTextType = groupMsg.getType().indexOf("text");
         String firstText = groupMsg.getContent().get(firstTextType).get("text").toString();
 
-        if (pattern != null && pattern.matcher(firstText).matches()){
+        // 创建一个Matcher对象
+        Matcher matcher = pattern.matcher(firstText);
+
+        if (matcher.matches()){
             // 获取动作，并按照执行顺序进行排序
             List<Action> roleActions = role.getAction().stream()
                     .sorted(Comparator.comparingInt(Action::getSeq))
@@ -65,10 +72,10 @@ public class RoleEngine implements RoleManager {
 
             if (role.isExtract() && role.getExtractPosition() != null) {
                 int position = role.getExtractPosition();
-                // 确保位置在有效范围内
-                if (position >= 0 && position <= firstText.length()) {
-                    // 提取文本
-                    String extractText = firstText.substring(position);
+                // 确保捕获组位置在有效范围内
+                if (position >= 0 && position <= matcher.groupCount()) {
+                    // 提取指定组的文本
+                    String extractText = matcher.group(position);
                     // 设置所有动作中所提取的文本
                     roleActions.forEach(action -> action.setExtractText(extractText));
                 }
