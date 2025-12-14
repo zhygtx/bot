@@ -34,6 +34,7 @@ public class RoleEngine implements RoleManager {
             switch (role.getMatchMode()){
                 case text :
                     matchText(role, groupMsg, actions);
+                    break;
                 case image :
                 default:
                     break;

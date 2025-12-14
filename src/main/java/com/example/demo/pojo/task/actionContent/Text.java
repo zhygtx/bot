@@ -1,4 +1,4 @@
-package com.example.demo.pojo.task.msg;
+package com.example.demo.pojo.task.actionContent;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

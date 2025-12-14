@@ -41,7 +41,7 @@ public class Action {
     private String dataId;
 
     /**
-     * 是否将动作链进行消息拼接
+     * 是否拼接该动作链中上一条所需发送的消息
      */
     private boolean isConcat = false;
 

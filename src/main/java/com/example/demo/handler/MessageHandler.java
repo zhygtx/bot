@@ -3,7 +3,6 @@ package com.example.demo.handler;
 import com.example.demo.core.processor.MessageProcessor;
 import com.example.demo.core.processor.TaskProcessor;
 import com.example.demo.pojo.msg.GroupMsg;
-import com.example.demo.service.task.BotService;
 import com.mikuac.shiro.annotation.GroupMessageHandler;
 import com.mikuac.shiro.annotation.PrivateMessageHandler;
 import com.mikuac.shiro.annotation.common.Shiro;
@@ -13,6 +12,8 @@ import com.mikuac.shiro.dto.event.message.PrivateMessageEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 /**
  * 消息事件处理器
@@ -27,14 +28,11 @@ public class MessageHandler {
     private final MessageProcessor messageProcessor;
     private final TaskProcessor taskProcessor;
 
-    private final BotService botService;
-
 
     @Autowired
-    public MessageHandler(MessageProcessor messageProcessor, TaskProcessor taskProcessor, BotService botService, BotCoreEvent botCoreEvent) {
+    public MessageHandler(MessageProcessor messageProcessor, TaskProcessor taskProcessor, BotCoreEvent botCoreEvent) {
         this.messageProcessor = messageProcessor;
         this.taskProcessor = taskProcessor;
-        this.botService = botService;
         this.botCoreEvent = botCoreEvent;
     }
 
@@ -50,10 +48,17 @@ public class MessageHandler {
         log.info("[群消息][BOT:{}] 群号: {}, 发送者: {}, 消息内容: {}",
                 bot.getSelfId(), event.getGroupId(), event.getUserId(), event.getMessage());
         if (!botCoreEvent.getBotQqs().contains(event.getUserId())){
+            // 处理原始消息
             GroupMsg groupMsg = messageProcessor.groupProcess(bot, event);
-            String result = taskProcessor.taskProcess(groupMsg);
-            if (result!=null){
-                bot.sendGroupMsg(event.getGroupId(), result, false);
+            // 获取所需发送的消息
+            List<String> result = taskProcessor.taskProcess(groupMsg);
+
+            if (result!=null&&!result.isEmpty()){
+                for (String s : result){
+                    if (s!=null){
+                        bot.sendGroupMsg(event.getGroupId(), s, false);
+                    }
+                }
             }
         }
     }
