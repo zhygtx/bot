@@ -5,17 +5,14 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * 文本消息实体，定义所发送的内容
- */
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
 @Builder
-public class Text {
+public class Api {
 
     /**
-     * 文本消息ID
+     * apiID
      */
     private String id;
 
@@ -25,8 +22,14 @@ public class Text {
     private String userId;
 
     /**
-     * 文本内容
+     * api名称
      */
-    private String text;
+    private apiName name;
 
+    /**
+     * 可调用的 api 名称
+     */
+    public enum apiName {
+        setGroupSpecialTitle
+    }
 }

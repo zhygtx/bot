@@ -1,5 +1,6 @@
 package com.example.demo.core.engine;
 
+import com.example.demo.core.engine.executor.ApiExecutor;
 import com.example.demo.core.engine.executor.TextExecutor;
 import com.example.demo.core.manager.ActionManager;
 import com.example.demo.pojo.msg.GroupMsg;
@@ -17,10 +18,12 @@ import java.util.Map;
 public class ActionEngine implements ActionManager {
 
     private final TextExecutor textExecutor;
+    private final ApiExecutor apiExecutor;
 
     @Autowired
-    public ActionEngine(TextExecutor textExecutor) {
+    public ActionEngine(TextExecutor textExecutor, ApiExecutor apiExecutor) {
         this.textExecutor = textExecutor;
+        this.apiExecutor = apiExecutor;
     }
 
     /**
@@ -48,6 +51,9 @@ public class ActionEngine implements ActionManager {
                         case image:
                             //图片处理逻辑
                             break;
+                        case api:
+                            handleApi(action, text, groupMsg);
+                            break;
                         default:
                             break;
                     }
@@ -62,15 +68,13 @@ public class ActionEngine implements ActionManager {
         return result;
     }
 
-
     /**
-     * 处理文本动作
+     * 追加文本结果
      * @param action 动作对象
      * @param text 存储返回消息的列表
-     * @param groupMsg 群消息对象
+     * @param msg 返回消息
      */
-    private void handleText(Action action ,List<String> text, GroupMsg groupMsg){
-        String msg = textExecutor.getText(action, groupMsg);
+    private void appendTextResult(Action action, List<String> text, String msg) {
         if (msg == null){
             return;
         }
@@ -85,4 +89,25 @@ public class ActionEngine implements ActionManager {
         }
     }
 
+    /**
+     * 处理文本动作
+     * @param action 动作对象
+     * @param text 存储返回消息的列表
+     * @param groupMsg 群消息对象
+     */
+    private void handleText(Action action ,List<String> text, GroupMsg groupMsg){
+        String msg = textExecutor.getText(action, groupMsg);
+        appendTextResult(action, text, msg);
+    }
+
+    /**
+     * 处理api动作
+     * @param action 动作对象
+     * @param text 存储返回消息的列表
+     * @param groupMsg 群消息对象
+     */
+    private void handleApi(Action action ,List<String> text, GroupMsg groupMsg){
+        String msg = apiExecutor.executeApi(action, groupMsg);
+        appendTextResult(action, text, msg);
+    }
 }
