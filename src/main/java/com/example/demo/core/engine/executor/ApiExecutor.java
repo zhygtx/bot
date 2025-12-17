@@ -4,8 +4,10 @@ import com.example.demo.pojo.msg.GroupMsg;
 import com.example.demo.pojo.task.Action;
 import com.example.demo.pojo.task.actionContent.Api;
 import com.example.demo.service.task.actionContent.ApiService;
+import com.example.demo.utils.HTMLUtil;
 import com.gbx.warframe.worldstate.pojo.Fissure;
 import com.gbx.warframe.worldstate.service.FissureService;
+import com.mikuac.shiro.common.utils.MsgUtils;
 import com.mikuac.shiro.core.Bot;
 import com.mikuac.shiro.core.BotContainer;
 import com.mikuac.shiro.dto.action.common.ActionRaw;
@@ -13,7 +15,11 @@ import jakarta.annotation.Resource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Component
 public class ApiExecutor {
@@ -72,6 +78,17 @@ public class ApiExecutor {
         if (fissures.isEmpty()){
             return "无相关裂隙";
         }
-        return fissures.toString();
+        //按裂隙等级排序
+        Map<String, List<Fissure>> fissureMap = fissures.stream()
+                .sorted(Comparator.comparingInt(Fissure::getModifierLevel))
+                .collect(Collectors.groupingBy(
+                        Fissure::getModifier,
+                        LinkedHashMap::new,
+                        Collectors.toList()
+                ));
+
+        return MsgUtils.builder()
+                .img("base64://"+HTMLUtil.toImage(fissureMap))
+                .build();
     }
 }

@@ -136,6 +136,12 @@
             <artifactId>spring-boot-starter-thymeleaf</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>ognl</groupId>
+            <artifactId>ognl</artifactId>
+            <version>3.4.9</version>
+        </dependency>
+
         <!-- Warframe WorldState SDK 用于获取Warframe游戏世界状态信息的SDK -->
         <dependency>
             <groupId>com.gbx.warframe</groupId>
