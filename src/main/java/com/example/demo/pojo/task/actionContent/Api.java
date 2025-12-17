@@ -30,6 +30,7 @@ public class Api {
      * 可调用的 api 名称
      */
     public enum apiName {
-        setGroupSpecialTitle
+        setGroupSpecialTitle,
+        getWarframeFissure
     }
 }

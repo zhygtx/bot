@@ -4,6 +4,8 @@ import com.example.demo.pojo.msg.GroupMsg;
 import com.example.demo.pojo.task.Action;
 import com.example.demo.pojo.task.actionContent.Api;
 import com.example.demo.service.task.actionContent.ApiService;
+import com.gbx.warframe.worldstate.pojo.Fissure;
+import com.gbx.warframe.worldstate.service.FissureService;
 import com.mikuac.shiro.core.Bot;
 import com.mikuac.shiro.core.BotContainer;
 import com.mikuac.shiro.dto.action.common.ActionRaw;
@@ -11,17 +13,21 @@ import jakarta.annotation.Resource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 public class ApiExecutor {
     // 注入 Bot 容器
     @Resource
     private BotContainer botContainer;
 
+    private final FissureService fissureService;
     private final ApiService apiService;
 
     @Autowired
-    public ApiExecutor(ApiService apiService) {
+    public ApiExecutor(ApiService apiService, FissureService fissureService) {
         this.apiService = apiService;
+        this.fissureService = fissureService;
     }
 
     public String executeApi(Action action, GroupMsg groupMsg){
@@ -31,12 +37,20 @@ public class ApiExecutor {
             case setGroupSpecialTitle:
                 result = setGroupSpecialTitle(groupMsg, action.getExtractText());
                 break;
+            case getWarframeFissure:
+                result = getWarframeFissure(action.getExtractText());
             default:
                 break;
         }
         return result;
     }
 
+    /**
+     * 设置群成员特殊头衔
+     * @param groupMsg 群消息对象
+     * @param specialTitle 特殊头衔
+     * @return 设置结果
+     */
     private String setGroupSpecialTitle(GroupMsg groupMsg, String specialTitle) {
         try {
             if (specialTitle.getBytes().length>18){
@@ -51,5 +65,13 @@ public class ApiExecutor {
         } catch (Exception e) {
             return "设置头衔失败"+e.getMessage();
         }
+    }
+
+    private String getWarframeFissure(String key){
+        List<Fissure> fissures = fissureService.getFissures(key);
+        if (fissures.isEmpty()){
+            return "无相关裂隙";
+        }
+        return fissures.toString();
     }
 }
