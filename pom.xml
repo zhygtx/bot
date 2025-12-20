@@ -152,10 +152,28 @@
 
     <build>
         <finalName>bot</finalName>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <includes>
+                    <include>**/*.*</include>
+                </includes>
+                <filtering>false</filtering>
+            </resource>
+        </resources>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <!-- 确保包含所有资源 -->
+                    <requiresUnpack>
+                        <dependency>
+                            <groupId>com.microsoft.playwright</groupId>
+                            <artifactId>playwright</artifactId>
+                        </dependency>
+                    </requiresUnpack>
+                </configuration>
             </plugin>
         </plugins>
     </build>

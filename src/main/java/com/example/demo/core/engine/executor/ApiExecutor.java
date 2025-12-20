@@ -63,11 +63,20 @@ public class ApiExecutor {
                 return "头衔长度不能超过18个字节";
             }
             Bot bot = botContainer.robots.get(groupMsg.getBotId());
-            ActionRaw actionRaw = bot.setGroupSpecialTitle(groupMsg.getGroupId(), groupMsg.getUserId(), specialTitle,-1);
-            if (!actionRaw.getStatus().equals("ok")){
-                return "设置头衔失败";
+            ActionRaw actionRaw;
+            if(specialTitle.isEmpty() || specialTitle.equals(" ") || specialTitle.equals("/n")){
+                actionRaw = bot.setGroupSpecialTitle(groupMsg.getGroupId(), groupMsg.getUserId(), "",-1);
+                if (!actionRaw.getStatus().equals("ok")){
+                    return "取消头衔失败";
+                }
+                return "取消头衔成功";
+            }else {
+                actionRaw = bot.setGroupSpecialTitle(groupMsg.getGroupId(), groupMsg.getUserId(), specialTitle,-1);
+                if (!actionRaw.getStatus().equals("ok")){
+                    return "设置头衔失败" +specialTitle;
+                }
+                return "设置头衔成功" +specialTitle;
             }
-            return "设置头衔成功："+specialTitle;
         } catch (Exception e) {
             return "设置头衔失败"+e.getMessage();
         }

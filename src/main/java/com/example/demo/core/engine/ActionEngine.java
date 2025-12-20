@@ -2,6 +2,7 @@ package com.example.demo.core.engine;
 
 import com.example.demo.core.engine.executor.ApiExecutor;
 import com.example.demo.core.engine.executor.TextExecutor;
+import com.example.demo.core.engine.executor.UrlExecutor;
 import com.example.demo.core.manager.ActionManager;
 import com.example.demo.pojo.msg.GroupMsg;
 import com.example.demo.pojo.task.Action;
@@ -17,13 +18,15 @@ import java.util.Map;
 @Component
 public class ActionEngine implements ActionManager {
 
+    private final UrlExecutor urlExecutor;
     private final TextExecutor textExecutor;
     private final ApiExecutor apiExecutor;
 
     @Autowired
-    public ActionEngine(TextExecutor textExecutor, ApiExecutor apiExecutor) {
+    public ActionEngine(TextExecutor textExecutor, ApiExecutor apiExecutor, UrlExecutor urlExecutor) {
         this.textExecutor = textExecutor;
         this.apiExecutor = apiExecutor;
+        this.urlExecutor = urlExecutor;
     }
 
     /**
@@ -53,6 +56,9 @@ public class ActionEngine implements ActionManager {
                             break;
                         case api:
                             handleApi(action, text, groupMsg);
+                            break;
+                        case url:
+                            handleUrl(action, text, groupMsg);
                             break;
                         default:
                             break;
@@ -108,6 +114,11 @@ public class ActionEngine implements ActionManager {
      */
     private void handleApi(Action action ,List<String> text, GroupMsg groupMsg){
         String msg = apiExecutor.executeApi(action, groupMsg);
+        appendTextResult(action, text, msg);
+    }
+
+    private void handleUrl(Action action ,List<String> text, GroupMsg groupMsg){
+        String msg = urlExecutor.executeUrl(action, groupMsg);
         appendTextResult(action, text, msg);
     }
 }
