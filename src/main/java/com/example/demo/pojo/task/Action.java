@@ -28,6 +28,7 @@ public class Action {
     /**
      * 是否需要@触发的用户
      */
+    @Builder.Default
     private boolean needAt = false;
 
     /**
@@ -43,11 +44,13 @@ public class Action {
     /**
      * 是否拼接该动作链中上一条所需发送的消息
      */
+    @Builder.Default
     private boolean isConcat = false;
 
     /**
      * 动作执行优先级，越小越先执行
      */
+    @Builder.Default
     private int seq = 0;
 
     public enum ActionType {

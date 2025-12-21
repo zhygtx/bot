@@ -1,14 +1,13 @@
 package com.example.demo.pojo.msg;
 
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 /**
  * 群消息实体
  */
 @Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
+@SuperBuilder
 @EqualsAndHashCode(callSuper = true)
 public class GroupMsg extends Msg{
 
@@ -20,6 +19,7 @@ public class GroupMsg extends Msg{
     /**
      * 是否@了Bot
      */
+    @Builder.Default
     private boolean isAt = false;
 
     /**

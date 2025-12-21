@@ -31,5 +31,6 @@ public class Url {
     /**
      * URL参数
      */
+    @Builder.Default
     private Map<String,String> params = new HashMap<>();
 }

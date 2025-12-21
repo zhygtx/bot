@@ -41,6 +41,7 @@ public class Scope {
     /**
      * 是否需要@才可触发
      */
+    @Builder.Default
     private boolean isAt = true;
 
     /**

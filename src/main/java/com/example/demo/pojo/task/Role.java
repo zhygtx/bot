@@ -54,11 +54,13 @@ public class Role {
     /**
      * 是否启用
      */
+    @Builder.Default
     private boolean isEnable = false;
 
     /**
      * 是否提取正则表达式后续文本
      */
+    @Builder.Default
     private boolean isExtract = false;
 
     /**
