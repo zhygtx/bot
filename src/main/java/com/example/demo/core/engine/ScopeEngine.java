@@ -85,7 +85,7 @@ public class ScopeEngine implements ScopeManager {
         List<Role> roles = new ArrayList<>();
         for (Scope scope : scopes){
             if (Objects.equals(scope.getBotQQ(), privateMsg.getBotId())
-                && scope.getScopeType() == Scope.ScopeType.privateMsg|| scope.getScopeType() == Scope.ScopeType.all
+                && (scope.getScopeType() == Scope.ScopeType.privateMsg || scope.getScopeType() == Scope.ScopeType.all)
                 && (scope.getScopeId() == null || scope.getScopeId().equals(privateMsg.getUserId()))
             ){
                 roles.addAll(scope.getRoles());
