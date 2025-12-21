@@ -54,6 +54,20 @@ public class Scope {
     private GroupRole botRole;
 
     /**
+     * 作用域类型
+     */
+    private ScopeType scopeType;
+
+    /**
+     * 作用域类型
+     */
+    public enum ScopeType {
+        all,
+        groupMsg,
+        privateMsg
+    }
+
+    /**
      * 所拥有的触发规则
      */
     private transient List<Role> roles;

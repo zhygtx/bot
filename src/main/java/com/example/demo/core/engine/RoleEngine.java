@@ -1,7 +1,7 @@
 package com.example.demo.core.engine;
 
 import com.example.demo.core.manager.RoleManager;
-import com.example.demo.pojo.msg.GroupMsg;
+import com.example.demo.pojo.msg.Msg;
 import com.example.demo.pojo.task.Action;
 import com.example.demo.pojo.task.Role;
 import org.springframework.stereotype.Component;
@@ -19,11 +19,14 @@ public class RoleEngine implements RoleManager {
     /**
      * 根据作用域中获取到的具体规则获取动作
      * @param roles 作用域中获取到的具体规则
-     * @param groupMsg 消息对象
+     * @param msgObj 消息对象
      * @return 获取到的需要执行的动作
      */
     @Override
-    public Map<String, List<Action>> getActions(List<Role> roles, GroupMsg groupMsg){
+    public Map<String, List<Action>> getActions(List<Role> roles, Object msgObj){
+        // 获取消息对象传导为父对象
+        Msg msg = (Msg) msgObj;
+
         Map<String, List<Action>> actions = new HashMap<>();
 
         // 过滤掉动作为空的类型
@@ -32,13 +35,13 @@ public class RoleEngine implements RoleManager {
 
         // 过滤掉暂未实现的消息类型
         roles.removeIf(role ->
-                !groupMsg.getType().contains(role.getMatchMode().toString()));
+                !msg.getType().contains(role.getMatchMode().toString()));
 
         for (Role role : roles){
             switch (role.getMatchMode()){
                 case text :
-                    if (groupMsg.getType().contains("text")){
-                        matchText(role, groupMsg, actions);
+                    if (msg.getType().contains("text")){
+                        matchText(role, msg, actions);
                     }
                     break;
                 case image :
@@ -53,13 +56,13 @@ public class RoleEngine implements RoleManager {
     /**
      * 匹配文本消息
      * @param role 角色
-     * @param groupMsg 消息对象
+     * @param msg 消息对象
      * @param actions 动作列表
      */
-    private void matchText(Role role, GroupMsg groupMsg , Map<String, List<Action>> actions){
+    private void matchText(Role role, Msg msg , Map<String, List<Action>> actions){
         Pattern pattern = role.getPattern();
-        Integer firstTextType = groupMsg.getType().indexOf("text");
-        String firstText = groupMsg.getContent().get(firstTextType).get("text").toString();
+        Integer firstTextType = msg.getType().indexOf("text");
+        String firstText = msg.getContent().get(firstTextType).get("text").toString();
 
         // 创建一个Matcher对象
         Matcher matcher = pattern.matcher(firstText);

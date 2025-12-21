@@ -1,6 +1,5 @@
 package com.example.demo.core.engine.executor;
 
-import com.example.demo.pojo.msg.GroupMsg;
 import com.example.demo.pojo.task.Action;
 import com.example.demo.pojo.task.actionContent.Url;
 import com.example.demo.service.task.actionContent.UrlService;
@@ -19,7 +18,7 @@ public class UrlExecutor {
         this.urlService = urlService;
     }
 
-    public String executeUrl(Action action, GroupMsg groupMsg){
+    public String executeUrl(Action action, Object msg){
         String result;
         //获取URL信息并拼接URL参数
         Url urlInfo = urlService.getUrl(action.getDataId());

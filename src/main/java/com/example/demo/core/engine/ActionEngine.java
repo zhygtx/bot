@@ -4,7 +4,6 @@ import com.example.demo.core.engine.executor.ApiExecutor;
 import com.example.demo.core.engine.executor.TextExecutor;
 import com.example.demo.core.engine.executor.UrlExecutor;
 import com.example.demo.core.manager.ActionManager;
-import com.example.demo.pojo.msg.GroupMsg;
 import com.example.demo.pojo.task.Action;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,11 +31,11 @@ public class ActionEngine implements ActionManager {
     /**
      * 执行动作
      * @param actions 动作列表
-     * @param groupMsg 群消息对象
+     * @param msg 群消息对象
      * @return 执行结果
      */
     @Override
-    public List<String> executeActions(Map<String,List<Action>> actions, GroupMsg groupMsg) {
+    public List<String> executeActions(Map<String,List<Action>> actions, Object msg) {
 
         List<String> result = new ArrayList<>();
         //遍历所有动作
@@ -49,16 +48,16 @@ public class ActionEngine implements ActionManager {
                     //处理相关动作
                     switch (action.getActionType()){
                         case text:
-                            handleText(action, text, groupMsg);
+                            handleText(action, text, msg);
                             break;
                         case image:
                             //图片处理逻辑
                             break;
                         case api:
-                            handleApi(action, text, groupMsg);
+                            handleApi(action, text, msg);
                             break;
                         case url:
-                            handleUrl(action, text, groupMsg);
+                                handleUrl(action, text, msg);
                             break;
                         default:
                             break;
@@ -99,10 +98,10 @@ public class ActionEngine implements ActionManager {
      * 处理文本动作
      * @param action 动作对象
      * @param text 存储返回消息的列表
-     * @param groupMsg 群消息对象
+     * @param msgObj 消息对象
      */
-    private void handleText(Action action ,List<String> text, GroupMsg groupMsg){
-        String msg = textExecutor.getText(action, groupMsg);
+    private void handleText(Action action ,List<String> text, Object msgObj){
+        String msg = textExecutor.getText(action, msgObj);
         appendTextResult(action, text, msg);
     }
 
@@ -110,15 +109,15 @@ public class ActionEngine implements ActionManager {
      * 处理api动作
      * @param action 动作对象
      * @param text 存储返回消息的列表
-     * @param groupMsg 群消息对象
+     * @param msgObj 消息对象
      */
-    private void handleApi(Action action ,List<String> text, GroupMsg groupMsg){
-        String msg = apiExecutor.executeApi(action, groupMsg);
+    private void handleApi(Action action ,List<String> text, Object msgObj){
+        String msg = apiExecutor.executeApi(action, msgObj);
         appendTextResult(action, text, msg);
     }
 
-    private void handleUrl(Action action ,List<String> text, GroupMsg groupMsg){
-        String msg = urlExecutor.executeUrl(action, groupMsg);
+    private void handleUrl(Action action ,List<String> text, Object msgObj){
+        String msg = urlExecutor.executeUrl(action, msgObj);
         appendTextResult(action, text, msg);
     }
 }

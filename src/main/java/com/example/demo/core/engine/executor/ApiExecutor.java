@@ -36,12 +36,12 @@ public class ApiExecutor {
         this.fissureService = fissureService;
     }
 
-    public String executeApi(Action action, GroupMsg groupMsg){
+    public String executeApi(Action action, Object msg){
         Api api = apiService.getApi(action.getDataId());
         String result = "";
         switch (api.getName()){
             case setGroupSpecialTitle:
-                result = setGroupSpecialTitle(groupMsg, action.getExtractText());
+                result = setGroupSpecialTitle((GroupMsg) msg, action.getExtractText());
                 break;
             case getWarframeFissure:
                 result = getWarframeFissure(action.getExtractText());
@@ -82,6 +82,11 @@ public class ApiExecutor {
         }
     }
 
+    /**
+     * 获取战区裂隙信息
+     * @param key 搜索关键字
+     * @return 裂隙信息
+     */
     private String getWarframeFissure(String key){
         List<Fissure> fissures = fissureService.getFissures(key);
         if (fissures.isEmpty()){

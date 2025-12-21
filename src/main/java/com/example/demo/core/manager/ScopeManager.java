@@ -1,6 +1,5 @@
 package com.example.demo.core.manager;
 
-import com.example.demo.pojo.msg.GroupMsg;
 import com.example.demo.pojo.task.Role;
 
 import java.util.List;
@@ -12,6 +11,6 @@ public interface ScopeManager {
      * @param groupMsg 消息对象
      * @return 触发作用域中匹配的规则
      */
-    List<Role> getRoles(GroupMsg groupMsg);
+    List<Role> getRoles(Object groupMsg);
 
 }

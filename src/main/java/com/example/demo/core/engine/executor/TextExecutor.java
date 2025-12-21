@@ -21,10 +21,10 @@ public class TextExecutor {
     /**
      * 获取文本内容
      * @param action 动作对象
-     * @param groupMsg 群消息对象
+     * @param msg 群消息对象
      * @return 文本内容
      */
-    public String getText(Action action, GroupMsg groupMsg){
+    public String getText(Action action, Object msg){
         MsgUtils builder = MsgUtils.builder()
                 .text(textService.getText(action.getDataId()).getText())
                 .text("\n")
@@ -33,7 +33,7 @@ public class TextExecutor {
 
         // 如果需要@用户，则添加@操作
         if (action.isNeedAt()) {
-            builder.at(groupMsg.getUserId());
+            builder.at(((GroupMsg)msg).getUserId());
         }
 
         return builder.build();

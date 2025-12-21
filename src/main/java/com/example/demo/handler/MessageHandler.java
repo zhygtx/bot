@@ -3,6 +3,7 @@ package com.example.demo.handler;
 import com.example.demo.core.processor.MessageProcessor;
 import com.example.demo.core.processor.TaskProcessor;
 import com.example.demo.pojo.msg.GroupMsg;
+import com.example.demo.pojo.msg.PrivateMsg;
 import com.mikuac.shiro.annotation.GroupMessageHandler;
 import com.mikuac.shiro.annotation.PrivateMessageHandler;
 import com.mikuac.shiro.annotation.common.Shiro;
@@ -74,5 +75,20 @@ public class MessageHandler {
         // 打印私聊消息到控制台
         log.info("[私聊消息][BOT:{}] 发送者: {}, 消息内容: {}",
                 bot.getSelfId(), event.getUserId(), event.getMessage());
+
+        if (!botCoreEvent.getBotQqs().contains(event.getUserId())){
+            // 处理原始消息
+            PrivateMsg privateMsg = messageProcessor.privateProcess(bot, event);
+            // 获取所需发送的消息
+            List<String> result = taskProcessor.taskProcess(privateMsg);
+
+            if (result!=null&&!result.isEmpty()){
+                for (String s : result){
+                    if (s!=null){
+                        bot.sendPrivateMsg(event.getUserId(), s, false);
+                    }
+                }
+            }
+        }
     }
 }
