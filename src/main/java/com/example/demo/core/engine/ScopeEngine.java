@@ -55,10 +55,11 @@ public class ScopeEngine implements ScopeManager {
         List<Role> roles = new ArrayList<>();
         for (Scope scope : scopes){
             if (Objects.equals(scope.getBotQQ(), groupMsg.getBotId())
-                && (scope.getScopeType() == Scope.ScopeType.groupMsg|| scope.getScopeType() == Scope.ScopeType.all)
+                && (scope.getScopeType() == Scope.ScopeType.groupMsg || scope.getScopeType() == Scope.ScopeType.all)
                 && (scope.isAt()==groupMsg.isAt()|| !scope.isAt())
                 && scope.getUserRole().hasPermission(groupMsg.getUserRole())
                 && scope.getBotRole().hasPermission(botCoreEvent.getBotGroupRoles(groupMsg.getBotId()).get(groupMsg.getGroupId()))
+                && (scope.getScopeId() == null || scope.getScopeId().equals(groupMsg.getGroupId()))
                 ){
                 roles.addAll(scope.getRoles());
             }
@@ -84,7 +85,9 @@ public class ScopeEngine implements ScopeManager {
         List<Role> roles = new ArrayList<>();
         for (Scope scope : scopes){
             if (Objects.equals(scope.getBotQQ(), privateMsg.getBotId())
-                && scope.getScopeType() == Scope.ScopeType.privateMsg|| scope.getScopeType() == Scope.ScopeType.all){
+                && scope.getScopeType() == Scope.ScopeType.privateMsg|| scope.getScopeType() == Scope.ScopeType.all
+                && (scope.getScopeId() == null || scope.getScopeId().equals(privateMsg.getUserId()))
+            ){
                 roles.addAll(scope.getRoles());
             }
         }

@@ -60,6 +60,11 @@ public class Scope {
     private ScopeType scopeType;
 
     /**
+     * 作用对象号(私聊为qq号，群聊为群号)
+     */
+    private Long scopeId;
+
+    /**
      * 作用域类型
      */
     public enum ScopeType {
