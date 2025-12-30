@@ -9,6 +9,11 @@ public class UrlUtil {
 
     private static final HttpClient httpClient = HttpClient.newHttpClient();
 
+    /**
+     * 获取URL内容
+     * @param url URL
+     * @return URL内容
+     */
     public static  String retrieveUrl(String url) throws  Exception{
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))

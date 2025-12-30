@@ -27,8 +27,6 @@ public class TextExecutor {
     public String getText(Action action, Object msg){
         MsgUtils builder = MsgUtils.builder()
                 .text(textService.getText(action.getDataId()).getText())
-                .text("\n")
-                .text(action.getExtractText())
                 .text("\n");
 
         // 如果需要@用户，则添加@操作

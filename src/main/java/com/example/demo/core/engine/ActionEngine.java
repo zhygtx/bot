@@ -116,6 +116,12 @@ public class ActionEngine implements ActionManager {
         appendTextResult(action, text, msg);
     }
 
+    /**
+     * 处理url动作
+     * @param action 动作对象
+     * @param text 存储返回消息的列表
+     * @param msgObj 消息对象
+     */
     private void handleUrl(Action action ,List<String> text, Object msgObj){
         String msg = urlExecutor.executeUrl(action, msgObj);
         appendTextResult(action, text, msg);
