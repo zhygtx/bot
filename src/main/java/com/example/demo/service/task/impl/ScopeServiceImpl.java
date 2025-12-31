@@ -24,12 +24,17 @@ public class ScopeServiceImpl implements ScopeService {
         this.scopeMapper = scopeMapper;
     }
 
+    /**
+     * 获取所有作用域
+     * @return 作用域列表
+     */
     @Override
     public List<Scope> getAllScopes() {
         List<Scope> scopes = scopeMapper.getAllScopes();
         Map<String, List<Role>> allRoles = roleService.getAllRoles();
-        for (Scope scope : scopes){
-            scope.setRoles(new ArrayList<>(allRoles.get(scope.getId())));
+        for (Scope scope : scopes) {
+            List<Role> roles = allRoles.get(scope.getId());
+            scope.setRoles(roles != null ? new ArrayList<>(roles) : new ArrayList<>());
         }
         return scopes;
     }
