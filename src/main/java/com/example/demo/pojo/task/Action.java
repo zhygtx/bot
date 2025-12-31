@@ -54,7 +54,7 @@ public class Action {
     private int seq = 0;
 
     public enum ActionType {
-        text,image,api,url
+        text,image,api,url,template
     }
 
     /**

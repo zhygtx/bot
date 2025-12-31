@@ -18,6 +18,12 @@ public class UrlExecutor {
         this.urlService = urlService;
     }
 
+    /**
+     * 执行URL动作
+     * @param action 动作对象
+     * @param msg 群消息对象
+     * @return 执行结果
+     */
     public String executeUrl(Action action, Object msg){
         String result;
         //获取URL信息并拼接URL参数

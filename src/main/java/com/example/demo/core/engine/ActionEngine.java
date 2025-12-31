@@ -1,6 +1,7 @@
 package com.example.demo.core.engine;
 
 import com.example.demo.core.engine.executor.ApiExecutor;
+import com.example.demo.core.engine.executor.TemplateExecutor;
 import com.example.demo.core.engine.executor.TextExecutor;
 import com.example.demo.core.engine.executor.UrlExecutor;
 import com.example.demo.core.manager.ActionManager;
@@ -20,12 +21,14 @@ public class ActionEngine implements ActionManager {
     private final UrlExecutor urlExecutor;
     private final TextExecutor textExecutor;
     private final ApiExecutor apiExecutor;
+    private final TemplateExecutor templateExecutor;
 
     @Autowired
-    public ActionEngine(TextExecutor textExecutor, ApiExecutor apiExecutor, UrlExecutor urlExecutor) {
+    public ActionEngine(TextExecutor textExecutor, ApiExecutor apiExecutor, UrlExecutor urlExecutor, TemplateExecutor templateExecutor) {
         this.textExecutor = textExecutor;
         this.apiExecutor = apiExecutor;
         this.urlExecutor = urlExecutor;
+        this.templateExecutor = templateExecutor;
     }
 
     /**
@@ -57,7 +60,10 @@ public class ActionEngine implements ActionManager {
                             handleApi(action, text, msg);
                             break;
                         case url:
-                                handleUrl(action, text, msg);
+                            handleUrl(action, text, msg);
+                            break;
+                        case template:
+                            handleTemplate(action, text, msg);
                             break;
                         default:
                             break;
@@ -124,6 +130,17 @@ public class ActionEngine implements ActionManager {
      */
     private void handleUrl(Action action ,List<String> text, Object msgObj){
         String msg = urlExecutor.executeUrl(action, msgObj);
+        appendTextResult(action, text, msg);
+    }
+
+    /**
+     * 处理api模板动作
+     * @param action 动作对象
+     * @param text 存储返回消息的列表
+     * @param msgObj 消息对象
+     */
+    private void handleTemplate(Action action ,List<String> text, Object msgObj){
+        String msg = templateExecutor.executeTemplate(action, msgObj);
         appendTextResult(action, text, msg);
     }
 }
