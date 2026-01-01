@@ -165,6 +165,11 @@ public class HTMLUtil {
             page.setContent(html, new Page.SetContentOptions()
                     .setWaitUntil(WaitUntilState.DOMCONTENTLOADED));
 
+            page.waitForFunction("() => { " +
+                    "const images = Array.from(document.images); " +
+                    "return images.every(img => img.complete); " +
+                    "}");
+
             // 获取实际内容高度
             int contentHeight;
 
