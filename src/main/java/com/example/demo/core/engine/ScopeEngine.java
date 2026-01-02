@@ -55,12 +55,14 @@ public class ScopeEngine implements ScopeManager {
         List<Role> roles = new ArrayList<>();
         for (Scope scope : scopes){
             if (Objects.equals(scope.getBotQQ(), groupMsg.getBotId())
-                && (scope.getScopeType() == Scope.ScopeType.groupMsg || scope.getScopeType() == Scope.ScopeType.all)
-                && (scope.isAt()==groupMsg.isAt()|| !scope.isAt())
-                && scope.getUserRole().hasPermission(groupMsg.getUserRole())
-                && scope.getBotRole().hasPermission(botCoreEvent.getBotGroupRoles(groupMsg.getBotId()).get(groupMsg.getGroupId()))
-                && (scope.getScopeId() == null || scope.getScopeId().equals(groupMsg.getGroupId()))
-                ){
+                    && (scope.isAt()==groupMsg.isAt()|| !scope.isAt())
+                    && scope.getQQUserRole().hasPermission(groupMsg.getUserRole())
+                    && (scope.getQQUserId() == null || scope.getQQUserId().equals(groupMsg.getUserId()))
+                    && (scope.getQQGroupId() == null || scope.getQQGroupId().equals(groupMsg.getGroupId()))
+                    && scope.getQQBotRole().hasPermission(botCoreEvent.getBotGroupRoles(groupMsg.getBotId()).get(groupMsg.getGroupId()))
+                    && (scope.getQQScopeType() == Scope.ScopeType.groupMsg || scope.getQQScopeType() == Scope.ScopeType.all)
+                    && (scope.getQQScopeId() == null || scope.getQQScopeId().equals(groupMsg.getGroupId()))
+                    ){
                 roles.addAll(scope.getRoles());
             }
         }
@@ -85,8 +87,8 @@ public class ScopeEngine implements ScopeManager {
         List<Role> roles = new ArrayList<>();
         for (Scope scope : scopes){
             if (Objects.equals(scope.getBotQQ(), privateMsg.getBotId())
-                && (scope.getScopeType() == Scope.ScopeType.privateMsg || scope.getScopeType() == Scope.ScopeType.all)
-                && (scope.getScopeId() == null || scope.getScopeId().equals(privateMsg.getUserId()))
+                && (scope.getQQScopeType() == Scope.ScopeType.privateMsg || scope.getQQScopeType() == Scope.ScopeType.all)
+                && (scope.getQQScopeId() == null || scope.getQQScopeId().equals(privateMsg.getUserId()))
             ){
                 roles.addAll(scope.getRoles());
             }

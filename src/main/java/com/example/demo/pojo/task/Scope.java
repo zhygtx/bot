@@ -29,14 +29,14 @@ public class Scope {
     private String name;
 
     /**
-     * 机器人QQ
-     */
-    private Long botQQ;
-
-    /**
      * 所属用户ID
      */
     private String userId;
+
+    /**
+     * 机器人QQ
+     */
+    private Long botQQ;
 
     /**
      * 是否需要@才可触发
@@ -47,22 +47,32 @@ public class Scope {
     /**
      * 作用用户所需权限
      */
-    private GroupRole userRole;
+    private GroupRole QQUserRole;
+
+    /**
+     * 作用用户QQ号
+     */
+    private Long QQUserId;
+
+    /**
+     * 作用群号
+     */
+    private Long QQGroupId;
 
     /**
      * 所需Bot权限
      */
-    private GroupRole botRole;
+    private GroupRole QQBotRole;
 
     /**
      * 作用域类型
      */
-    private ScopeType scopeType;
+    private ScopeType QQScopeType;
 
     /**
      * 作用对象号(私聊为qq号，群聊为群号)
      */
-    private Long scopeId;
+    private Long QQScopeId;
 
     /**
      * 作用域类型
