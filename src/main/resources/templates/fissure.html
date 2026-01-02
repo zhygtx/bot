@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta charset="UTF-8">
     <style>
@@ -14,10 +15,11 @@
         .container {
             max-width: 600px;
             margin: 0 auto;
-            background: #fff;
+            background: #302d34;
+            color: #ffffff;
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
 
         .tier {
@@ -29,13 +31,14 @@
         .tier-title {
             font-size: 1.5em;
             margin-bottom: 10px;
-            color: #555;
         }
 
         .info-item {
             font-size: 1.1em;
             margin: 8px 0;
+            padding-right: 10px;
             line-height: 1.6;
+            border-radius: 5px 0 0 0;
         }
 
         .mission,
@@ -58,38 +61,171 @@
         .separator {
             margin: 0 5px;
         }
+
+        /* 核桃相关样式 */
+        .walnut-container {
+            display: inline-flex;
+            align-items: center;
+            position: relative;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+
+        .walnut-img {
+            width: 70px;
+            display: block;
+        }
+
+        .walnut-title {
+            font-size: 12px;
+            background-color: #191a1a;
+            color: #ffffff;
+            padding: 0 5px;
+            position: absolute;
+            bottom: 3%;
+            left: 25%;
+        }
+
+        /* 核桃类型对应的背景色和边框 */
+        /* 古纪 */
+        .ancientEra {
+            background-color: rgb(62, 65, 64);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-height: 60px;
+            border-left: 3px solid #cabd9a;
+            border-bottom: 1px solid #cabd9a;
+        }
+
+        /* 前纪 */
+        .previousChronicles {
+            background-color: rgb(33, 29, 24);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-height: 60px;
+            border-left: 3px solid #cabd9a;
+            border-bottom: 1px solid #cabd9a;
+        }
+
+        /* 中纪 */
+        .centerChronicles {
+            background-color: rgb(125, 139, 140);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-height: 60px;
+            border-left: 3px solid #cabd9a;
+            border-bottom: 1px solid #cabd9a;
+        }
+
+        /* 后纪 */
+        .laterChronicles {
+            background-color: rgb(86, 82, 63);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-height: 60px;
+            border-left: 3px solid #cabd9a;
+            border-bottom: 1px solid #cabd9a;
+        }
+
+        /* 安魂 */
+        .requiem {
+            background-color: rgb(68, 48, 55);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-height: 60px;
+            border-left: 3px solid #bf7880;
+            border-bottom: 1px solid #bb757d;
+        }
+
+        .flex {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* 核桃信息行样式 */
+        .info-item.with-walnut {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-height: 60px;
+        }
+
+        .walnut-info {
+            display: flex;
+            align-items: center;
+            margin-right: 15px;
+        }
+
+        .missionType-text {
+            width: 40px;
+            padding: 2px;
+            font-weight: bold;
+            color: #56523f;
+            background-color: #a68f79;
+            text-align: center;
+        }
+
+        .font-weight {
+            font-size: 24px;
+            font-weight: bold;
+        }
     </style>
 </head>
+
 <body>
-<div class="container">
-    <!-- 使用 entrySet 遍历 Map -->
-    <div th:each="entry : ${data}">
-        <div class="tier">
-            <!-- 显示层级标题 -->
-            <h2 class="tier-title" th:text="${entry.key}"></h2>
+    <div class="container">
+        <div th:each="entry : ${data}">
+            <div class="tier">
+                <!-- 显示层级标题 -->
+                <h2 class="tier-title" th:text="${entry.key}"></h2>
 
-            <!-- 遍历每个裂隙 -->
-            <div th:each="fissure : ${entry.value}">
-                <div class="info-item">
-                    <!-- 任务类型 -->
-                    <span>[<span th:text="${fissure.missionType}">防御</span>]</span>
+                <!-- 遍历每个裂隙 -->
+                <div th:each="fissure : ${entry.value}">
+                    <!-- 根据核桃类型动态设置CSS类 -->
+                    <div class="info-item with-walnut" th:classappend="
+                            ${fissure.modifier} == '古纪' ? 'ancientEra' :
+                            (${fissure.modifier} == '前纪' ? 'previousChronicles' :
+                            (${fissure.modifier} == '中纪' ? 'centerChronicles' :
+                            (${fissure.modifier} == '后纪' ? 'laterChronicles' :
+                            (${fissure.modifier} == '安魂' ? 'requiem' : ''))))">
 
-                    <!-- 钢铁标识 -->
-                    <span class="red badge" th:if="${fissure.isHard}">[钢铁]</span>
 
-                    <!-- 节点名称 -->
-                    <span class="node" th:text="${fissure.node}">节点名称</span>
+                    <!-- 核桃信息 -->
+                        <div class="walnut-info">
+                            <!-- 任务类型 -->
+                            <div class="missionType-text" th:text="${fissure.isHard ? '钢铁' : '普通'}">
+                            </div>
 
-                    <!-- 分隔符 -->
-                    <span class="separator">-</span>
+                            <!-- 核桃图片和标题 -->
+                            <div th:if="${fissure.modifier}">
+                                <div class="walnut-container">
+                                    <img th:src="'http://localhost:8080/' + ${fissure.modifier} + '.webp'" class="walnut-img"  alt=""/>
+                                    <div class="walnut-title" th:text="${fissure.modifier}"></div>
+                                </div>
+                            </div>
 
-                    <!-- 剩余时间（红色） -->
-                    <span class="separator">剩余时间：</span>
-                    <span class="red expiry" th:text="${fissure.eta}">1h23s</span>
+                            <!-- 任务类型文本 -->
+                            <div class="font-weight" th:text="${fissure.missionType}"></div>
+                        </div>
+
+                        <!-- 节点名称 -->
+                        <div class="font-weight" style="margin-left: -100px;">
+                            <span class="node" th:text="${fissure.node}"></span>
+                        </div>
+
+                        <!-- 剩余时间 -->
+                        <div class="font-weight red" th:text="${fissure.eta}"></div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 </body>
+
 </html>

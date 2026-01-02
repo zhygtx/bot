@@ -121,7 +121,7 @@ public class HTMLUtil {
     public static Result<String> objectToImage(Object data, Template template) {
         // 1. 初始化单例资源
         initStringTemplateEngineIfNeeded();
-        // 2. 渲染模板（使用 Thymeleaf，从 classpath 的 templates/fissure.html）
+        // 2. 渲染模板（使用 Thymeleaf）
         String html;
         try {
             // 读取模板内容（可选：直接使用 TEMPLATE_ENGINE.process(templateName, ctx)）
