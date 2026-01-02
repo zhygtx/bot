@@ -55,7 +55,7 @@
         }
 
         .red {
-            color: #e50a0a;
+            color: #a90e0e;
         }
 
         .separator {
@@ -175,6 +175,11 @@
             font-size: 24px;
             font-weight: bold;
         }
+
+        .red-text {
+            color: #a90e0e; /* 或者使用其他红色调 */
+        }
+
     </style>
 </head>
 
@@ -199,7 +204,8 @@
                     <!-- 核桃信息 -->
                         <div class="walnut-info">
                             <!-- 任务类型 -->
-                            <div class="missionType-text" th:text="${fissure.isHard ? '钢铁' : '普通'}">
+                            <div class="missionType-text" th:text="${fissure.isHard ? '钢铁' : '普通'}"
+                                 th:classappend="${fissure.isHard ? 'red-text' : ''}">
                             </div>
 
                             <!-- 核桃图片和标题 -->
