@@ -26,7 +26,8 @@ public class TextExecutor {
      */
     public String getText(Action action, Object msg){
         MsgUtils builder = MsgUtils.builder()
-                .text(textService.getText(action.getDataId()).getText());
+                .text(textService.getText(action.getDataId()).getText())
+                .text(action.getExtractText().toString());
 
         // 如果需要@用户，则添加@操作
         if (action.isNeedAt()) {

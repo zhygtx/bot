@@ -66,7 +66,7 @@ public class Role {
     /**
      * 提取文本位置
      */
-    private Integer extractPosition;
+    private List<Integer> extractPosition;
 
     /**
      * 匹配类型

@@ -60,7 +60,7 @@ public class TemplateExecutor {
         Api api = apiService.getApi(template.getDataId());
         switch (api.getName()){
             case getWarframeFissure:
-                return templateUtil.getWarframeFissure(action.getExtractText(),template);
+                return templateUtil.getWarframeFissure(action.getExtractText().get(0),template);
             default:
                 return "";
         }

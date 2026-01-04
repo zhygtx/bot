@@ -29,7 +29,7 @@ public class ApiExecutor {
         String result = "";
         switch (api.getName()){
             case setGroupSpecialTitle:
-                result = setGroupSpecialTitle((GroupMsg) msg, action.getExtractText());
+                result = setGroupSpecialTitle((GroupMsg) msg, action.getExtractText().get(0));
                 break;
             default:
                 break;

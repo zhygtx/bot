@@ -2,6 +2,8 @@ package com.example.demo.pojo.task;
 
 import lombok.*;
 
+import java.util.List;
+
 /**
  * 动作消息实体 支持多种动作类型并可链式执行
  */
@@ -53,6 +55,9 @@ public class Action {
     @Builder.Default
     private int seq = 0;
 
+    /**
+     * 动作类型枚举
+     */
     public enum ActionType {
         text,image,api,url,template
     }
@@ -60,5 +65,5 @@ public class Action {
     /**
      * 提取的文本内容
      */
-    private transient String extractText;
+    private transient List<String> extractText;
 }

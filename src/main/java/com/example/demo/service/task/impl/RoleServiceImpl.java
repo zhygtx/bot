@@ -3,6 +3,7 @@ package com.example.demo.service.task.impl;
 import com.example.demo.mapper.task.ActionMapper;
 import com.example.demo.mapper.task.RoleMapper;
 import com.example.demo.pojo.task.Role;
+import com.example.demo.service.task.ExtractPositionService;
 import com.example.demo.service.task.RoleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -20,11 +21,13 @@ public class RoleServiceImpl implements RoleService {
 
     private final ActionMapper actionMapper;
     private final RoleMapper roleMapper;
+    private final ExtractPositionService extractPositionService;
 
     @Autowired
-    public RoleServiceImpl(ActionMapper actionMapper, RoleMapper roleMapper) {
+    public RoleServiceImpl(ActionMapper actionMapper, RoleMapper roleMapper, ExtractPositionService extractPositionService) {
         this.actionMapper = actionMapper;
         this.roleMapper = roleMapper;
+        this.extractPositionService = extractPositionService;
     }
 
     /**
@@ -39,6 +42,8 @@ public class RoleServiceImpl implements RoleService {
         for (Role role : roles){
             // 获取当前角色对应的所有操作权限并设置到角色对象中
             role.setAction(actionMapper.getActions(role.getId()));
+            // 获取当前规则所需要的提取位置
+            role.setExtractPosition(extractPositionService.getExtractPosition(role.getId()));
             // 确保结果集中存在当前作用域ID对应的列表，如果不存在则创建新的空列表
             result.put(role.getScopeId(), result.getOrDefault(role.getScopeId(), new ArrayList<>()));
             // 将当前角色添加到对应作用域ID的列表中
