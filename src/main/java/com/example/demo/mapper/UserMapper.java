@@ -23,8 +23,8 @@ public interface UserMapper {
      * 插入用户
      * @param user 用户信息
      */
-    @Select("INSERT INTO user (id, name, account, pwd, create_time, update_time) " +
-            "VALUES (#{id}, #{name}, #{account}, #{pwd}, #{createTime}, #{updateTime})")
+    @Select("INSERT INTO user (id, name, account, pwd, email, create_time, update_time) " +
+            "VALUES (#{id}, #{name}, #{account}, #{pwd},#{email} ,#{createTime}, #{updateTime})")
     void insertUser(User user);
 
     /**
@@ -39,7 +39,7 @@ public interface UserMapper {
      * 更新用户信息
      * @param user 用户信息
      */
-    @Update("update user set name=#{name}, qq=#{QQ}, email=#{email}, bot_id=#{botId}, update_time=#{updateTime} where account=#{account}")
+    @Update("update user set name=#{name}, qq=#{QQ}, bot_id=#{botId}, update_time=#{updateTime} where account=#{account}")
     void updateUser(User user);
 
     /**
@@ -48,4 +48,11 @@ public interface UserMapper {
      */
     @Update("update user set pwd= #{pwd} where account= #{account}")
     void updatePwd(User user);
+
+    /**
+     * 更新用户邮箱
+     * @param user 用户信息
+     */
+    @Update("update user set email= #{email} where account= #{account}")
+    void updateEmail(User user);
 }

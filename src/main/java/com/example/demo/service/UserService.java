@@ -15,6 +15,13 @@ public interface UserService {
     Boolean isExist(String userAccount);
 
     /**
+     * 根据用户账号查询用户信息
+     * @param account 用户ID
+     * @return 用户信息
+     */
+    User selectByAccount(String account);
+
+    /**
      * 插入用户
      * @param user 用户信息
      */
@@ -39,4 +46,10 @@ public interface UserService {
      * @param user 用户信息
      */
     void updatePwd(User user);
+
+    /**
+     * 修改邮箱
+     * @param user 用户信息
+     */
+    void updateEmail(User user);
 }

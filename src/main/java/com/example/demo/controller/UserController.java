@@ -73,4 +73,12 @@ public class UserController {
         userService.updatePwd(user);
         return Result.success("修改成功");
     }
+
+    @RequestMapping("/updateEmail")
+    public Result<String> updateEmail(User user) {
+        user.setAccount(user.getAccount());
+        user.setEmail(user.getEmail());
+        userService.updateEmail(user);
+        return Result.success("修改成功");
+    }
 }

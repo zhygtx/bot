@@ -36,6 +36,16 @@ public class UserServiceImpl implements UserService {
     }
 
     /**
+     * 根据用户ID查询用户信息
+     * @param account 用户ID
+     * @return 用户信息
+     */
+    @Override
+    public User selectByAccount(String account) {
+        return userMapper.selectByAccount(account);
+    }
+
+    /**
      * 插入用户
      * @param user 用户信息
      */
@@ -81,5 +91,16 @@ public class UserServiceImpl implements UserService {
         user.setUpdateTime(LocalDateTime.now());
         user.setPwd(passwordEncoder.encode(user.getPwd()));
         userMapper.updatePwd(user);
+    }
+
+    /**
+     * 修改邮箱
+     * @param user 用户信息
+     */
+    @Override
+    public void updateEmail(User user) {
+        user.setAccount(user.getAccount());
+        user.setEmail(user.getEmail());
+        userMapper.updateEmail(user);
     }
 }

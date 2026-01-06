@@ -149,6 +149,13 @@
             <artifactId>spring-security-crypto</artifactId>
         </dependency>
 
+        <!-- Spring Boot Mail Starter 提供邮件功能 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+
+
         <!-- Warframe WorldState SDK 用于获取Warframe游戏世界状态信息的SDK -->
         <dependency>
             <groupId>com.gbx.warframe</groupId>
