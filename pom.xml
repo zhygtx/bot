@@ -136,10 +136,17 @@
             <artifactId>spring-boot-starter-thymeleaf</artifactId>
         </dependency>
 
+        <!-- OGNL 是一个开放源代码的Java表达式语言 -->
         <dependency>
             <groupId>ognl</groupId>
             <artifactId>ognl</artifactId>
             <version>3.3.4</version>
+        </dependency>
+
+        <!-- Spring Security 提供了安全功能，如身份验证、授权等 -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-crypto</artifactId>
         </dependency>
 
         <!-- Warframe WorldState SDK 用于获取Warframe游戏世界状态信息的SDK -->
