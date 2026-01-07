@@ -73,6 +73,31 @@ public class HTMLUtil {
     }
 
     /**
+     * 延迟初始化方法 - 在应用启动后延迟初始化浏览器和模板引擎
+     * 用于在应用启动完成后再初始化 Playwright 浏览器资源
+     */
+    public static void delayedInit() {
+        if (BROWSER == null && STRING_TEMPLATE_ENGINE == null) {
+            Thread delayedInitThread = new Thread(() -> {
+                try {
+                    Thread.sleep(10000); // 等待10秒
+                    initBrowserIfNeeded();
+                    initStringTemplateEngineIfNeeded();
+                    log.info("Playwright Browser 已初始化完成");
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    log.error("延迟初始化线程被中断", e);
+                }
+            });
+            delayedInitThread.setDaemon(false);
+            delayedInitThread.start();
+        } else {
+            log.info("浏览器或模板引擎已初始化，跳过延迟初始化");
+        }
+    }
+
+
+    /**
      * 将 jsonData 渲染为 HTML（使用传入的模板），
      * 然后用复用的 Playwright Browser 截图并返回 PNG 的 Base64 字符串。
      *

@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -46,8 +47,8 @@ public class BotCoreEvent extends CoreEvent {
 
     /**
      * 处理 Bot 上线事件。
-     * 当 Bot 成功连接到服务端时调用此方法。
-     * @param bot 上线的 Bot 实例
+     * 当 Bot 与服务端成功连接时调用此方法。
+     * @param bot Bot 对象
      */
     @Override
     public void online(Bot bot) {
@@ -59,13 +60,25 @@ public class BotCoreEvent extends CoreEvent {
 
         // 3. 检查该 Bot 是否在白名单中
         if (whitelistedBots.contains(botQQ)) {
-            // 4. 如果在白名单中，则将其加入在线缓存
-            Map<Long, String> botGroupRoles;
-            botGroupRoles = botContext.getBotGroupRoles(bot);
-            botsCache.putIfAbsent(botQQ, botGroupRoles);
+            // 4. 异步处理：延迟一段时间后再获取并缓存Bot信息
+            CompletableFuture.runAsync(() -> {
+                try {
+                    // 延迟3秒等待Bot完全初始化
+                    Thread.sleep(3000);
 
-            // 5. 记录日志
-            log.info("[Bot 上线] QQ: {}, 已添加到在线缓存", botQQ);
+                    // 获取Bot群角色信息
+                    Map<Long, String> botGroupRoles = botContext.getBotGroupRoles(bot);
+                    botsCache.putIfAbsent(botQQ, botGroupRoles);
+
+                    // 记录日志
+                    log.info("[Bot 上线] QQ: {}, 已添加到在线缓存", botQQ);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    log.error("[Bot 上线] QQ: {} 处理被中断", botQQ, e);
+                } catch (Exception e) {
+                    log.error("[Bot 上线] QQ: {} 信息获取失败", botQQ, e);
+                }
+            });
 
         } else {
             log.warn("[Bot 上线拒绝] QQ: {} 不在白名单中", botQQ);
