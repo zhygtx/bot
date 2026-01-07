@@ -1,5 +1,6 @@
 package com.example.demo.service.impl;
 
+import com.example.demo.pojo.Result;
 import com.example.demo.service.EmailService;
 import jakarta.mail.internet.MimeMessage;
 import lombok.extern.slf4j.Slf4j;
@@ -33,8 +34,12 @@ public class EmailServiceImpl implements EmailService {
      * @param email 收件邮箱
      */
     @Override
-    public boolean sendVerificationCode(String email){
+    public Result<String> sendVerificationCode(String email){
         try {
+            String redisKey = "verification:code:" + email;
+            if (redisTemplate.hasKey(redisKey)){
+                return Result.error("验证码已发送请检查邮箱");
+            }
             MimeMessage message = javaMailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
@@ -57,13 +62,12 @@ public class EmailServiceImpl implements EmailService {
             javaMailSender.send(message);
 
             // 保存验证码到Redis，设置5分钟过期
-            String redisKey = "verification:code:" + email;
             redisTemplate.opsForValue().set(redisKey, String.valueOf(verificationCode), 5, TimeUnit.MINUTES);
             log.info("发送验证码邮件成功，邮箱：{}验证码：{}",email,verificationCode);
-            return true;
+            return Result.success("发送验证码成功");
         } catch (Exception e) {
             log.warn("发送验证码邮件失败，邮箱：{}",email,e);
-            return false;
+            return Result.error("发送验证码邮件失败");
         }
     }
 

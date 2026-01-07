@@ -1,5 +1,7 @@
 package com.example.demo.service;
 
+import com.example.demo.pojo.Result;
+
 /**
  * 邮箱服务接口
  */
@@ -10,7 +12,7 @@ public interface EmailService {
      * @param email 收件邮箱
      * @return 发送结果
      */
-    boolean sendVerificationCode(String email);
+    Result<String> sendVerificationCode(String email);
 
     /**
      * 验证验证码

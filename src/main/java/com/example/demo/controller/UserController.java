@@ -2,19 +2,23 @@ package com.example.demo.controller;
 
 import com.example.demo.pojo.Result;
 import com.example.demo.pojo.User;
+import com.example.demo.service.EmailService;
 import com.example.demo.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-@Controller("/user")
+@RestController
+@RequestMapping("/user")
 public class UserController {
 
+    private final EmailService emailService;
     private final UserService userService;
 
     @Autowired
-    public UserController(UserService userService) {
+    public UserController(UserService userService, EmailService emailService) {
         this.userService = userService;
+        this.emailService = emailService;
     }
 
     /**
@@ -23,7 +27,7 @@ public class UserController {
      */
     @RequestMapping("/insertUser")
     public Result<String> insertUser(User user) {
-        if (userService.isExist(user.getAccount())){
+        if (userService.isExistByAccount(user.getAccount())){
             return Result.error("该账号已存在");
         }
         userService.insertUser(user);
@@ -37,7 +41,7 @@ public class UserController {
      */
     @RequestMapping("/login")
     public Result<String> login(String account, String pwd) {
-        if (!userService.isExist(account)){
+        if (!userService.isExistByAccount(account)){
             return Result.error("该账号不存在");
         }
         if (!userService.login(account, pwd)){
@@ -74,11 +78,35 @@ public class UserController {
         return Result.success("修改成功");
     }
 
+    /**
+     * 修改邮箱
+     * @param user 用户对象
+     */
     @RequestMapping("/updateEmail")
     public Result<String> updateEmail(User user) {
         user.setAccount(user.getAccount());
         user.setEmail(user.getEmail());
         userService.updateEmail(user);
+        return Result.success("修改成功");
+    }
+
+    /**
+     * 忘记密码
+     * @param account 账号
+     * @param email 邮箱
+     * @param newPwd 新密码
+     * @param code 验证码
+     */
+    @RequestMapping("/retrievePwd")
+    public Result<String> retrievePwd(String account, String email, String newPwd, String code) {
+        if (!userService.isExistByAccount(account)) return Result.error("该账号不存在");
+        if (!userService.selectByAccount(account).getEmail().equals(email)) return Result.error("该邮箱并未与此账号绑定");
+        if (!emailService.verifyCode(email, code)) return Result.error("验证码错误");
+        if (userService.login(account, newPwd)) return Result.error("新密码不能与旧密码相同");
+        User user = new User();
+        user.setAccount(account);
+        user.setPwd(newPwd);
+        userService.updatePwd(user);
         return Result.success("修改成功");
     }
 }

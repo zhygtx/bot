@@ -17,7 +17,15 @@ public interface UserMapper {
      * @return 是否存在
      */
     @Select("SELECT EXISTS(SELECT 1 FROM user WHERE account = #{userAccount})")
-    Boolean isExist(String userAccount);
+    Boolean isExistByAccount(String userAccount);
+
+    /**
+     * 判断用户是否存在
+     * @param email 邮箱
+     * @return 存在返回true
+     */
+    @Select("SELECT EXISTS(SELECT 1 FROM user WHERE email = #{email})")
+    Boolean isExistByEmail(String email);
 
     /**
      * 插入用户

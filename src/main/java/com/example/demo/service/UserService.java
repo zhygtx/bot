@@ -12,7 +12,14 @@ public interface UserService {
      * @param userAccount 用户ID
      * @return 存在返回true
      */
-    Boolean isExist(String userAccount);
+    Boolean isExistByAccount(String userAccount);
+
+    /**
+     * 判断用户是否存在
+     * @param email 用户邮箱
+     * @return 存在返回true
+     */
+    Boolean isExistByEmail(String email);
 
     /**
      * 根据用户账号查询用户信息

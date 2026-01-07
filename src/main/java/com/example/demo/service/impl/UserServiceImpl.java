@@ -31,8 +31,18 @@ public class UserServiceImpl implements UserService {
      * @return 存在返回true
      */
     @Override
-    public Boolean isExist(String userAccount) {
-        return userMapper.isExist(userAccount);
+    public Boolean isExistByAccount(String userAccount) {
+        return userMapper.isExistByAccount(userAccount);
+    }
+
+    /**
+     * 判断用户是否存在
+     * @param email 邮箱
+     * @return 存在返回true
+     */
+    @Override
+    public Boolean isExistByEmail(String email) {
+        return userMapper.isExistByEmail(email);
     }
 
     /**
