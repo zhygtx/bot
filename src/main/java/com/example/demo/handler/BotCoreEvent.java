@@ -1,6 +1,7 @@
 package com.example.demo.handler;
 
 import com.example.demo.handler.utils.BotContext;
+import com.example.demo.service.EmailService;
 import com.example.demo.service.task.BotService;
 import com.mikuac.shiro.core.Bot;
 import com.mikuac.shiro.core.BotContainer;
@@ -34,13 +35,15 @@ public class BotCoreEvent extends CoreEvent {
     @Resource
     private BotContainer botContainer;
 
+    private final EmailService emailService;
     private final BotService botService;
     private final BotContext botContext;
 
     @Autowired
-    public BotCoreEvent(BotService botService, BotContext botContext) {
+    public BotCoreEvent(BotService botService, BotContext botContext, EmailService emailService) {
         this.botService = botService;
         this.botContext = botContext;
+        this.emailService = emailService;
     }
 
     private final Map<Long, Map<Long, String>> botsCache = new ConcurrentHashMap<>();
@@ -97,6 +100,7 @@ public class BotCoreEvent extends CoreEvent {
 
         // 2. 记录日志
         if (removedBotData != null) {
+            emailService.sendEmail(account + "@qq.com", "Bot下通知" , "您的QQBot已下线，如非手动下线请检查账号状态或联系管理员" , false);
             log.info("[Bot 下线] QQ: {}, 已从在线缓存移除", account);
         } else {
             log.info("[Bot 下线] QQ: {}, 未在在线缓存中找到", account);

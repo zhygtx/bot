@@ -40,12 +40,6 @@ public class EmailServiceImpl implements EmailService {
             if (redisTemplate.hasKey(redisKey)){
                 return Result.error("验证码已发送请检查邮箱");
             }
-            MimeMessage message = javaMailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-
-            helper.setFrom("1874743565@qq.com");
-            helper.setTo(email);
-            helper.setSubject("验证码");
 
             // 生成6位随机数
             int verificationCode = (int)((Math.random()*9+1)*100000);
@@ -57,9 +51,10 @@ public class EmailServiceImpl implements EmailService {
             // 处理HTML模板
             String htmlContent = templateEngine.process("verification-code", context);
 
-            helper.setText(htmlContent, true); // true 表示是HTML内容
-
-            javaMailSender.send(message);
+            if (!sendEmail(email, "验证码", htmlContent, true)) {
+                log.warn("发送验证码邮件失败，邮箱：{}",email);
+                return Result.error("发送验证码邮件失败");
+            }
 
             // 保存验证码到Redis，设置5分钟过期
             redisTemplate.opsForValue().set(redisKey, String.valueOf(verificationCode), 5, TimeUnit.MINUTES);
@@ -85,5 +80,29 @@ public class EmailServiceImpl implements EmailService {
             redisTemplate.delete(redisKey);// 验证成功，删除Redis中的验证码
         }
         return redisCode != null && redisCode.equals(verificationCode);
+    }
+
+    /**
+     * 发送邮件
+     * @param email 收件邮箱
+     * @param subject 邮件主题
+     * @param content 邮件内容
+     */
+    @Override
+    public Boolean sendEmail(String email, String subject, String content, Boolean isHtml){
+        try {
+            MimeMessage message = javaMailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setFrom("1874743565@qq.com");
+            helper.setTo(email);
+            helper.setSubject(subject);
+            helper.setText(content,isHtml);
+            javaMailSender.send(message);
+            return true;
+        } catch (Exception e) {
+            log.warn("发送邮件失败，邮箱：{}",email,e);
+            return false;
+        }
     }
 }
