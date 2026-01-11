@@ -154,21 +154,26 @@ public class BotCoreEvent extends CoreEvent {
      */
     @Scheduled(fixedDelay = 60_000, initialDelay = 60_000)
     public void updateBotsCache() {
-
+        log.debug("[Bot 缓存更新] 正在更新缓存...");
         if (botContainer.robots.isEmpty()){
+            log.debug("[Bot 缓存更新] 无Bot在线");
             return;
         }
 
         Set<Long> botQQsSnapshot = new HashSet<>(botsCache.keySet());
-
         for (Long botQQ : botQQsSnapshot) {
             try {
                 Bot bot = botContainer.robots.get(botQQ);
-                if (bot != null) {
+                Boolean online = bot.getStatus().getData().getOnline();
+                if (online) {
+                    log.debug("[Bot 缓存更新] QQ: {} 已更新", botQQ);
                     Map<Long, String> botGroupRoles = botContext.getBotGroupRoles(bot);
                     botsCache.put(botQQ, botGroupRoles);
                 } else {
                     botsCache.remove(botQQ);
+                    log.info("Bot[{}]意外离线", botQQ);
+                    emailService.sendEmail(botQQ + "@qq.com", "Bot下通知" , "您的QQBot已下线，如非手动下线请检查账号状态或联系管理员" , false);
+                    log.info("[Bot 离线] QQ: {} 已从在线缓存移除", botQQ);
                 }
             } catch (Exception e) {
                 log.error("更新Bot {} 缓存失败", botQQ, e);
