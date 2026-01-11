@@ -32,7 +32,7 @@ public class ScopeCacheManager {
     public void refreshCache() {
         try {
             this.cachedScopes = scopeService.getAllScopes();
-            log.info("Scope缓存已更新");
+            log.debug("Scope缓存已更新");
         } catch (Exception e) {
             // 记录日志，但不中断定时任务
             log.error("缓存更新失败: ", e);
