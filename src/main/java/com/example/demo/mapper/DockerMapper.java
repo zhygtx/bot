@@ -3,6 +3,8 @@ package com.example.demo.mapper;
 import com.example.demo.pojo.Docker;
 import org.apache.ibatis.annotations.Mapper;
 
+import java.util.List;
+
 @Mapper
 public interface DockerMapper {
     //todo:数据库实现
@@ -24,5 +26,17 @@ public interface DockerMapper {
       * 添加docker
       * @param docker docker信息
      */
-    void insertDockerInfo(Docker docker);
+    void insert(Docker docker);
+
+    /**
+      * 获取需要更新的docker
+      * @return docker列表
+     */
+    List<Docker> selectNeedUpdate();
+
+    /**
+      * 删除docker
+      * @param containerId docker容器id
+     */
+    void deleteByContainerId(String containerId);
 }

@@ -1,12 +1,18 @@
 package com.example.demo.docker;
 
-import com.example.demo.pojo.Result;
-
 /**
  * docker 服务接口
  */
 public interface DockerService {
 
-    Result<String> createContainer();
+    /**
+     * 创建容器
+     */
+    void createContainer();
 
+    /**
+     * 删除容器
+     * @param containerId
+     */
+    void deleteContainer(String containerId);
 }
