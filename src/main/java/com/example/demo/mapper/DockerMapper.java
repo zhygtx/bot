@@ -42,6 +42,12 @@ public interface DockerMapper {
     List<Docker> selectNeedUpdate();
 
     /**
+      * 更新docker信息
+      * @param docker docker信息
+     */
+    void update(Docker docker);
+
+    /**
       * 删除docker
       * @param containerId docker容器id
      */

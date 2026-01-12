@@ -4,6 +4,7 @@ import com.example.demo.docker.DockerService;
 import com.example.demo.mapper.DockerMapper;
 import com.example.demo.pojo.Docker;
 import com.example.demo.pojo.User;
+import com.example.demo.service.EmailService;
 import com.example.demo.utils.DockerUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,19 +13,22 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @SuppressWarnings("LoggingSimilarMessage")
 @Service
 @Slf4j
 public class DockerServiceImpl implements DockerService {
 
+    private final EmailService emailService;
     private final DockerUtil dockerUtil;
     private final DockerMapper dockerMapper;
 
     @Autowired
-    public DockerServiceImpl(DockerUtil dockerUtil, DockerMapper dockerMapper) {
+    public DockerServiceImpl(DockerUtil dockerUtil, DockerMapper dockerMapper, EmailService emailService) {
         this.dockerUtil = dockerUtil;
         this.dockerMapper = dockerMapper;
+        this.emailService = emailService;
     }
 
     @Override
@@ -70,6 +74,10 @@ public class DockerServiceImpl implements DockerService {
         dockerMapper.deleteByContainerId(containerId);
     }
 
+    /**
+     * 删除容器
+     * @param botQQ botQQ
+     */
     @Override
     public void deleteContainer(Long botQQ){
         Docker docker = dockerMapper.selectByBotQQ(botQQ);
@@ -79,6 +87,25 @@ public class DockerServiceImpl implements DockerService {
         String containerId = docker.getContainerId();
         dockerUtil.deleteContainer(containerId);
         dockerMapper.deleteByContainerId(containerId);
+    }
+
+    @Override
+    @Scheduled(fixedDelay = 10 * 60 * 1000)
+    public void cleanDocker(){
+        List<Docker> dockerList = dockerMapper.selectNeedUpdate();
+        for (Docker docker : dockerList) {
+            List<String> files = dockerUtil.listFilesInContainer(docker.getContainerId());
+            if (!files.contains("napcat_"+ docker.getBotQQ())){
+                log.debug("容器 {} 中登录的QQ与数据库中用户登记的QQ不一致，删除容器", docker.getContainerId());
+                dockerUtil.deleteContainer(docker.getContainerId());
+                dockerMapper.deleteByContainerId(docker.getContainerId());
+                emailService.sendEmail(docker.getBotQQ() + "@qq.com", "容器删除通知", "由于您登录的QQ与登记的QQ并不一致现已被程序自动清除", false);
+            }else {
+                log.debug("容器 {} 中登录的QQ与数据库中用户登记的QQ一致，更新容器信息", docker.getContainerId());
+                docker.setUpdateTime(LocalDateTime.now());
+                dockerMapper.update(docker);
+            }
+        }
     }
 
 }

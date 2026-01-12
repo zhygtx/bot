@@ -1,7 +1,9 @@
 package com.example.demo.utils;
 
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.CreateContainerCmd;
+import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.*;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
@@ -10,14 +12,19 @@ import com.github.dockerjava.httpclient5.ApacheDockerHttpClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.ServerSocket;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -323,4 +330,48 @@ public class DockerUtil {
             log.error("删除容器时发生错误: {}", e.getMessage(), e);
         }
     }
+
+    /**
+     * 列出容器中的文件
+     * @param containerId 容器ID
+     * @return 文件列表
+     */
+    public List<String> listFilesInContainer(String containerId) {
+        String path = "/app/napcat/config/";
+        try {
+            ExecCreateCmdResponse execCreate = dockerClient.execCreateCmd(containerId)
+                    .withCmd("sh", "-c", "ls -p " + path + " | grep -v /")
+                    .withAttachStdout(true)
+                    .withAttachStderr(true)
+                    .exec();
+
+            ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+
+            // 创建回调
+            ResultCallback.Adapter<Frame> callback = new ResultCallback.Adapter<>() {
+                @Override
+                public void onNext(Frame frame) {
+                    try {
+                        // 将输出写入stdout
+                        stdout.write(frame.getPayload());
+                    } catch (IOException e) {
+                        // 记录但不阻塞回调
+                    }
+                }
+            };
+            //
+            dockerClient.execStartCmd(execCreate.getId()).exec(callback);
+            callback.awaitCompletion(); // 等待命令执行完
+            String output = stdout.toString(StandardCharsets.UTF_8);
+            // 将输出转换为列表
+            return Arrays.stream(output.split("\\r?\\n"))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("列出容器 {} 中的文件时出错: {}", containerId, e.getMessage(), e);
+            throw new RuntimeException(e);
+        }
+    }
+
 }
