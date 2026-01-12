@@ -1,7 +1,7 @@
-package com.example.demo.service.task.impl;
+package com.example.demo.service.impl;
 
 import com.example.demo.mapper.BotMapper;
-import com.example.demo.service.task.BotService;
+import com.example.demo.service.BotService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -27,6 +27,16 @@ public class BotServiceImpl implements BotService {
     @Override
     public Set<Long> getAllBotQQs() {
         return botMapper.getAllBotQQs();
+    }
+
+    /**
+     * 更新机器人是否在线
+     * @param botQQ 机器人QQ
+     * @param online 是否在线
+     */
+    @Override
+    public void updateOnline(Long botQQ, boolean online){
+        botMapper.updateOnline(botQQ, online);
     }
 
 }

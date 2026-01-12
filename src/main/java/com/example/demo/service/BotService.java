@@ -1,18 +1,16 @@
-package com.example.demo.mapper;
-
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Select;
+package com.example.demo.service;
 
 import java.util.Set;
 
-@Mapper
-public interface BotMapper {
+/**
+ * 机器人服务接口
+ */
+public interface BotService {
 
     /**
      * 获取所有机器人QQ
      * @return 机器人QQ列表
      */
-    @Select("SELECT bot_qq FROM bot")
     Set<Long> getAllBotQQs();
 
     /**
@@ -20,6 +18,6 @@ public interface BotMapper {
      * @param botQQ 机器人QQ
      * @param online 是否在线
      */
-    void updateOnline(Long botQQ, Boolean online);
+    void updateOnline(Long botQQ, boolean online);
 
 }

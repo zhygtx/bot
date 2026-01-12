@@ -2,7 +2,7 @@ package com.example.demo.handler;
 
 import com.example.demo.handler.utils.BotContext;
 import com.example.demo.service.EmailService;
-import com.example.demo.service.task.BotService;
+import com.example.demo.service.BotService;
 import com.mikuac.shiro.core.Bot;
 import com.mikuac.shiro.core.BotContainer;
 import com.mikuac.shiro.core.CoreEvent;
@@ -75,6 +75,7 @@ public class BotCoreEvent extends CoreEvent {
 
                     // 记录日志
                     log.info("[Bot 上线] QQ: {}, 已添加到在线缓存", botQQ);
+                    botService.updateOnline(botQQ, true);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     log.error("[Bot 上线] QQ: {} 处理被中断", botQQ, e);
@@ -102,6 +103,7 @@ public class BotCoreEvent extends CoreEvent {
         if (removedBotData != null) {
             emailService.sendEmail(account + "@qq.com", "Bot下通知" , "您的QQBot已下线，如非手动下线请检查账号状态或联系管理员" , false);
             log.info("[Bot 下线] QQ: {}, 已从在线缓存移除", account);
+            botService.updateOnline(account, false);
         } else {
             log.info("[Bot 下线] QQ: {}, 未在在线缓存中找到", account);
         }
@@ -131,6 +133,7 @@ public class BotCoreEvent extends CoreEvent {
                 if (whitelistedBots.contains(botQQ)) {
                     // 6. 如果在白名单中，允许连接
                     log.debug("[WebSocket 连接] QQ: {} 在白名单中，允许连接", botQQ);
+                    botService.updateOnline(botQQ, true);
                     return true;
                 } else {
                     // 7. 如果不在白名单中，拒绝连接
@@ -174,6 +177,7 @@ public class BotCoreEvent extends CoreEvent {
                     log.info("Bot[{}]意外离线", botQQ);
                     emailService.sendEmail(botQQ + "@qq.com", "Bot下通知" , "您的QQBot异常离线，如非手动下线请检查账号状态或联系管理员" , false);
                     log.info("[Bot 离线] QQ: {} 已从在线缓存移除", botQQ);
+                    botService.updateOnline(botQQ, false);
                 }
             } catch (Exception e) {
                 log.error("更新Bot {} 缓存失败", botQQ, e);
