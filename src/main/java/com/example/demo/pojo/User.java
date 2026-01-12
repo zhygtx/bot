@@ -47,7 +47,7 @@ public class User {
     /**
      * 用户所拥有的机器人的ID
      */
-    private String botId;
+    private Long botQQ;
 
     /**
      * 用户权限(给予管理员时手动填写，默认空时为普通用户)

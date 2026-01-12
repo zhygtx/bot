@@ -5,6 +5,7 @@ import com.example.demo.mapper.DockerMapper;
 import com.example.demo.pojo.Docker;
 import com.example.demo.pojo.User;
 import com.example.demo.service.EmailService;
+import com.example.demo.service.UserService;
 import com.example.demo.utils.DockerUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,12 +24,14 @@ public class DockerServiceImpl implements DockerService {
     private final EmailService emailService;
     private final DockerUtil dockerUtil;
     private final DockerMapper dockerMapper;
+    private final UserService userService;
 
     @Autowired
-    public DockerServiceImpl(DockerUtil dockerUtil, DockerMapper dockerMapper, EmailService emailService) {
+    public DockerServiceImpl(DockerUtil dockerUtil, DockerMapper dockerMapper, EmailService emailService, UserService userService) {
         this.dockerUtil = dockerUtil;
         this.dockerMapper = dockerMapper;
         this.emailService = emailService;
+        this.userService = userService;
     }
 
     @Override
@@ -99,7 +102,8 @@ public class DockerServiceImpl implements DockerService {
                 log.debug("容器 {} 中登录的QQ与数据库中用户登记的QQ不一致，删除容器", docker.getContainerId());
                 dockerUtil.deleteContainer(docker.getContainerId());
                 dockerMapper.deleteByContainerId(docker.getContainerId());
-                emailService.sendEmail(docker.getBotQQ() + "@qq.com", "容器删除通知", "由于您登录的QQ与登记的QQ并不一致现已被程序自动清除", false);
+                String email = userService.selectEmail(docker.getUserId());
+                emailService.sendEmail(email, "容器删除通知", "由于您登录的QQ与登记的QQ并不一致现已被程序自动清除", false);
             }else {
                 log.debug("容器 {} 中登录的QQ与数据库中用户登记的QQ一致，更新容器信息", docker.getContainerId());
                 docker.setUpdateTime(LocalDateTime.now());

@@ -113,4 +113,24 @@ public class UserServiceImpl implements UserService {
         user.setEmail(user.getEmail());
         userMapper.updateEmail(user);
     }
+
+    /**
+     * 根据用户ID查询邮箱
+     * @param id 用户ID
+     * @return 邮箱
+     */
+    @Override
+    public String selectEmail(String id) {
+        return userMapper.selectEmail(id);
+    }
+
+    /**
+     * 根据botQQ查询邮箱
+     * @param botQQ botQQ
+     * @return 邮箱
+     */
+    @Override
+    public String selectEmail(Long botQQ) {
+        return userMapper.selectEmail(botQQ);
+    }
 }

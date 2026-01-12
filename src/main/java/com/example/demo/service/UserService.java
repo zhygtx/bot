@@ -59,4 +59,18 @@ public interface UserService {
      * @param user 用户信息
      */
     void updateEmail(User user);
+
+    /**
+     * 获取用户邮箱
+     * @param id 用户ID
+     * @return 邮箱
+     */
+    String selectEmail(String id);
+
+    /**
+     * 获取用户邮箱
+     * @param botQQ 机器人QQ
+     * @return 邮箱
+     */
+    String selectEmail(Long botQQ);
 }

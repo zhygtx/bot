@@ -47,7 +47,7 @@ public interface UserMapper {
      * 更新用户信息
      * @param user 用户信息
      */
-    @Update("update user set name=#{name}, qq=#{QQ}, bot_id=#{botId}, update_time=#{updateTime} where account=#{account}")
+    @Update("update user set name=#{name}, qq=#{QQ}, bot_qq=#{botQQ}, update_time=#{updateTime} where account=#{account}")
     void updateUser(User user);
 
     /**
@@ -56,6 +56,22 @@ public interface UserMapper {
      */
     @Update("update user set pwd= #{pwd} where account= #{account}")
     void updatePwd(User user);
+
+    /**
+     * 根据用户ID查询用户邮箱
+     * @param id 用户ID
+     * @return 用户邮箱
+     */
+    @Select("SELECT email FROM user WHERE id = #{id}")
+    String selectEmail(String id);
+
+    /**
+     * 根据botQQ查询用户邮箱
+     * @param botQQ botQQ
+     * @return 用户邮箱
+     */
+    @Select("SELECT email FROM user WHERE bot_qq = #{botQQ}")
+    String selectEmail(Long botQQ);
 
     /**
      * 更新用户邮箱
