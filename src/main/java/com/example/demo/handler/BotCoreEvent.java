@@ -1,5 +1,6 @@
 package com.example.demo.handler;
 
+import com.example.demo.docker.DockerService;
 import com.example.demo.handler.utils.BotContext;
 import com.example.demo.service.EmailService;
 import com.example.demo.service.BotService;
@@ -38,12 +39,14 @@ public class BotCoreEvent extends CoreEvent {
     private final EmailService emailService;
     private final BotService botService;
     private final BotContext botContext;
+    private final DockerService dockerService;
 
     @Autowired
-    public BotCoreEvent(BotService botService, BotContext botContext, EmailService emailService) {
+    public BotCoreEvent(BotService botService, BotContext botContext, EmailService emailService, DockerService dockerService) {
         this.botService = botService;
         this.botContext = botContext;
         this.emailService = emailService;
+        this.dockerService = dockerService;
     }
 
     private final Map<Long, Map<Long, String>> botsCache = new ConcurrentHashMap<>();
@@ -104,6 +107,7 @@ public class BotCoreEvent extends CoreEvent {
             emailService.sendEmail(account + "@qq.com", "Bot下通知" , "您的QQBot已下线，如非手动下线请检查账号状态或联系管理员" , false);
             log.info("[Bot 下线] QQ: {}, 已从在线缓存移除", account);
             botService.updateOnline(account, false);
+            dockerService.deleteContainer(account);
         } else {
             log.info("[Bot 下线] QQ: {}, 未在在线缓存中找到", account);
         }
@@ -178,6 +182,7 @@ public class BotCoreEvent extends CoreEvent {
                     emailService.sendEmail(botQQ + "@qq.com", "Bot下通知" , "您的QQBot异常离线，如非手动下线请检查账号状态或联系管理员" , false);
                     log.info("[Bot 离线] QQ: {} 已从在线缓存移除", botQQ);
                     botService.updateOnline(botQQ, false);
+                    dockerService.deleteContainer(botQQ);
                 }
             } catch (Exception e) {
                 log.error("更新Bot {} 缓存失败", botQQ, e);

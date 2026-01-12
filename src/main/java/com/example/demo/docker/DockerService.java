@@ -12,7 +12,13 @@ public interface DockerService {
 
     /**
      * 删除容器
-     * @param containerId
+     * @param containerId 容器ID
      */
     void deleteContainer(String containerId);
+
+    /**
+     * 删除容器
+     * @param botQQ 机器人QQ
+     */
+    void deleteContainer(Long botQQ);
 }

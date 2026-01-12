@@ -70,4 +70,15 @@ public class DockerServiceImpl implements DockerService {
         dockerMapper.deleteByContainerId(containerId);
     }
 
+    @Override
+    public void deleteContainer(Long botQQ){
+        Docker docker = dockerMapper.selectByBotQQ(botQQ);
+        if (docker == null){
+            return;
+        }
+        String containerId = docker.getContainerId();
+        dockerUtil.deleteContainer(containerId);
+        dockerMapper.deleteByContainerId(containerId);
+    }
+
 }

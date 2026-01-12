@@ -23,6 +23,13 @@ public interface DockerMapper {
     Boolean isOverLimit();
 
     /**
+      * 根据botQQ获取docker信息
+      * @param botQQ botQQ
+      * @return docker信息
+     */
+    Docker selectByBotQQ(Long botQQ);
+
+    /**
       * 添加docker
       * @param docker docker信息
      */
