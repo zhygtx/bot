@@ -146,14 +146,14 @@ public class DockerUtil {
      * @throws Exception 网络操作异常
      */
     public String getHostIpAddress() throws Exception {
-        log.info("开始获取宿主IP地址");
+        log.debug("开始获取宿主IP地址");
 
         // 获取所有网络接口
         Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
 
         while (interfaces.hasMoreElements()) {
             NetworkInterface networkInterface = interfaces.nextElement();
-            log.info("检查网络接口: {}, 是否为回环: {}, 是否为虚拟: {}, 是否激活: {}",
+            log.debug("检查网络接口: {}, 是否为回环: {}, 是否为虚拟: {}, 是否激活: {}",
                     networkInterface.getName(), networkInterface.isLoopback(),
                     networkInterface.isVirtual(), networkInterface.isUp());
 
@@ -170,11 +170,11 @@ public class DockerUtil {
                 // 检查是否为IPv4地址且不是本地地址
                 if (!address.isLoopbackAddress() && address.getHostAddress().contains(".")) {
                     String ip = address.getHostAddress();
-                    log.info("发现IP地址: {}", ip);
+                    log.debug("发现IP地址: {}", ip);
 
                     // 排除Docker内部网络等特殊IP
                     if (!ip.startsWith("172.17.0.") && !ip.startsWith("127.")) {
-                        log.info("返回有效的宿主IP地址: {}", ip);
+                        log.debug("返回有效的宿主IP地址: {}", ip);
                         return ip;
                     }
                 }

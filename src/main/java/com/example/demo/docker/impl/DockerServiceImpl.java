@@ -37,8 +37,7 @@ public class DockerServiceImpl implements DockerService {
     @Override
     @Scheduled(initialDelay = 15000, fixedDelay = Long.MAX_VALUE)
     public void createContainer(){
-        User user = new User();
-        user.setName("test");
+        User user = userService.selectByAccount("test");
         String containerName = "test";
         String token = "gbx2004817";
         log.info("开始创建容器，用户: {}, 容器名称: {}, token: {}", user.getName(), containerName, token != null ? "***" : null);
@@ -60,7 +59,7 @@ public class DockerServiceImpl implements DockerService {
         docker.setName(containerName);
         docker.setUserId(user.getId());
         docker.setBotQQ(user.getQQ());
-        docker.setPort(hostPort + "");
+        docker.setPort(hostPort);
         docker.setToken(token);
         docker.setCreateTime(LocalDateTime.now());
         docker.setUpdateTime(LocalDateTime.now());
@@ -93,7 +92,7 @@ public class DockerServiceImpl implements DockerService {
     }
 
     @Override
-    @Scheduled(fixedDelay = 10 * 60 * 1000)
+    @Scheduled(initialDelay = 5 * 60 * 1000, fixedDelay = 5 * 60 * 1000)
     public void cleanDocker(){
         List<Docker> dockerList = dockerMapper.selectNeedUpdate();
         for (Docker docker : dockerList) {

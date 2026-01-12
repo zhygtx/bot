@@ -90,6 +90,7 @@ public class EmailServiceImpl implements EmailService {
      */
     @Override
     public Boolean sendEmail(String email, String subject, String content, Boolean isHtml){
+        log.info("发送邮件开始，邮箱：{} , 主题 {} ,内容 {} ",email,subject,content);
         try {
             MimeMessage message = javaMailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");

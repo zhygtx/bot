@@ -34,7 +34,7 @@ public class Docker {
     /**
      * 容器外部映射端口
      */
-    private String port;
+    private Integer port;
 
     /**
      * 容器token(暂不支持后续修改)

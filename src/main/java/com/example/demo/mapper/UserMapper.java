@@ -63,7 +63,7 @@ public interface UserMapper {
      * @return 用户邮箱
      */
     @Select("SELECT email FROM user WHERE id = #{id}")
-    String selectEmail(String id);
+    String selectEmailById(String id);
 
     /**
      * 根据botQQ查询用户邮箱
@@ -71,7 +71,7 @@ public interface UserMapper {
      * @return 用户邮箱
      */
     @Select("SELECT email FROM user WHERE bot_qq = #{botQQ}")
-    String selectEmail(Long botQQ);
+    String selectEmailByBotQQ(Long botQQ);
 
     /**
      * 更新用户邮箱

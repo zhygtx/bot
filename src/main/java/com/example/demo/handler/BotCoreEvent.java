@@ -108,7 +108,9 @@ public class BotCoreEvent extends CoreEvent {
         // 2. 记录日志
         if (removedBotData != null) {
             String email = userService.selectEmail(account);
-            emailService.sendEmail(email, "Bot下通知" , "您的QQBot已下线，如非手动下线请检查账号状态或联系管理员" , false);
+            if (email != null) {
+                emailService.sendEmail(email, "Bot下线通知" , "您的QQBot已下线，如非手动下线请检查账号状态或联系管理员" , false);
+            }
             log.info("[Bot 下线] QQ: {}, 已从在线缓存移除", account);
             botService.updateOnline(account, false);
             dockerService.deleteContainer(account);

@@ -121,7 +121,7 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public String selectEmail(String id) {
-        return userMapper.selectEmail(id);
+        return userMapper.selectEmailById(id);
     }
 
     /**
@@ -131,6 +131,6 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public String selectEmail(Long botQQ) {
-        return userMapper.selectEmail(botQQ);
+        return userMapper.selectEmailByBotQQ(botQQ);
     }
 }
