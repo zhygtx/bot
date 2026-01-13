@@ -8,11 +8,9 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
-import java.util.concurrent.TimeUnit;
 
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @Component
 public class JWTUtil {
@@ -33,9 +31,6 @@ public class JWTUtil {
 
     // 生成JWT令牌
     public String generateToken(String userId, String account) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("userId", userId);
-        claims.put("account", account);
 
         Algorithm algorithm = Algorithm.HMAC256(SECRET);
 
@@ -71,6 +66,7 @@ public class JWTUtil {
      * @return 是否验证通过
      */
     public boolean verifyToken(String token) {
+        token = token.replace("Bearer ", "");
         try {
             Algorithm algorithm = Algorithm.HMAC256(SECRET);
             JWTVerifier verifier = JWT.require(algorithm)
@@ -90,24 +86,31 @@ public class JWTUtil {
      * @return 是否存在
      */
     public boolean isTokenInRedis(String userId, String token) {
+        if (token == null) {
+            return false;
+        }
+        token = token.replace("Bearer ", "");
         String redisToken = redisTemplate.opsForValue().get("token:" + userId);
-        return token != null && token.equals(redisToken);
+        return token.equals(redisToken);
     }
 
     // 从令牌中获取用户ID
     public String getUserIdFromToken(String token) {
+        token = token.replace("Bearer ", "");
         DecodedJWT decodedJWT = JWT.decode(token);
         return decodedJWT.getClaim("userId").asString();
     }
 
     // 从令牌中获取账号
     public String getAccountFromToken(String token) {
+        token = token.replace("Bearer ", "");
         DecodedJWT decodedJWT = JWT.decode(token);
         return decodedJWT.getClaim("account").asString();
     }
 
     // 检查令牌是否过期
     public boolean isTokenExpired(String token) {
+        token = token.replace("Bearer ", "");
         DecodedJWT decodedJWT = JWT.decode(token);
         Date expiresAt = decodedJWT.getExpiresAt();
         return expiresAt.before(new Date());

@@ -12,7 +12,7 @@ public interface DockerService {
      * @param user 用户
      * @param token 容器令牌
      */
-    void createContainer(User user, String token);
+    Integer createContainer(User user, String token);
 
     /**
      * 删除容器

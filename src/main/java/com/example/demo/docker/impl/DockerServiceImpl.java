@@ -40,7 +40,7 @@ public class DockerServiceImpl implements DockerService {
      * @param token token
      */
     @Override
-    public void createContainer(User user,String token){
+    public Integer createContainer(User user,String token){
         String containerName = "napcat_" + user.getQQ();
         log.info("开始创建容器，用户: {}, 容器名称: {}, token: {}", user.getName(), containerName, token != null ? "***" : null);
         
@@ -66,6 +66,7 @@ public class DockerServiceImpl implements DockerService {
         docker.setCreateTime(LocalDateTime.now());
         docker.setUpdateTime(LocalDateTime.now());
         dockerMapper.insert(docker);
+        return hostPort;
     }
 
     /**

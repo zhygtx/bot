@@ -6,6 +6,7 @@ import com.example.demo.service.EmailService;
 import com.example.demo.service.UserService;
 import com.example.demo.utils.JWTUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -32,7 +33,7 @@ public class UserController {
       * @param user 用户对象
      */
     @RequestMapping("/insertUser")
-    public Result<String> insertUser(User user) {
+    public Result<String> insertUser(@RequestBody User user) {
         if (userService.isExistByAccount(user.getAccount())){
             return Result.error("该账号已存在");
         }
@@ -74,7 +75,7 @@ public class UserController {
      * @param user 用户对象
      */
     @RequestMapping("/update")
-    public Result<String> update(User user) {
+    public Result<String> update(@RequestBody User user) {
         userService.updateUser(user);
         return Result.success("修改成功");
     }
@@ -102,7 +103,7 @@ public class UserController {
      * @param user 用户对象
      */
     @RequestMapping("/updateEmail")
-    public Result<String> updateEmail(User user) {
+    public Result<String> updateEmail(@RequestBody User user) {
         user.setAccount(user.getAccount());
         user.setEmail(user.getEmail());
         userService.updateEmail(user);
