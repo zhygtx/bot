@@ -3,10 +3,12 @@ package com.example.demo.service.task.impl;
 import com.example.demo.mapper.task.ActionMapper;
 import com.example.demo.mapper.task.RoleMapper;
 import com.example.demo.pojo.task.Role;
+import com.example.demo.service.task.ActionService;
 import com.example.demo.service.task.ExtractPositionService;
 import com.example.demo.service.task.RoleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -22,12 +24,14 @@ public class RoleServiceImpl implements RoleService {
     private final ActionMapper actionMapper;
     private final RoleMapper roleMapper;
     private final ExtractPositionService extractPositionService;
+    private final ActionService actionService;
 
     @Autowired
-    public RoleServiceImpl(ActionMapper actionMapper, RoleMapper roleMapper, ExtractPositionService extractPositionService) {
+    public RoleServiceImpl(ActionMapper actionMapper, RoleMapper roleMapper, ExtractPositionService extractPositionService, ActionService actionService) {
         this.actionMapper = actionMapper;
         this.roleMapper = roleMapper;
         this.extractPositionService = extractPositionService;
+        this.actionService = actionService;
     }
 
     /**
@@ -135,22 +139,37 @@ public class RoleServiceImpl implements RoleService {
     }
 
     /**
-     * 删除任务触发规则
+     * 删除任务触发规则，级联删除关联的Action和ExtractPosition
      * @param id 任务触发规则ID
      * @return 删除数量
      */
     @Override
+    @Transactional
     public int deleteRoleById(String id) {
+        // 级联删除关联的Action
+        actionService.deleteActionsByRoleId(id);
+        // 级联删除关联的ExtractPosition
+        extractPositionService.deleteExtractPositionsByRoleId(id);
+        // 删除Role
         return roleMapper.deleteById(id);
     }
 
     /**
-     * 根据作用域ID删除任务触发规则
+     * 根据作用域ID删除任务触发规则，级联删除关联的Action和ExtractPosition
      * @param scopeId 作用域ID
      * @return 删除数量
      */
     @Override
+    @Transactional
     public int deleteRolesByScopeId(String scopeId) {
+        // 获取该作用域下的所有Role
+        List<Role> roles = roleMapper.selectByScopeId(scopeId);
+        // 遍历Role，级联删除关联的Action和ExtractPosition
+        for (Role role : roles) {
+            actionService.deleteActionsByRoleId(role.getId());
+            extractPositionService.deleteExtractPositionsByRoleId(role.getId());
+        }
+        // 删除Role
         return roleMapper.deleteByScopeId(scopeId);
     }
 }

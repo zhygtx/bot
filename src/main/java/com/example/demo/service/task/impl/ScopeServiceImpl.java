@@ -7,6 +7,7 @@ import com.example.demo.service.task.RoleService;
 import com.example.demo.service.task.ScopeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -94,12 +95,16 @@ public class ScopeServiceImpl implements ScopeService {
     }
 
     /**
-     * 删除作用域
+     * 删除作用域，级联删除关联的Role、Action等
      * @param id 作用域ID
      * @return 删除数量
      */
     @Override
+    @Transactional
     public int deleteScopeById(String id) {
+        // 级联删除关联的Role（Role会级联删除关联的Action和ExtractPosition）
+        roleService.deleteRolesByScopeId(id);
+        // 删除Scope
         return scopeMapper.deleteById(id);
     }
 
