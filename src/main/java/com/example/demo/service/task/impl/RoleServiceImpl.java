@@ -31,7 +31,7 @@ public class RoleServiceImpl implements RoleService {
     }
 
     /**
-     * 获取所有任务触发规则
+     * 获取所有任务触发规则，按作用域分组
      * @return 所有任务触发规则
      */
     @Override
@@ -51,5 +51,106 @@ public class RoleServiceImpl implements RoleService {
         }
 
         return result;
+    }
+
+    /**
+     * 获取所有任务触发规则列表
+     * @return 任务触发规则列表
+     */
+    @Override
+    public List<Role> getAllRolesList() {
+        List<Role> roles = roleMapper.getAllRoles();
+        for (Role role : roles) {
+            role.setAction(actionMapper.getActions(role.getId()));
+            role.setExtractPosition(extractPositionService.getExtractPosition(role.getId()));
+        }
+        return roles;
+    }
+
+    /**
+     * 根据ID获取任务触发规则
+     * @param id 任务触发规则ID
+     * @return 任务触发规则
+     */
+    @Override
+    public Role getRoleById(String id) {
+        Role role = roleMapper.selectById(id);
+        if (role != null) {
+            role.setAction(actionMapper.getActions(role.getId()));
+            role.setExtractPosition(extractPositionService.getExtractPosition(role.getId()));
+        }
+        return role;
+    }
+
+    /**
+     * 根据用户ID获取任务触发规则列表
+     * @param userId 用户ID
+     * @return 任务触发规则列表
+     */
+    @Override
+    public List<Role> getRolesByUserId(String userId) {
+        List<Role> roles = roleMapper.selectByUserId(userId);
+        for (Role role : roles) {
+            role.setAction(actionMapper.getActions(role.getId()));
+            role.setExtractPosition(extractPositionService.getExtractPosition(role.getId()));
+        }
+        return roles;
+    }
+
+    /**
+     * 根据作用域ID获取任务触发规则列表
+     * @param scopeId 作用域ID
+     * @return 任务触发规则列表
+     */
+    @Override
+    public List<Role> getRolesByScopeId(String scopeId) {
+        List<Role> roles = roleMapper.selectByScopeId(scopeId);
+        for (Role role : roles) {
+            role.setAction(actionMapper.getActions(role.getId()));
+            role.setExtractPosition(extractPositionService.getExtractPosition(role.getId()));
+        }
+        return roles;
+    }
+
+    /**
+     * 添加任务触发规则
+     * @param role 任务触发规则
+     * @return 任务触发规则
+     */
+    @Override
+    public Role addRole(Role role) {
+        roleMapper.insert(role);
+        return role;
+    }
+
+    /**
+     * 更新任务触发规则
+     * @param role 任务触发规则
+     * @return 任务触发规则
+     */
+    @Override
+    public Role updateRole(Role role) {
+        roleMapper.update(role);
+        return role;
+    }
+
+    /**
+     * 删除任务触发规则
+     * @param id 任务触发规则ID
+     * @return 删除数量
+     */
+    @Override
+    public int deleteRoleById(String id) {
+        return roleMapper.deleteById(id);
+    }
+
+    /**
+     * 根据作用域ID删除任务触发规则
+     * @param scopeId 作用域ID
+     * @return 删除数量
+     */
+    @Override
+    public int deleteRolesByScopeId(String scopeId) {
+        return roleMapper.deleteByScopeId(scopeId);
     }
 }

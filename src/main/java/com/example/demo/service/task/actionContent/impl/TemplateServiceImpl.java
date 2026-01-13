@@ -6,6 +6,8 @@ import com.example.demo.service.task.actionContent.TemplateService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 /**
  * 模板服务实现类
  */
@@ -29,4 +31,64 @@ public class TemplateServiceImpl implements TemplateService {
         return templateMapper.getById(id);
     }
 
+    /**
+     * 获取所有模板
+     * @return 模板列表
+     */
+    @Override
+    public List<Template> getAllTemplates() {
+        return templateMapper.getAllTemplates();
+    }
+
+    /**
+     * 根据ID获取模板
+     * @param id 模板ID
+     * @return 模板
+     */
+    @Override
+    public Template getTemplateById(String id) {
+        return templateMapper.selectById(id);
+    }
+
+    /**
+     * 根据用户ID获取模板列表
+     * @param userId 用户ID
+     * @return 模板列表
+     */
+    @Override
+    public List<Template> getTemplatesByUserId(String userId) {
+        return templateMapper.selectByUserId(userId);
+    }
+
+    /**
+     * 添加模板
+     * @param template 模板
+     * @return 模板
+     */
+    @Override
+    public Template addTemplate(Template template) {
+        templateMapper.insert(template);
+        return template;
+    }
+
+    /**
+     * 更新模板
+     * @param template 模板
+     * @return 模板
+     */
+    @Override
+    public Template updateTemplate(Template template) {
+        templateMapper.update(template);
+        return template;
+    }
+
+    /**
+     * 删除模板
+     * @param id 模板ID
+     * @return 删除数量
+     */
+    @Override
+    public int deleteTemplateById(String id) {
+        return templateMapper.deleteById(id);
+    }
 }

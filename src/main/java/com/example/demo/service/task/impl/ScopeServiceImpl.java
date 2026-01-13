@@ -39,4 +39,68 @@ public class ScopeServiceImpl implements ScopeService {
         return scopes;
     }
 
+    /**
+     * 根据ID获取作用域
+     * @param id 作用域ID
+     * @return 作用域
+     */
+    @Override
+    public Scope getScopeById(String id) {
+        Scope scope = scopeMapper.selectById(id);
+        if (scope != null) {
+            Map<String, List<Role>> allRoles = roleService.getAllRoles();
+            List<Role> roles = allRoles.get(scope.getId());
+            scope.setRoles(roles != null ? new ArrayList<>(roles) : new ArrayList<>());
+        }
+        return scope;
+    }
+
+    /**
+     * 根据用户ID获取作用域列表
+     * @param userId 用户ID
+     * @return 作用域列表
+     */
+    @Override
+    public List<Scope> getScopesByUserId(String userId) {
+        List<Scope> scopes = scopeMapper.selectByUserId(userId);
+        Map<String, List<Role>> allRoles = roleService.getAllRoles();
+        for (Scope scope : scopes) {
+            List<Role> roles = allRoles.get(scope.getId());
+            scope.setRoles(roles != null ? new ArrayList<>(roles) : new ArrayList<>());
+        }
+        return scopes;
+    }
+
+    /**
+     * 添加作用域
+     * @param scope 作用域
+     * @return 作用域
+     */
+    @Override
+    public Scope addScope(Scope scope) {
+        scopeMapper.insert(scope);
+        return scope;
+    }
+
+    /**
+     * 更新作用域
+     * @param scope 作用域
+     * @return 作用域
+     */
+    @Override
+    public Scope updateScope(Scope scope) {
+        scopeMapper.update(scope);
+        return scope;
+    }
+
+    /**
+     * 删除作用域
+     * @param id 作用域ID
+     * @return 删除数量
+     */
+    @Override
+    public int deleteScopeById(String id) {
+        return scopeMapper.deleteById(id);
+    }
+
 }
