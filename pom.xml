@@ -33,6 +33,12 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
+        <!-- Spring Security -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
         <!-- MyBatis Spring Boot Starter 集成MyBatis ORM框架与Spring Boot -->
         <dependency>
             <groupId>org.mybatis.spring.boot</groupId>
