@@ -62,7 +62,7 @@ public interface UserMapper {
      * 更新用户密码
      * @param user 用户信息
      */
-    @Update("update user set pwd= #{pwd} where account= #{account}")
+    @Update("update user set pwd= #{pwd} where id= #{id}")
     void updatePwd(User user);
 
     /**
@@ -87,4 +87,12 @@ public interface UserMapper {
      */
     @Update("update user set email= #{email} where account= #{account}")
     void updateEmail(User user);
+
+    /**
+     * 更新BotQQ
+     * @param id 用户ID
+     * @param botQQ botQQ
+     */
+    @Update("update user set bot_qq= #{botQQ} where id= #{id}")
+    void updateBotQQ(String id, Long botQQ);
 }

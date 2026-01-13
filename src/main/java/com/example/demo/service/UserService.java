@@ -53,7 +53,7 @@ public interface UserService {
      * 修改用户信息
      * @param user 用户信息
      */
-    void updateUser(User user);
+    void updateUser(User user,String userId);
 
     /**
      * 修改密码

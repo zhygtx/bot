@@ -1,5 +1,7 @@
 package com.example.demo.service;
 
+import com.example.demo.pojo.BotInfo;
+
 import java.util.Set;
 
 /**
@@ -20,4 +22,31 @@ public interface BotService {
      */
     void updateOnline(Long botQQ, boolean online);
 
+    /**
+     * 插入机器人
+     * @param name 机器人名称
+     * @param botQQ 机器QQ
+     */
+    void insert(String userId, String name, Long botQQ);
+
+    /**
+     * 删除机器人
+     * @param userId 用户ID
+     */
+    void delete(String userId);
+
+    /**
+     * 更新机器人
+     * @param userId 用户ID
+     * @param name 机器人名称
+     * @param botQQ 机器QQ
+     */
+    void update(String userId, String name, Long botQQ);
+
+    /**
+     * 获取机器人信息
+     * @param userId 用户ID
+     * @return 机器人信息
+     */
+    BotInfo select(String userId);
 }

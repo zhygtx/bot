@@ -92,24 +92,24 @@ public class UserController {
      * @param user 用户对象
      */
     @RequestMapping("/update")
-    public Result<String> update(@RequestBody User user) {
-        userService.updateUser(user);
+    public Result<String> update(@RequestBody User user ,HttpServletRequest request) {
+        userService.updateUser(user, authUtil.getCurrentUserId(request));
         return Result.success("修改成功");
     }
 
     /**
      * 修改密码
-     * @param account 账号
      * @param oldPwd 旧密码
      * @param newPwd 新密码
      */
     @RequestMapping("/updatePwd")
-    public Result<String> updatePwd(String account, String oldPwd, String newPwd) {
+    public Result<String> updatePwd(HttpServletRequest request, String oldPwd, String newPwd) {
+        String account = authUtil.getCurrentUserAccount(request);
         if (!userService.login(account, oldPwd)){
             return Result.error("旧密码错误");
         }
         User user = new User();
-        user.setAccount(account);
+        user.setId(authUtil.getCurrentUserId(request));
         user.setPwd(newPwd);
         userService.updatePwd(user);
         return Result.success("修改成功");
@@ -140,8 +140,8 @@ public class UserController {
         if (!userService.selectByAccount(account).getEmail().equals(email)) return Result.error("该邮箱并未与此账号绑定");
         if (!emailService.verifyCode(email, code)) return Result.error("验证码错误");
         if (userService.login(account, newPwd)) return Result.error("新密码不能与旧密码相同");
-        User user = new User();
-        user.setAccount(account);
+        User user = userService.selectByAccount(account);
+        user.setId(user.getId());
         user.setPwd(newPwd);
         userService.updatePwd(user);
         return Result.success("修改成功");

@@ -97,8 +97,8 @@ public class UserServiceImpl implements UserService {
      * @param user 用户信息
      */
     @Override
-    public void updateUser(User user){
-        User existingUser = userMapper.selectByAccount(user.getAccount());
+    public void updateUser(User user,String userId){
+        User existingUser = userMapper.selectById(userId);
         user.setAccount(existingUser.getAccount());
         user.setId(existingUser.getId());
         user.setCreateTime(existingUser.getCreateTime());

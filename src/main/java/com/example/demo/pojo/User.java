@@ -45,7 +45,7 @@ public class User {
     private String email;
 
     /**
-     * 用户所拥有的机器人的ID
+     * 用户所拥有的机器人的ID(用户不得从此处修改，此处仅为便捷查询,具体修改去BotInfo表)
      */
     private Long botQQ;
 

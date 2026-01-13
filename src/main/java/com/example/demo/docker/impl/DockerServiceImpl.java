@@ -70,7 +70,7 @@ public class DockerServiceImpl implements DockerService {
     }
 
     /**
-     * 创建容器并自动处理配置文件
+     * 删除容器
      * @param containerId 容器ID
      */
     @Override

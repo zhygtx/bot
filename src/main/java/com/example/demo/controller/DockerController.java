@@ -32,8 +32,8 @@ public class DockerController {
      */
     @RequestMapping("/create")
     public Result<Integer> createContainer(HttpServletRequest request, String napcatToken) {
-        String account = authUtil.getCurrentUserId(request);
-        User user = userService.selectByAccount(account);
+        String userId = authUtil.getCurrentUserId(request);
+        User user = userService.selectById(userId);
         if (user.getBotQQ() == null){
             return Result.error("请先绑定BotQQ");
         }
@@ -47,8 +47,8 @@ public class DockerController {
      */
     @RequestMapping("/delete")
     public Result<String> deleteContainer(HttpServletRequest request) {
-        String account = authUtil.getCurrentUserId(request);
-        User user = userService.selectByAccount(account);
+        String userId = authUtil.getCurrentUserId(request);
+        User user = userService.selectById(userId);
         dockerService.deleteContainer(user.getQQ());
         return Result.success();
     }

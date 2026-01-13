@@ -1,8 +1,7 @@
 package com.example.demo.mapper;
 
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Select;
-import org.apache.ibatis.annotations.Update;
+import com.example.demo.pojo.BotInfo;
+import org.apache.ibatis.annotations.*;
 
 import java.util.Set;
 
@@ -23,4 +22,34 @@ public interface BotMapper {
      */
     @Update("UPDATE bot SET online = #{online} WHERE bot_qq = #{botQQ}")
     void updateOnline(Long botQQ, Boolean online);
+
+    /**
+     * 插入机器人
+     * @param bot 机器人
+     */
+    @Insert("INSERT INTO bot (id,bot_qq, name, user_id) " +
+            "VALUES (#{id},#{bot.qq}, #{bot.name}, #{bot.userId})")
+    void insert(BotInfo bot);
+
+    /**
+     * 删除机器人
+     * @param userId 用户ID
+     */
+    @Delete("DELETE FROM bot WHERE user_id = #{userId}")
+    void delete(String userId);
+
+    /**
+     * 更新机器人信息
+     * @param bot 机器人
+     */
+    @Update("UPDATE bot SET name = #{bot.name}, bot_qq = #{bot.qq} WHERE id = #{bot.id}")
+    void update(BotInfo bot);
+
+    /**
+     * 获取机器人信息
+     * @param userId 用户ID
+     * @return 机器人信息
+     */
+    @Select("SELECT * FROM bot WHERE user_id = #{userId}")
+    BotInfo selectByUserId(String userId);
 }
