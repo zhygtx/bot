@@ -4,7 +4,9 @@ import com.example.demo.pojo.Result;
 import com.example.demo.pojo.User;
 import com.example.demo.service.EmailService;
 import com.example.demo.service.UserService;
+import com.example.demo.utils.AuthUtil;
 import com.example.demo.utils.JWTUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,12 +22,14 @@ public class UserController {
     private final EmailService emailService;
     private final UserService userService;
     private final JWTUtil jwtUtil;
+    private final AuthUtil authUtil;
 
     @Autowired
-    public UserController(UserService userService, EmailService emailService, JWTUtil jwtUtil) {
+    public UserController(UserService userService, EmailService emailService, JWTUtil jwtUtil, AuthUtil authUtil) {
         this.userService = userService;
         this.emailService = emailService;
         this.jwtUtil = jwtUtil;
+        this.authUtil = authUtil;
     }
 
     /**
@@ -68,6 +72,19 @@ public class UserController {
         result.put("account", user.getAccount());
 
         return Result.success("登录成功", result);
+    }
+
+    /**
+     * 获取当前用户信息
+      * @param request HttpServletRequest对象
+     */
+    @RequestMapping("/info")
+    public Result<User> getCurrentUserInfo(HttpServletRequest request) {
+        User user = userService.selectById(authUtil.getCurrentUserId(request));
+        if (user == null) {
+            return Result.error("用户不存在");
+        }
+        return Result.success(user);
     }
 
     /**

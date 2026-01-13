@@ -4,34 +4,35 @@ import com.example.demo.docker.DockerService;
 import com.example.demo.pojo.Result;
 import com.example.demo.pojo.User;
 import com.example.demo.service.UserService;
-import com.example.demo.utils.JWTUtil;
-import org.springframework.web.bind.annotation.RequestHeader;
+import com.example.demo.utils.AuthUtil;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/docker")
 public class DockerController {
 
-    private final JWTUtil jwtUtil;
     private final DockerService dockerService;
     private final UserService userService;
+    private final AuthUtil authUtil;
 
-    public DockerController(JWTUtil jwtUtil, DockerService dockerService, UserService userService) {
-        this.jwtUtil = jwtUtil;
+    @Autowired
+    public DockerController(DockerService dockerService, UserService userService, AuthUtil authUtil) {
         this.dockerService = dockerService;
         this.userService = userService;
+        this.authUtil = authUtil;
     }
 
     /**
      * 创建容器
-     * @param token 容器令牌
+     * @param request HTTP请求
      * @param napcatToken 用户设置的令牌
      */
     @RequestMapping("/create")
-    public Result<Integer> createContainer(@RequestHeader("Authorization") String token, @RequestParam String napcatToken) {
-        String account = jwtUtil.getAccountFromToken(token);
+    public Result<Integer> createContainer(HttpServletRequest request, String napcatToken) {
+        String account = authUtil.getCurrentUserId(request);
         User user = userService.selectByAccount(account);
         if (user.getBotQQ() == null){
             return Result.error("请先绑定BotQQ");
@@ -42,11 +43,11 @@ public class DockerController {
 
     /**
      * 删除容器
-     * @param token 用户设置的令牌
+     * @param request HTTP请求
      */
     @RequestMapping("/delete")
-    public Result<String> deleteContainer(@RequestHeader("Authorization") String token) {
-        String account = jwtUtil.getAccountFromToken(token);
+    public Result<String> deleteContainer(HttpServletRequest request) {
+        String account = authUtil.getCurrentUserId(request);
         User user = userService.selectByAccount(account);
         dockerService.deleteContainer(user.getQQ());
         return Result.success();

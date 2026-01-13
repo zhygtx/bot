@@ -29,6 +29,13 @@ public interface UserService {
     User selectByAccount(String account);
 
     /**
+     * 根据用户ID查询用户信息
+     * @param id 用户ID
+     * @return 用户信息
+     */
+    User selectById(String id);
+
+    /**
      * 插入用户
      * @param user 用户信息
      */

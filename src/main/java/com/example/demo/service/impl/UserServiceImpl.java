@@ -56,6 +56,16 @@ public class UserServiceImpl implements UserService {
     }
 
     /**
+     * 根据用户ID查询用户信息
+     * @param id 用户ID
+     * @return 用户信息
+     */
+    @Override
+    public User selectById(String id) {
+        return userMapper.selectById(id);
+    }
+
+    /**
      * 插入用户
      * @param user 用户信息
      */

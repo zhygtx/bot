@@ -6,6 +6,7 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
@@ -15,37 +16,39 @@ import java.util.concurrent.TimeUnit;
 @Component
 public class JWTUtil {
 
-    // JWT密钥，生产环境中应从配置文件获取
-    private static final String SECRET = "your-secret-key-change-this-in-production";
-    // 过期时间（2小时）
-    private static final long EXPIRE_TIME = 2 * 60 * 60 * 1000;
+    @Value("my-super-secret-jwt-key-change-in-production")
+    private String secret;
+
+    @Value("7200000") // 默认2小时
+    private Long expiration;
+
     // 发行人
     private static final String ISSUER = "general-bot";
 
-    private final RedisTemplate<String, String> redisTemplate;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     @Autowired
-    public JWTUtil(RedisTemplate<String, String> redisTemplate) {
+    public JWTUtil(RedisTemplate<String, Object> redisTemplate) {
         this.redisTemplate = redisTemplate;
     }
 
     // 生成JWT令牌
     public String generateToken(String userId, String account) {
-
-        Algorithm algorithm = Algorithm.HMAC256(SECRET);
+        Algorithm algorithm = Algorithm.HMAC256(secret);
 
         String token = JWT.create()
                 .withIssuer(ISSUER)
                 .withClaim("userId", userId)
                 .withClaim("account", account)
                 .withIssuedAt(new Date())
-                .withExpiresAt(new Date(System.currentTimeMillis() + EXPIRE_TIME))
+                .withExpiresAt(new Date(System.currentTimeMillis() + expiration))
                 .sign(algorithm);
 
+        // 将token存入Redis，设置过期时间与JWT过期时间一致
         redisTemplate.opsForValue().set(
                 "token:" + userId,
                 token,
-                EXPIRE_TIME,
+                expiration,
                 TimeUnit.MILLISECONDS
         );
 
@@ -68,7 +71,7 @@ public class JWTUtil {
     public boolean verifyToken(String token) {
         token = token.replace("Bearer ", "");
         try {
-            Algorithm algorithm = Algorithm.HMAC256(SECRET);
+            Algorithm algorithm = Algorithm.HMAC256(secret);
             JWTVerifier verifier = JWT.require(algorithm)
                     .withIssuer(ISSUER)
                     .build();
@@ -90,7 +93,7 @@ public class JWTUtil {
             return false;
         }
         token = token.replace("Bearer ", "");
-        String redisToken = redisTemplate.opsForValue().get("token:" + userId);
+        String redisToken = (String) redisTemplate.opsForValue().get("token:" + userId);
         return token.equals(redisToken);
     }
 
@@ -114,5 +117,30 @@ public class JWTUtil {
         DecodedJWT decodedJWT = JWT.decode(token);
         Date expiresAt = decodedJWT.getExpiresAt();
         return expiresAt.before(new Date());
+    }
+
+    /**
+     * 刷新令牌
+     * @param userId 用户ID
+     * @param account 账户名
+     * @return 新的令牌
+     */
+    public String refreshToken(String userId, String account) {
+        // 先删除旧的token
+        deleteToken(userId);
+        // 生成新的token
+        return generateToken(userId, account);
+    }
+
+    /**
+     * 获取令牌剩余过期时间（毫秒）
+     * @param token 令牌
+     * @return 剩余时间，负数表示已过期
+     */
+    public Long getTokenRemainingExpiration(String token) {
+        token = token.replace("Bearer ", "");
+        DecodedJWT decodedJWT = JWT.decode(token);
+        Date expiresAt = decodedJWT.getExpiresAt();
+        return expiresAt.getTime() - System.currentTimeMillis();
     }
 }

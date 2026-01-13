@@ -44,6 +44,14 @@ public interface UserMapper {
     User selectByAccount(String account);
 
     /**
+     * 根据用户ID查询用户信息
+     * @param id 用户ID
+     * @return 用户信息
+     */
+    @Select("SELECT * FROM user WHERE id = #{id}")
+    User selectById(String id);
+
+    /**
      * 更新用户信息
      * @param user 用户信息
      */
