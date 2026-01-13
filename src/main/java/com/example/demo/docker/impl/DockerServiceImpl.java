@@ -34,12 +34,14 @@ public class DockerServiceImpl implements DockerService {
         this.userService = userService;
     }
 
+    /**
+     * 创建容器并自动处理配置文件
+     * @param user 用户
+     * @param token token
+     */
     @Override
-    @Scheduled(initialDelay = 15000, fixedDelay = Long.MAX_VALUE)
-    public void createContainer(){
-        User user = userService.selectByAccount("test");
-        String containerName = "test";
-        String token = "gbx2004817";
+    public void createContainer(User user,String token){
+        String containerName = "napcat_" + user.getQQ();
         log.info("开始创建容器，用户: {}, 容器名称: {}, token: {}", user.getName(), containerName, token != null ? "***" : null);
         
         int hostPort;
