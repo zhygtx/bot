@@ -95,6 +95,19 @@ public class DockerServiceImpl implements DockerService {
     }
 
     @Override
+    public void deleteContainer(User user){
+        Long botQQ = user.getBotQQ();
+        Docker docker = dockerMapper.selectByBotQQ(botQQ);
+        if (docker == null){
+            return;
+        }
+        String containerId = docker.getContainerId();
+        dockerUtil.deleteContainer(containerId);
+        dockerMapper.deleteByContainerId(containerId);
+        emailService.sendEmail(user.getEmail(), "容器删除通知", "您的容器已被清理，如非本人操作请联系管理员", false);
+    }
+
+    @Override
     @Scheduled(initialDelay = 5 * 60 * 1000, fixedDelay = 5 * 60 * 1000)
     public void cleanDocker(){
         List<Docker> dockerList = dockerMapper.selectNeedUpdate();

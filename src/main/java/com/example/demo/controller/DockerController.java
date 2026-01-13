@@ -49,7 +49,7 @@ public class DockerController {
     public Result<String> deleteContainer(HttpServletRequest request) {
         String userId = authUtil.getCurrentUserId(request);
         User user = userService.selectById(userId);
-        dockerService.deleteContainer(user.getBotQQ());
+        dockerService.deleteContainer(user);
         return Result.success();
     }
 }

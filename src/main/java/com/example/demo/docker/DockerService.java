@@ -27,6 +27,12 @@ public interface DockerService {
     void deleteContainer(Long botQQ);
 
     /**
+     * 删除容器
+     * @param user 用户
+     */
+    void deleteContainer(User user);
+
+    /**
      * 更新容器
      */
     @SuppressWarnings("unused")
