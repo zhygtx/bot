@@ -60,7 +60,7 @@ public class DockerServiceImpl implements DockerService {
         docker.setContainerId(containerId);
         docker.setName(containerName);
         docker.setUserId(user.getId());
-        docker.setBotQQ(user.getQQ());
+        docker.setBotQQ(user.getBotQQ());
         docker.setPort(hostPort);
         docker.setToken(token);
         docker.setCreateTime(LocalDateTime.now());

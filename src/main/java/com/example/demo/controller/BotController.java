@@ -31,8 +31,7 @@ public class BotController {
     @RequestMapping("/insert")
     public Result<?> insert(HttpServletRequest request, String name, Long botQQ) {
         String userId = authUtil.getCurrentUserId(request);
-        botService.insert(userId, name, botQQ);
-        return Result.success();
+        return botService.insert(userId, name, botQQ);
     }
 
     /**

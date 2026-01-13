@@ -3,6 +3,7 @@ package com.example.demo.service.impl;
 import com.example.demo.mapper.BotMapper;
 import com.example.demo.mapper.UserMapper;
 import com.example.demo.pojo.BotInfo;
+import com.example.demo.pojo.Result;
 import com.example.demo.service.BotService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -50,7 +51,10 @@ public class BotServiceImpl implements BotService {
      * @param botQQ 机器人QQ
      */
     @Override
-    public void insert(String userId, String name, Long botQQ) {
+    public Result<?> insert(String userId, String name, Long botQQ) {
+        if (botMapper.existsByBotQQ(botQQ)) {
+            return Result.error("该bot已被注册");
+        }
         BotInfo bot = new BotInfo();
         bot.setId(UUID.randomUUID().toString());
         bot.setBotQQ(botQQ);
@@ -58,6 +62,7 @@ public class BotServiceImpl implements BotService {
         bot.setUserId(userId);
         userMapper.updateBotQQ(userId, botQQ);
         botMapper.insert(bot);
+        return Result.success();
     }
 
     /**

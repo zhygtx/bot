@@ -26,7 +26,8 @@ public class EmailController {
      */
     @RequestMapping("/sendVerificationCode")
     public Result<String> sendVerificationCode(String email) {
-        return emailService.sendVerificationCode(email);
+        emailService.sendVerificationCode(email);
+        return Result.success();
     }
 
     /**

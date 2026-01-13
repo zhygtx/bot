@@ -42,7 +42,7 @@ public class UserController {
             return Result.error("该账号已存在");
         }
         userService.insertUser(user);
-        return Result.success("注册成功");
+        return Result.success();
     }
 
     /**
@@ -71,7 +71,7 @@ public class UserController {
         result.put("username", user.getName());
         result.put("account", user.getAccount());
 
-        return Result.success("登录成功", result);
+        return Result.success(result);
     }
 
     /**
@@ -94,7 +94,7 @@ public class UserController {
     @RequestMapping("/update")
     public Result<String> update(@RequestBody User user ,HttpServletRequest request) {
         userService.updateUser(user, authUtil.getCurrentUserId(request));
-        return Result.success("修改成功");
+        return Result.success();
     }
 
     /**
@@ -112,7 +112,7 @@ public class UserController {
         user.setId(authUtil.getCurrentUserId(request));
         user.setPwd(newPwd);
         userService.updatePwd(user);
-        return Result.success("修改成功");
+        return Result.success();
     }
 
     /**
@@ -124,7 +124,7 @@ public class UserController {
         user.setAccount(user.getAccount());
         user.setEmail(user.getEmail());
         userService.updateEmail(user);
-        return Result.success("修改成功");
+        return Result.success();
     }
 
     /**
@@ -144,7 +144,7 @@ public class UserController {
         user.setId(user.getId());
         user.setPwd(newPwd);
         userService.updatePwd(user);
-        return Result.success("修改成功");
+        return Result.success();
     }
 
     /**
@@ -155,6 +155,6 @@ public class UserController {
     public Result<String> logout(String userId) {
         // 从Redis中删除token
         jwtUtil.deleteToken(userId);
-        return Result.success("退出成功");
+        return Result.success();
     }
 }

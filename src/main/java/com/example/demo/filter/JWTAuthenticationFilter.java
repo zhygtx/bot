@@ -6,11 +6,14 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.lang.Nullable;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Collections;
 
 @Component
 public class JWTAuthenticationFilter extends OncePerRequestFilter {
@@ -30,6 +33,12 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
         }
 
         response.setContentType("application/json;charset=UTF-8");
+
+        // 允许 OPTIONS 请求直接通过，不进行认证检查
+        if (request.getMethod().equals("OPTIONS")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         // 排除不需要认证的接口
         String requestURI = request.getRequestURI();
@@ -99,6 +108,11 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
             writer.close();
             return;
         }
+
+        // 创建认证对象，将用户ID设置到SecurityContext
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(userId, null, Collections.emptyList());
+        SecurityContextHolder.getContext().setAuthentication(authentication);
 
         // 令牌有效，继续处理请求
         filterChain.doFilter(request, response);

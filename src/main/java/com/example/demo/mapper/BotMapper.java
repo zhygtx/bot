@@ -25,11 +25,11 @@ public interface BotMapper {
 
     /**
      * 插入机器人
-     * @param bot 机器人
+     * @param botInfo 机器人
      */
     @Insert("INSERT INTO bot (id,bot_qq, name, user_id) " +
-            "VALUES (#{id},#{bot.qq}, #{bot.name}, #{bot.userId})")
-    void insert(BotInfo bot);
+            "VALUES (#{id},#{botQQ}, #{name}, #{userId})")
+    void insert(BotInfo botInfo);
 
     /**
      * 删除机器人
@@ -40,10 +40,10 @@ public interface BotMapper {
 
     /**
      * 更新机器人信息
-     * @param bot 机器人
+     * @param botInfo 机器人
      */
-    @Update("UPDATE bot SET name = #{bot.name}, bot_qq = #{bot.qq} WHERE id = #{bot.id}")
-    void update(BotInfo bot);
+    @Update("UPDATE bot SET name = #{name}, bot_qq = #{botQQ} WHERE id = #{id}")
+    void update(BotInfo botInfo);
 
     /**
      * 获取机器人信息
@@ -52,4 +52,7 @@ public interface BotMapper {
      */
     @Select("SELECT * FROM bot WHERE user_id = #{userId}")
     BotInfo selectByUserId(String userId);
+
+    @Select("SELECT EXISTS(SELECT * FROM bot WHERE bot_qq = #{botQQ})")
+    boolean existsByBotQQ(Long botQQ);
 }

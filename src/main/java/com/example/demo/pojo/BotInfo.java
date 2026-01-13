@@ -35,5 +35,5 @@ public class BotInfo {
     /**
      * 机器人是否在线
      */
-    private Boolean isOnline;
+    private boolean isOnline = false;
 }

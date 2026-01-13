@@ -1,6 +1,7 @@
 package com.example.demo.service;
 
 import com.example.demo.pojo.BotInfo;
+import com.example.demo.pojo.Result;
 
 import java.util.Set;
 
@@ -27,7 +28,7 @@ public interface BotService {
      * @param name 机器人名称
      * @param botQQ 机器QQ
      */
-    void insert(String userId, String name, Long botQQ);
+    Result<?> insert(String userId, String name, Long botQQ);
 
     /**
      * 删除机器人
