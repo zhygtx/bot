@@ -44,7 +44,7 @@ public interface TextMapper {
      * @param text 文本内容
      * @return 插入数量
      */
-    @Insert("INSERT INTO text (id, user_id, text) VALUES (#{id}, #{userId}, #{text})")
+    @Insert("INSERT INTO text (id, name,user_id, text) VALUES (#{id},#{name},#{userId}, #{text})")
     int insert(Text text);
 
     /**
@@ -52,7 +52,7 @@ public interface TextMapper {
      * @param text 文本内容
      * @return 更新数量
      */
-    @Update("UPDATE text SET user_id = #{userId}, text = #{text} WHERE id = #{id}")
+    @Update("UPDATE text SET user_id = #{userId}, name=#{name} ,text = #{text} WHERE id = #{id}")
     int update(Text text);
 
     /**

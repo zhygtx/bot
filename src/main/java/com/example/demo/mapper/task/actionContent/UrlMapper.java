@@ -46,7 +46,7 @@ public interface UrlMapper {
      * @param url URL
      * @return 插入数量
      */
-    @Insert("INSERT INTO url (id, user_id, url) VALUES (#{id}, #{userId}, #{url})")
+    @Insert("INSERT INTO url (id, name ,user_id, url) VALUES (#{id}, #{name},#{userId}, #{url})")
     int insert(Url url);
 
     /**
@@ -54,7 +54,7 @@ public interface UrlMapper {
      * @param url URL
      * @return 更新数量
      */
-    @Update("UPDATE url SET user_id = #{userId}, url = #{url} WHERE id = #{id}")
+    @Update("UPDATE url SET name =#{name},url = #{url} WHERE id = #{id}")
     int update(Url url);
 
     /**

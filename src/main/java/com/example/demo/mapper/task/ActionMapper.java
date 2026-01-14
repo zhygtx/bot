@@ -45,7 +45,7 @@ public interface ActionMapper {
      * @param action 动作
      * @return 插入数量
      */
-    @Insert("INSERT INTO action (id, role_id, user_id, need_at, action_type, data_id, is_concat, seq) VALUES (#{id}, #{roleId}, #{userId}, #{needAt}, #{actionType}, #{dataId}, #{isConcat}, #{seq})")
+    @Insert("INSERT INTO action (id, name,role_id, user_id, need_at, action_type, data_id, is_concat, seq) VALUES (#{id},#{name},#{roleId}, #{userId}, #{needAt}, #{actionType}, #{dataId}, #{isConcat}, #{seq})")
     int insert(Action action);
 
     /**
@@ -53,7 +53,7 @@ public interface ActionMapper {
      * @param action 动作
      * @return 更新数量
      */
-    @Update("UPDATE action SET role_id = #{roleId}, user_id = #{userId}, need_at = #{needAt}, action_type = #{actionType}, data_id = #{dataId}, is_concat = #{isConcat}, seq = #{seq} WHERE id = #{id}")
+    @Update("UPDATE action SET role_id = #{roleId}, name =#{name}, need_at = #{needAt}, action_type = #{actionType}, data_id = #{dataId}, is_concat = #{isConcat}, seq = #{seq} WHERE id = #{id}")
     int update(Action action);
 
     /**
