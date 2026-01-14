@@ -3,6 +3,8 @@ package com.example.demo.controller.task.actionContent;
 import com.example.demo.pojo.Result;
 import com.example.demo.pojo.task.actionContent.Url;
 import com.example.demo.service.task.actionContent.UrlService;
+import com.example.demo.utils.AuthUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,52 +15,74 @@ import java.util.List;
 public class UrlController {
 
     private final UrlService urlService;
+    private final AuthUtil authUtil;
 
     @Autowired
-    public UrlController(UrlService urlService) {
+    public UrlController(UrlService urlService, AuthUtil authUtil) {
         this.urlService = urlService;
+        this.authUtil = authUtil;
     }
 
     /**
-     * 获取所有URL
+     * 获取当前用户的所有URL
+     * @param request HTTP请求
      * @return URL列表
      */
-    @GetMapping
-    public Result<List<Url>> getAllUrls() {
-        return Result.success(urlService.getAllUrls());
+    @RequestMapping("/list")
+    public Result<List<Url>> getUrlsByCurrentUser(HttpServletRequest request) {
+        // 获取当前用户ID
+        String userId = authUtil.getCurrentUserId(request);
+        if (userId == null) {
+            return Result.error("未授权访问");
+        }
+        
+        List<Url> urls = urlService.getUrlsByUserId(userId);
+        return Result.success(urls);
     }
 
     /**
      * 根据ID获取URL
      * @param id URL ID
+     * @param request HTTP请求
      * @return URL
      */
-    @GetMapping("/{id}")
-    public Result<Url> getUrlById(@PathVariable String id) {
+    @RequestMapping("/{id}")
+    public Result<Url> getUrlById(@PathVariable String id, HttpServletRequest request) {
+        // 获取当前用户ID
+        String userId = authUtil.getCurrentUserId(request);
+        if (userId == null) {
+            return Result.error("未授权访问");
+        }
+        
         Url url = urlService.getUrl(id);
         if (url == null) {
             return Result.error("URL不存在");
         }
+        
+        // 验证权限，确保用户只能访问自己的URL
+        if (!userId.equals(url.getUserId())) {
+            return Result.error("无权限访问该URL");
+        }
+        
         return Result.success(url);
-    }
-
-    /**
-     * 根据用户ID获取URL列表
-     * @param userId 用户ID
-     * @return URL列表
-     */
-    @GetMapping("/user/{userId}")
-    public Result<List<Url>> getUrlsByUserId(@PathVariable String userId) {
-        return Result.success(urlService.getUrlsByUserId(userId));
     }
 
     /**
      * 创建URL
      * @param url URL
+     * @param request HTTP请求
      * @return URL
      */
-    @PostMapping
-    public Result<Url> addUrl(@RequestBody Url url) {
+    @RequestMapping("/add")
+    public Result<Url> addUrl(@RequestBody Url url, HttpServletRequest request) {
+        // 获取当前用户ID
+        String userId = authUtil.getCurrentUserId(request);
+        if (userId == null) {
+            return Result.error("未授权访问");
+        }
+        
+        // 设置当前用户ID
+        url.setUserId(userId);
         Url addedUrl = urlService.addUrl(url);
         return Result.success("URL添加成功", addedUrl);
     }
@@ -67,10 +91,28 @@ public class UrlController {
      * 更新URL
      * @param id URL ID
      * @param url URL
+     * @param request HTTP请求
      * @return URL
      */
-    @PutMapping("/{id}")
-    public Result<Url> updateUrl(@PathVariable String id, @RequestBody Url url) {
+    @RequestMapping("/update/{id}")
+    public Result<Url> updateUrl(@PathVariable String id, @RequestBody Url url, HttpServletRequest request) {
+        // 获取当前用户ID
+        String userId = authUtil.getCurrentUserId(request);
+        if (userId == null) {
+            return Result.error("未授权访问");
+        }
+        
+        // 验证权限，确保用户只能更新自己的URL
+        Url existingUrl = urlService.getUrl(id);
+        if (existingUrl == null) {
+            return Result.error("URL不存在");
+        }
+        if (!userId.equals(existingUrl.getUserId())) {
+            return Result.error("无权限更新该URL");
+        }
+        
+        // 设置当前用户ID和ID
+        url.setUserId(userId);
         url.setId(id);
         Url updatedUrl = urlService.updateUrl(url);
         return Result.success("URL更新成功", updatedUrl);
@@ -79,10 +121,26 @@ public class UrlController {
     /**
      * 删除URL
      * @param id URL ID
+     * @param request HTTP请求
      * @return 删除结果
      */
-    @DeleteMapping("/{id}")
-    public Result<String> deleteUrlById(@PathVariable String id) {
+    @RequestMapping("/delete/{id}")
+    public Result<String> deleteUrlById(@PathVariable String id, HttpServletRequest request) {
+        // 获取当前用户ID
+        String userId = authUtil.getCurrentUserId(request);
+        if (userId == null) {
+            return Result.error("未授权访问");
+        }
+        
+        // 验证权限，确保用户只能删除自己的URL
+        Url existingUrl = urlService.getUrl(id);
+        if (existingUrl == null) {
+            return Result.error("URL不存在");
+        }
+        if (!userId.equals(existingUrl.getUserId())) {
+            return Result.error("无权限删除该URL");
+        }
+        
         int result = urlService.deleteUrlById(id);
         if (result > 0) {
             return Result.success("URL删除成功");

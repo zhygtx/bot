@@ -60,14 +60,13 @@ public class TextServiceImpl implements TextService {
 
     /**
      * 添加文本内容
+     *
      * @param text 文本内容
-     * @return 文本内容
      */
     @Override
-    public Text addText(Text text) {
+    public void addText(Text text) {
         text.setId(UUID.randomUUID().toString());
         textMapper.insert(text);
-        return text;
     }
 
     /**

@@ -47,7 +47,7 @@ public class Action {
     /**
      * 动作类型，文本/图片/脚本/HTTP 调用等
      */
-    @JsonProperty("type")
+    @JsonProperty("actionType")
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     private ActionType actionType;
 

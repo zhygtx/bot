@@ -155,7 +155,7 @@ public class RoleServiceImpl implements RoleService {
     @Override
     public Role updateRole(Role role) {
         roleMapper.update(role);
-        if (role.getExtractPosition() != null){
+        if (!role.getExtractPosition().isEmpty()){
             extractPositionMapper.deleteByRoleId(role.getId());
             extractPositionMapper.insert(role.getId(),role.getExtractPosition());
         }else{

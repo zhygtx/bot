@@ -35,10 +35,10 @@ public interface TextService {
 
     /**
      * 添加文本内容
+     *
      * @param text 文本内容
-     * @return 文本内容
      */
-    Text addText(Text text);
+    void addText(Text text);
 
     /**
      * 更新文本内容
