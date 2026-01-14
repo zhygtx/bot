@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class ApiServiceImpl implements ApiService {
@@ -64,6 +65,7 @@ public class ApiServiceImpl implements ApiService {
      */
     @Override
     public Api addApi(Api api) {
+        api.setId(UUID.randomUUID().toString());
         apiMapper.insert(api);
         return api;
     }

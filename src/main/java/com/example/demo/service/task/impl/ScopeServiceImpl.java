@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 public class ScopeServiceImpl implements ScopeService {
@@ -79,6 +80,7 @@ public class ScopeServiceImpl implements ScopeService {
      */
     @Override
     public Scope addScope(Scope scope) {
+        scope.setId(UUID.randomUUID().toString());
         scopeMapper.insert(scope);
         return scope;
     }

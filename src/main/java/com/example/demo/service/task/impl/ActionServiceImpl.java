@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * 动作服务实现类
@@ -59,6 +60,7 @@ public class ActionServiceImpl implements ActionService {
      */
     @Override
     public Action addAction(Action action) {
+        action.setId(UUID.randomUUID().toString());
         actionMapper.insert(action);
         return action;
     }

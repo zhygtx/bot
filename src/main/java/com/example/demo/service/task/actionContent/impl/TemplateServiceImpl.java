@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * 模板服务实现类
@@ -67,6 +68,7 @@ public class TemplateServiceImpl implements TemplateService {
      */
     @Override
     public Template addTemplate(Template template) {
+        template.setId(UUID.randomUUID().toString());
         templateMapper.insert(template);
         return template;
     }

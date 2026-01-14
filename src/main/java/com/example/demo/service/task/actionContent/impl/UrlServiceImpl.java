@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 public class UrlServiceImpl implements UrlService {
@@ -49,6 +50,7 @@ public class UrlServiceImpl implements UrlService {
 
     @Override
     public Url addUrl(Url url) {
+        url.setId(UUID.randomUUID().toString());
         // 插入URL
         urlMapper.insert(url);
         // 插入URL参数

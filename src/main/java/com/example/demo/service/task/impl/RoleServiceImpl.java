@@ -10,10 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 任务触发规则服务实现类
@@ -123,6 +120,7 @@ public class RoleServiceImpl implements RoleService {
      */
     @Override
     public Role addRole(Role role) {
+        role.setId(UUID.randomUUID().toString());
         roleMapper.insert(role);
         return role;
     }
