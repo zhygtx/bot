@@ -1,6 +1,7 @@
 package com.example.demo.pojo.task;
 
 import com.example.demo.interceptor.ExcludeFromMD5;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -44,6 +45,7 @@ public class Role {
     /**
      * 匹配类型
      */
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private MatchMode matchMode;
 
     /**

@@ -36,7 +36,7 @@ public interface ScopeMapper {
      * @param scope 作用域
      * @return 插入数量
      */
-    @Insert("INSERT INTO scope (id, name, user_id, bot_qq, is_at, qq_user_role, qq_user_id, qq_group_id, qq_bot_role, qq_scope_type, qq_scope_id) VALUES (#{id}, #{name}, #{userId}, #{botQQ}, #{isAt}, #{QQUserRole}, #{QQUserId}, #{QQGroupId}, #{QQBotRole}, #{QQScopeType}, #{QQScopeId})")
+    @Insert("INSERT INTO scope (id, name, user_id, bot_qq, is_at, qq_user_role, qq_bot_role, qq_scope_type, qq_scope_id) VALUES (#{id}, #{name}, #{userId}, #{botQQ}, #{isAt}, #{qqUserRole}, #{qqBotRole}, #{qqScopeType}, #{qqScopeId})")
     int insert(Scope scope);
 
     /**
@@ -44,7 +44,7 @@ public interface ScopeMapper {
      * @param scope 作用域
      * @return 更新数量
      */
-    @Update("UPDATE scope SET name = #{name}, user_id = #{userId}, bot_qq = #{botQQ}, is_at = #{isAt}, qq_user_role = #{QQUserRole}, qq_user_id = #{QQUserId}, qq_group_id = #{QQGroupId}, qq_bot_role = #{QQBotRole}, qq_scope_type = #{QQScopeType}, qq_scope_id = #{QQScopeId} WHERE id = #{id}")
+    @Update("UPDATE scope SET name = #{name}, is_at = #{isAt}, qq_user_role = #{qqUserRole},  qq_bot_role = #{qqBotRole}, qq_scope_type = #{qqScopeType}, qq_scope_id = #{qqScopeId} WHERE id = #{id}")
     int update(Scope scope);
 
     /**

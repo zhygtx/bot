@@ -1,5 +1,6 @@
 package com.example.demo.pojo.task;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
 
 import java.util.List;
@@ -36,6 +37,7 @@ public class Action {
     /**
      * 动作类型，文本/图片/脚本/HTTP 调用等
      */
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private ActionType actionType;
 
     /**

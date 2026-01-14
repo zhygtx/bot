@@ -1,5 +1,6 @@
 package com.example.demo.pojo.task.actionContent;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -52,6 +53,7 @@ public class Template {
     /**
      * 模板类型
      */
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private TemplateType templateType;
 
     /**

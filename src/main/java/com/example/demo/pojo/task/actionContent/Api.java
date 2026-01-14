@@ -1,5 +1,6 @@
 package com.example.demo.pojo.task.actionContent;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -24,6 +25,7 @@ public class Api {
     /**
      * api名称
      */
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private apiName name;
 
     /**

@@ -2,11 +2,15 @@ package com.example.demo.controller.task;
 
 import com.example.demo.pojo.Result;
 import com.example.demo.pojo.task.Scope;
+import com.example.demo.service.UserService;
 import com.example.demo.service.task.ScopeService;
 import com.example.demo.utils.AuthUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -16,11 +20,13 @@ public class ScopeController {
 
     private final ScopeService scopeService;
     private final AuthUtil authUtil;
+    private final UserService userService;
 
     @Autowired
-    public ScopeController(ScopeService scopeService, AuthUtil authUtil) {
+    public ScopeController(ScopeService scopeService, AuthUtil authUtil, UserService userService) {
         this.scopeService = scopeService;
         this.authUtil = authUtil;
+        this.userService = userService;
     }
 
     /**
@@ -80,7 +86,7 @@ public class ScopeController {
         if (userId == null) {
             return Result.error("未授权访问");
         }
-        
+        scope.setBotQQ(userService.selectById(userId).getBotQQ());
         // 设置当前用户ID
         scope.setUserId(userId);
         Scope addedScope = scopeService.addScope(scope);

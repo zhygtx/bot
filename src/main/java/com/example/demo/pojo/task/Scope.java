@@ -1,5 +1,7 @@
 package com.example.demo.pojo.task;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,58 +23,60 @@ public class Scope {
     /**
      * 触发规则ID，UUID
      */
+    @JsonProperty("id")
     private String id;
 
     /**
      * 触发规则名称
      */
+    @JsonProperty("name")
     private String name;
 
     /**
      * 所属用户ID
      */
+    @JsonProperty("userId")
     private String userId;
 
     /**
      * 机器人QQ
      */
+    @JsonProperty("botQQ")
     private Long botQQ;
 
     /**
      * 是否需要@才可触发
      */
+    @JsonProperty("isAt")
     @Builder.Default
     private boolean isAt = true;
 
     /**
      * 作用用户所需权限
      */
-    private GroupRole QQUserRole;
-
-    /**
-     * 作用用户QQ号
-     */
-    private Long QQUserId;
-
-    /**
-     * 作用群号
-     */
-    private Long QQGroupId;
+    @JsonProperty("qqUserRole")
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
+    private GroupRole qqUserRole;
 
     /**
      * 所需Bot权限
      */
-    private GroupRole QQBotRole;
+    @JsonProperty("qqBotRole")
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
+    private GroupRole qqBotRole;
 
     /**
      * 作用域类型
      */
-    private ScopeType QQScopeType;
+    @JsonProperty("qqScopeType")
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
+    private ScopeType qqScopeType;
 
     /**
      * 作用对象号(私聊为qq号，群聊为群号)
      */
-    private Long QQScopeId;
+    @JsonProperty("qqScopeId")
+    private Long qqScopeId;
 
     /**
      * 作用域类型
