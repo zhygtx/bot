@@ -2,12 +2,14 @@ package com.example.demo.pojo.task;
 
 import com.example.demo.interceptor.ExcludeFromMD5;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 
@@ -24,16 +26,22 @@ public class Role {
      * 任务规则ID，UUID
      */
     @ExcludeFromMD5
+    @JsonProperty("id")
     private String id;
 
     /**
      * 所属用户ID，UUID
      */
+    @JsonProperty("userId")
     private String userId;
+
+    @JsonProperty("name")
+    private String name;
 
     /**
      * 所属作用域ID，UUID
      */
+    @JsonProperty("scopeId")
     private String scopeId;
 
     /**
@@ -45,30 +53,35 @@ public class Role {
     /**
      * 匹配类型
      */
+    @JsonProperty("matchMode")
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     private MatchMode matchMode;
 
     /**
      * 正则表达式内容
      */
+    @JsonProperty("regex")
     private String regex;
 
     /**
      * 是否启用
      */
     @Builder.Default
+    @JsonProperty("isEnable")
     private boolean isEnable = false;
 
     /**
      * 是否提取正则表达式后续文本
      */
     @Builder.Default
+    @JsonProperty("isExtract")
     private boolean isExtract = false;
 
     /**
      * 提取文本位置
      */
-    private List<Integer> extractPosition;
+    @JsonProperty("extractPosition")
+    private Set<Integer> extractPosition;
 
     /**
      * 匹配类型

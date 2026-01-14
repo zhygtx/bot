@@ -72,7 +72,7 @@ public class RoleEngine implements RoleManager {
             // 判断是否需要提取文本
             if (role.isExtract() && role.getExtractPosition() != null && !role.getExtractPosition().isEmpty()) {
                 // 获取动作的提取位置
-                List<Integer> position = role.getExtractPosition();
+                List<Integer> position = role.getExtractPosition().stream().toList();
                 // 创建一个所提取的文本的列表
                 List<String> extractText = new ArrayList<>();
                 // 遍历提取位置

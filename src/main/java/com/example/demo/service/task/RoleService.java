@@ -48,6 +48,13 @@ public interface RoleService {
     Role addRole(Role role);
 
     /**
+     * 判断是否存在相同MD5的任务触发规则
+     * @param md5 MD5值
+     * @return 是否存在相同MD5的任务触发规则
+     */
+    Boolean existsByMd5(String md5);
+
+    /**
      * 更新任务触发规则
      * @param role 任务触发规则
      * @return 任务触发规则
