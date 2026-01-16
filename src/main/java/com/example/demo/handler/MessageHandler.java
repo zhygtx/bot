@@ -55,6 +55,7 @@ public class MessageHandler {
             List<String> result = taskProcessor.taskProcess(groupMsg);
 
             if (result!=null&&!result.isEmpty()){
+                log.debug("群聊发送消息: {}",result);
                 for (String s : result){
                     if (s!=null){
                         bot.sendGroupMsg(event.getGroupId(), s, false);
@@ -83,6 +84,7 @@ public class MessageHandler {
             List<String> result = taskProcessor.taskProcess(privateMsg);
 
             if (result!=null&&!result.isEmpty()){
+                log.debug("私聊发送的消息: {}",result);
                 for (String s : result){
                     if (s!=null){
                         bot.sendPrivateMsg(event.getUserId(), s, false);
