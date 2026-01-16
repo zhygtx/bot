@@ -46,11 +46,11 @@ public class UrlExecutor {
             }
             //删除最后一个多余的"&"
             url = new StringBuilder(url.substring(0, url.length() - 1));
-            log.debug("参数拼接完成，完整URL: {}", url.toString());
+            log.debug("参数拼接完成，完整URL: {}", url);
         }
         
         try{
-            log.debug("开始解析URL: {}", url.toString());
+            log.debug("开始解析URL: {}", url);
             String imageUrl = UrlUtil.retrieveUrl(url.toString());
             log.debug("URL解析成功，获取到图片URL: {}", imageUrl);
             
