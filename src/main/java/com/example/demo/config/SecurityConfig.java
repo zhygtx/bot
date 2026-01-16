@@ -46,7 +46,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // 允许 OPTIONS 请求直接通过
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/user/login", "/user/insertUser", "/email/**").permitAll()
+                        .requestMatchers("/user/login", "/user/insertUser", "/email/**", "/ws/bot").permitAll()
                         .requestMatchers("/static/**").permitAll()
                         .anyRequest().authenticated()
                 )

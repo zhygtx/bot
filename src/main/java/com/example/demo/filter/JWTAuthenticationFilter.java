@@ -42,7 +42,7 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
 
         // 排除不需要认证的接口
         String requestURI = request.getRequestURI();
-        if (requestURI.equals("/user/login") || requestURI.equals("/user/insertUser") || requestURI.startsWith("/email/")) {
+        if (requestURI.equals("/user/login") || requestURI.equals("/user/insertUser") || requestURI.startsWith("/email/") || requestURI.equals("/ws/bot")) {
             filterChain.doFilter(request, response);
             return;
         }

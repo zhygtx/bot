@@ -141,12 +141,12 @@ public class DockerUtil {
 
 
     /**
-     * 获取宿主IP地址
-     * @return 宿主IP地址
+     * 获取Docker网络的网关地址
+     * @return Docker网关地址
      * @throws Exception 网络操作异常
      */
     public String getHostIpAddress() throws Exception {
-        log.debug("开始获取宿主IP地址");
+        log.debug("开始获取Docker网络的网关地址");
 
         // 获取所有网络接口
         Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
@@ -172,17 +172,18 @@ public class DockerUtil {
                     String ip = address.getHostAddress();
                     log.debug("发现IP地址: {}", ip);
 
-                    // 排除Docker内部网络等特殊IP
-                    if (!ip.startsWith("172.17.0.") && !ip.startsWith("127.")) {
-                        log.debug("返回有效的宿主IP地址: {}", ip);
-                        return ip;
+                    // 检查是否为Docker网络的网关地址（172.17.0.1）
+                    if (ip.startsWith("172.17.0.")) {
+                        log.debug("返回Docker网络的默认网关地址: {}", ip);
+                        return "172.17.0.1";
                     }
+
                 }
             }
         }
 
-        log.warn("未找到合适的IP地址，返回默认IP: 172.17.0.1");
-        // 如果没有找到合适的IP，返回默认的Docker网关
+        log.warn("未找到Docker网关地址，返回默认IP: 172.17.0.1");
+        // 如果没有找到Docker网关地址，返回默认的Docker网关
         return "172.17.0.1";
     }
 

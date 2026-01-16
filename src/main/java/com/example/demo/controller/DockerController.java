@@ -1,6 +1,7 @@
 package com.example.demo.controller;
 
 import com.example.demo.docker.DockerService;
+import com.example.demo.pojo.Docker;
 import com.example.demo.pojo.Result;
 import com.example.demo.pojo.User;
 import com.example.demo.service.UserService;
@@ -31,14 +32,28 @@ public class DockerController {
      * @param napcatToken 用户设置的令牌
      */
     @RequestMapping("/create")
-    public Result<Integer> createContainer(HttpServletRequest request, String napcatToken) {
+    public Result<?> createContainer(HttpServletRequest request, String napcatToken) {
         String userId = authUtil.getCurrentUserId(request);
         User user = userService.selectById(userId);
         if (user.getBotQQ() == null){
             return Result.error("请先绑定BotQQ");
         }
-        Integer hostPort = dockerService.createContainer(user,napcatToken);
-        return Result.success("创建容器成功,请根据端口访问napcatUI进行扫码登录", hostPort);
+        Result<?> result = dockerService.createContainer(user,napcatToken);
+        if (!result.getCode().equals(0)){
+            return result;
+        }
+        return Result.success("创建容器成功,请根据端口访问napcatUI进行扫码登录", result.getData());
+    }
+
+    /**
+     * 获取容器信息
+     * @param request HTTP请求
+     */
+    @RequestMapping("/info")
+    public Result<?> getContainerInfo(HttpServletRequest request) {
+        String userId = authUtil.getCurrentUserId(request);
+        Docker docker = dockerService.getByUserId(userId);
+        return Result.success(docker);
     }
 
     /**

@@ -1,5 +1,7 @@
 package com.example.demo.docker;
 
+import com.example.demo.pojo.Docker;
+import com.example.demo.pojo.Result;
 import com.example.demo.pojo.User;
 
 /**
@@ -12,7 +14,14 @@ public interface DockerService {
      * @param user 用户
      * @param token 容器令牌
      */
-    Integer createContainer(User user, String token);
+    Result<?> createContainer(User user, String token);
+
+    /**
+     * 获取docker信息
+     * @param userId 用户id
+     * @return docker信息
+     */
+    Docker getByUserId(String userId);
 
     /**
      * 删除容器

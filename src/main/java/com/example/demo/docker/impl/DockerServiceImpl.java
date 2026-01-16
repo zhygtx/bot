@@ -3,6 +3,7 @@ package com.example.demo.docker.impl;
 import com.example.demo.docker.DockerService;
 import com.example.demo.mapper.DockerMapper;
 import com.example.demo.pojo.Docker;
+import com.example.demo.pojo.Result;
 import com.example.demo.pojo.User;
 import com.example.demo.service.EmailService;
 import com.example.demo.service.UserService;
@@ -40,8 +41,17 @@ public class DockerServiceImpl implements DockerService {
      * @param token token
      */
     @Override
-    public Integer createContainer(User user,String token){
-        String containerName = "napcat_" + user.getQQ();
+    public Result<?> createContainer(User user, String token){
+
+        if (dockerMapper.isOverLimit()){
+            return Result.error("总容器数量超限");
+        }
+
+        if (dockerMapper.selectByBotQQ(user.getBotQQ()) != null){
+            return Result.error("存在您创建的正在运行的容器");
+        }
+
+        String containerName = "napcat_" + user.getBotQQ();
         log.info("开始创建容器，用户: {}, 容器名称: {}, token: {}", user.getName(), containerName, token != null ? "***" : null);
         
         int hostPort;
@@ -66,7 +76,17 @@ public class DockerServiceImpl implements DockerService {
         docker.setCreateTime(LocalDateTime.now());
         docker.setUpdateTime(LocalDateTime.now());
         dockerMapper.insert(docker);
-        return hostPort;
+        return Result.success(hostPort);
+    }
+
+    /**
+     * 获取用户容器信息
+     * @param userId 用户ID
+     * @return 容器信息
+     */
+    @Override
+    public Docker getByUserId(String userId){
+        return dockerMapper.selectByUserId(userId);
     }
 
     /**
