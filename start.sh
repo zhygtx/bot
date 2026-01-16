@@ -1,17 +1,17 @@
 #!/bin/bash
 
 # =============================================================================
-# QQBot 可视化回复规则项目 - 启动脚本
+# QQBot 可视化回复规则项目 - Linux启动脚本 (修复版)
 # 版本: 1.0.0
 # 描述: 用于管理 QQBot 后端服务的启动、停止、重启和状态查看
 # 作者: Auto Generated
 # =============================================================================
 
 # --------------------------- 配置变量 ---------------------------
-# JVM 参数配置
-JAVA_OPTS="-Xms512m -Xmx1024m -Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8 -Dserver.address=0.0.0.0"
+# JVM 参数配置 - 添加网络配置以解决IPv4/IPv6问题
+JAVA_OPTS="-Xms512m -Xmx1024m -Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8 -Dserver.address=0.0.0.0 -Djava.net.preferIPv4Stack=true -Djava.net.preferIPv6Addresses=false -Djava.net.bindv6only=false"
 JAVA_OPTS="$JAVA_OPTS -Dspring.config.location=classpath:/,file:./,file:./config/"
-
+``
 # 应用配置
 PID_FILE="bot.pid"          # 进程ID文件
 LOG_FILE="bot.log"          # 日志文件
@@ -87,7 +87,7 @@ is_running() {
 ensure_java17_installed() {
     local java_version
     echo_info "检查 Java 17 环境..."
-    
+
     if command -v java &> /dev/null; then
         java_version=$(java -version 2>&1 | head -n1 | cut -d'"' -f2)
         if [[ $java_version =~ ^17\. ]]; then
@@ -102,12 +102,12 @@ ensure_java17_installed() {
 
     # 尝试安装 OpenJDK 17
     if command -v apt-get &> /dev/null; then
-        sudo apt-get update &> /dev/null
-        sudo apt-get install -y openjdk-17-jre-headless &> /dev/null
+        sudo apt-get update
+        sudo apt-get install -y openjdk-17-jre-headless
     elif command -v yum &> /dev/null; then
-        sudo yum install -y java-17-openjdk-headless &> /dev/null
+        sudo yum install -y java-17-openjdk-headless
     elif command -v dnf &> /dev/null; then
-        sudo dnf install -y java-17-openjdk-headless &> /dev/null
+        sudo dnf install -y java-17-openjdk-headless
     else
         echo_error "未找到包管理器，无法自动安装 Java 17"
         exit 1
@@ -131,17 +131,17 @@ ensure_java17_installed() {
 # 检查并安装 npm 和 nodejs
 ensure_npm_installed() {
     echo_info "检查 Node.js 和 npm 环境..."
-    
+
     # 检查 Node.js 是否已安装
     if ! node -v &> /dev/null; then
         echo_warning "Node.js 未安装，正在安装..."
         if command -v apt-get &> /dev/null; then
-            sudo apt-get update &> /dev/null
-            sudo apt-get install -y nodejs npm &> /dev/null
+            sudo apt-get update
+            sudo apt-get install -y nodejs npm
         elif command -v yum &> /dev/null; then
-            sudo yum install -y nodejs npm &> /dev/null
+            sudo yum install -y nodejs npm
         elif command -v dnf &> /dev/null; then
-            sudo dnf install -y nodejs npm &> /dev/null
+            sudo dnf install -y nodejs npm
         else
             echo_error "未找到包管理器，无法自动安装 nodejs 和 npm"
             exit 1
@@ -154,11 +154,11 @@ ensure_npm_installed() {
     if ! command -v npm &> /dev/null; then
         echo_warning "npm 未安装，正在安装..."
         if command -v apt-get &> /dev/null; then
-            sudo apt-get install -y npm &> /dev/null
+            sudo apt-get install -y npm
         elif command -v yum &> /dev/null; then
-            sudo yum install -y npm &> /dev/null
+            sudo yum install -y npm
         elif command -v dnf &> /dev/null; then
-            sudo dnf install -y npm &> /dev/null
+            sudo dnf install -y npm
         else
             echo_error "未找到包管理器，无法自动安装 npm"
             exit 1
@@ -178,32 +178,34 @@ ensure_npm_installed() {
 # 检查并安装 Playwright
 ensure_playwright_installed() {
     ensure_npm_installed
-    
+
     echo_info "检查 Playwright 环境..."
     
-    # 检查 Playwright 是否已安装
-    if ! npx playwright --version &> /dev/null; then
-        echo_warning "Playwright 未安装或安装不完整，正在安装..."
-        npm init playwright@latest --yes &> /dev/null
-        echo_success "Playwright 安装成功"
-    else
+    # 检查 Playwright 是否已安装，添加超时处理
+    if timeout 10s npx playwright --version &> /dev/null; then
         echo_success "Playwright 已安装"
+        return 0
+    else
+        echo_warning "Playwright 未安装或安装不完整..."
+        echo_info "注意：Playwright 不是核心依赖，将跳过安装以加速应用启动..."
+        echo_info "如果需要使用 Playwright 功能，请手动运行: npm init playwright@latest"
+        return 0
     fi
 }
 
 # 检查并安装 lsof
 ensure_lsof_installed() {
     echo_info "检查 lsof 工具..."
-    
+
     if ! command -v lsof &> /dev/null; then
         echo_warning "lsof 命令未找到，正在安装..."
         if command -v apt-get &> /dev/null; then
-            sudo apt-get update &> /dev/null
-            sudo apt-get install -y lsof &> /dev/null
+            sudo apt-get update
+            sudo apt-get install -y lsof
         elif command -v yum &> /dev/null; then
-            sudo yum install -y lsof &> /dev/null
+            sudo yum install -y lsof
         elif command -v dnf &> /dev/null; then
-            sudo dnf install -y lsof &> /dev/null
+            sudo dnf install -y lsof
         else
             echo_error "未找到包管理器，无法自动安装 lsof"
             exit 1
@@ -223,7 +225,7 @@ ensure_lsof_installed() {
 # 杀死占用端口的进程
 kill_port_process() {
     ensure_lsof_installed
-    
+
     local port=$1
     local pid=$(lsof -t -i:$port)
     if [ ! -z "$pid" ]; then
@@ -239,7 +241,7 @@ kill_port_process() {
 
 # 显示启动信息
 echo_separator
-echo_title "QQBot 可视化回复规则项目启动脚本"
+echo_title "QQBot 可视化回复规则项目启动脚本 (修复版)"
 echo_separator
 
 case "$1" in
@@ -249,30 +251,36 @@ case "$1" in
         
         # 启动前检查环境依赖
         ensure_java17_installed
-        ensure_playwright_installed
-        echo_success "环境依赖检查完成"
         
+        # 尝试安装Playwright，但不阻塞应用启动
+        echo_info "尝试检查 Playwright 环境..."
+        if ! ensure_playwright_installed; then
+            echo_warning "Playwright 环境检查失败，但将继续启动应用..."
+        fi
+        
+        echo_success "核心环境依赖检查完成"
+
         echo_separator
-        
+
         if is_running; then
             echo_warning "应用已在运行中 (PID: $(get_pid))"
         else
             echo_info "正在清理端口 $PORT..."
             kill_port_process $PORT
-            
+
             echo_separator
-            
+
             echo_info "正在启动应用..."
             # 检查JAR文件是否存在
             if [ ! -f "$JAR_FILE" ]; then
                 echo_error "未找到JAR文件 $JAR_FILE"
                 exit 1
             fi
-            
+
             # 启动应用
             nohup java $JAVA_OPTS -jar "$JAR_FILE" > "$LOG_FILE" 2>&1 &
             echo $! > "$PID_FILE"
-            
+
             echo_separator
             echo_success "应用已成功启动！"
             echo_info "PID: $(cat $PID_FILE)"
@@ -282,11 +290,11 @@ case "$1" in
             echo_separator
         fi
         ;;
-        
+
     stop)
         echo_title "停止应用服务"
         echo_separator
-        
+
         if is_running; then
             pid=$(get_pid)
             kill "$pid" &> /dev/null
@@ -295,15 +303,15 @@ case "$1" in
         else
             echo_warning "应用未运行"
         fi
-        
+
         echo_separator
-        
+
         # 清理端口占用
         echo_info "清理端口 $PORT 占用..."
         kill_port_process $PORT
         echo_separator
         ;;
-        
+
     restart)
         echo_title "重启应用服务"
         echo_separator
@@ -312,17 +320,17 @@ case "$1" in
         sleep 2
         $0 start
         ;;
-        
+
     status)
         echo_title "应用服务状态"
         echo_separator
-        
+
         if is_running; then
             echo_success "应用正在运行中"
             echo_info "PID: $(get_pid)"
             echo_info "端口: $PORT"
             echo_info "日志: $LOG_FILE"
-            
+
             echo_separator
             echo_info "最近 5 行日志:"
             if [ -f "$LOG_FILE" ]; then
@@ -333,16 +341,16 @@ case "$1" in
         else
             echo_warning "应用未运行"
         fi
-        
+
         echo_separator
         ;;
-        
+
     logs)
         echo_title "查看应用日志"
         echo_separator
         echo_info "按 Ctrl+C 退出日志查看"
         echo_separator
-        
+
         if [ -f "$LOG_FILE" ]; then
             tail -f "$LOG_FILE"
         else
@@ -350,7 +358,7 @@ case "$1" in
             exit 1
         fi
         ;;
-        
+
     *)
         echo_title "使用帮助"
         echo_separator
