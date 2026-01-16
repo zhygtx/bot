@@ -114,6 +114,10 @@ public class DockerServiceImpl implements DockerService {
         dockerMapper.deleteByContainerId(containerId);
     }
 
+    /**
+     * 删除容器
+     * @param user 用户
+     */
     @Override
     public void deleteContainer(User user){
         Long botQQ = user.getBotQQ();
@@ -127,22 +131,28 @@ public class DockerServiceImpl implements DockerService {
         emailService.sendEmail(user.getEmail(), "容器删除通知", "您的容器已被清理，如非本人操作请联系管理员", false);
     }
 
+    /**
+     * 清理容器
+     */
     @Override
     @Scheduled(initialDelay = 5 * 60 * 1000, fixedDelay = 5 * 60 * 1000)
     public void cleanDocker(){
         List<Docker> dockerList = dockerMapper.selectNeedUpdate();
+        log.debug("需要更新容器列表: {}", dockerList);
         for (Docker docker : dockerList) {
             List<String> files = dockerUtil.listFilesInContainer(docker.getContainerId());
-            if (!files.contains("napcat_"+ docker.getBotQQ())){
+            log.debug("容器 {} 中文件列表: {}", docker.getContainerId(), files);
+            if (files.contains("napcat_"+ docker.getBotQQ() + ".json") || files.contains("onebot11_"+ docker.getBotQQ() + ".json")){
+                log.debug("容器 {} 中登录的QQ与数据库中用户登记的QQ一致，更新容器信息", docker.getContainerId());
+                docker.setUpdateTime(LocalDateTime.now());
+                dockerMapper.update(docker);
+            }else {
                 log.debug("容器 {} 中登录的QQ与数据库中用户登记的QQ不一致，删除容器", docker.getContainerId());
                 dockerUtil.deleteContainer(docker.getContainerId());
                 dockerMapper.deleteByContainerId(docker.getContainerId());
                 String email = userService.selectEmail(docker.getUserId());
                 emailService.sendEmail(email, "容器删除通知", "由于您登录的QQ与登记的QQ并不一致现已被程序自动清除", false);
-            }else {
-                log.debug("容器 {} 中登录的QQ与数据库中用户登记的QQ一致，更新容器信息", docker.getContainerId());
-                docker.setUpdateTime(LocalDateTime.now());
-                dockerMapper.update(docker);
+
             }
         }
     }

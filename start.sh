@@ -11,12 +11,29 @@
 # JVM 参数配置 - 添加网络配置以解决IPv4/IPv6问题
 JAVA_OPTS="-Xms512m -Xmx1024m -Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8 -Dserver.address=0.0.0.0 -Djava.net.preferIPv4Stack=true -Djava.net.preferIPv6Addresses=false -Djava.net.bindv6only=false"
 JAVA_OPTS="$JAVA_OPTS -Dspring.config.location=classpath:/,file:./,file:./config/"
-``
 # 应用配置
 PID_FILE="bot.pid"          # 进程ID文件
 LOG_FILE="bot.log"          # 日志文件
 JAR_FILE="bot.jar"          # 应用JAR文件名
 PORT=8080                   # 应用端口
+
+# 配置文件处理 - 支持外部配置文件优先加载
+SPRING_CONFIG_OPTS=""
+if [ -f "./config/application.yml" ]; then
+    SPRING_CONFIG_OPTS="--spring.config.location=file:./config/application.yml"
+elif [ -f "./application.yml" ]; then
+    SPRING_CONFIG_OPTS="--spring.config.location=file:./application.yml"
+else
+    SPRING_CONFIG_OPTS="--spring.config.location=optional:file:./config/application.yml,optional:file:./application.yml"
+fi
+
+# 日志配置文件处理 - 支持外部 logback 配置文件
+LOGGING_OPTS=""
+if [ -f "./logback-spring.xml" ]; then
+    LOGGING_OPTS="-Dlogging.config=./logback-spring.xml"
+elif [ -f "./config/logback-spring.xml" ]; then
+    LOGGING_OPTS="-Dlogging.config=./config/logback-spring.xml"
+fi
 
 # --------------------------- 颜色定义 ---------------------------
 RED="\033[31m"
@@ -278,7 +295,7 @@ case "$1" in
             fi
 
             # 启动应用
-            nohup java $JAVA_OPTS -jar "$JAR_FILE" > "$LOG_FILE" 2>&1 &
+            nohup java $JAVA_OPTS $CONFIG_OPTS -jar "$JAR_FILE" > "$LOG_FILE" 2>&1 &
             echo $! > "$PID_FILE"
 
             echo_separator

@@ -2,8 +2,12 @@ package com.example.demo.pojo.task;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -81,5 +85,5 @@ public class Action {
     /**
      * 提取的文本内容
      */
-    private transient List<String> extractText;
+    private transient List<String> extractText = new ArrayList<>();
 }
