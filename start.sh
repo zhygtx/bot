@@ -100,47 +100,47 @@ is_running() {
     fi
 }
 
-# 检查并安装 Java 17
-ensure_java17_installed() {
+# 检查并安装 Java 21
+ensure_java21_installed() {
     local java_version
-    echo_info "检查 Java 17 环境..."
+    echo_info "检查 Java 21 环境..."
 
     if command -v java &> /dev/null; then
         java_version=$(java -version 2>&1 | head -n1 | cut -d'"' -f2)
-        if [[ $java_version =~ ^17\. ]]; then
-            echo_success "Java 17 已安装 (版本: $java_version)"
+        if [[ $java_version =~ ^21\. ]]; then
+            echo_success "Java 21 已安装 (版本: $java_version)"
             return 0
         else
-            echo_warning "检测到 Java 版本: $java_version，需要安装 Java 17"
+            echo_warning "检测到 Java 版本: $java_version，需要安装 Java 21"
         fi
     else
-        echo_warning "Java 未安装，正在安装 Java 17..."
+        echo_warning "Java 未安装，正在安装 Java 21..."
     fi
 
-    # 尝试安装 OpenJDK 17
+    # 尝试安装 OpenJDK 21
     if command -v apt-get &> /dev/null; then
         sudo apt-get update
-        sudo apt-get install -y openjdk-17-jre-headless
+        sudo apt-get install -y openjdk-21-jre-headless
     elif command -v yum &> /dev/null; then
-        sudo yum install -y java-17-openjdk-headless
+        sudo yum install -y java-21-openjdk-headless
     elif command -v dnf &> /dev/null; then
-        sudo dnf install -y java-17-openjdk-headless
+        sudo dnf install -y java-21-openjdk-headless
     else
-        echo_error "未找到包管理器，无法自动安装 Java 17"
+        echo_error "未找到包管理器，无法自动安装 Java 21"
         exit 1
     fi
 
     # 验证安装
     if ! command -v java &> /dev/null; then
-        echo_error "Java 17 安装失败"
+        echo_error "Java 21 安装失败"
         exit 1
     fi
 
     java_version=$(java -version 2>&1 | head -n1 | cut -d'"' -f2)
-    if [[ $java_version =~ ^17\. ]]; then
-        echo_success "Java 17 安装成功 (版本: $java_version)"
+    if [[ $java_version =~ ^21\. ]]; then
+        echo_success "Java 21 安装成功 (版本: $java_version)"
     else
-        echo_error "安装的 Java 版本不是 17，当前版本: $java_version"
+        echo_error "安装的 Java 版本不是 21，当前版本: $java_version"
         exit 1
     fi
 }
@@ -267,7 +267,7 @@ case "$1" in
         echo_separator
         
         # 启动前检查环境依赖
-        ensure_java17_installed
+        ensure_java21_installed
         
         # 尝试安装Playwright，但不阻塞应用启动
         echo_info "尝试检查 Playwright 环境..."
