@@ -4,26 +4,27 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.SuperBuilder;
 
-import java.util.List;
-import java.util.Map;
-
+/**
+ * 群事件实体
+ */
 @Data
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)
-public class Msg extends Event{
+public class GroupEvent extends Event{
 
     /**
-     * 发送者ID
+     * 被处理人ID
      */
     private Long userId;
 
     /**
-     * 消息具体内容
+     * 群ID
      */
-    private Map<Integer, Map<String, Object>> content;
+    private Long groupId;
 
     /**
-     * 消息类型
+     * 处理人ID
      */
-    private List<String> type;
+    private Long operatorId;
+
 }

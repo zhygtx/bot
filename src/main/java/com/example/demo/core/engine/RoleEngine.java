@@ -1,6 +1,7 @@
 package com.example.demo.core.engine;
 
 import com.example.demo.core.manager.RoleManager;
+import com.example.demo.pojo.event.Event;
 import com.example.demo.pojo.event.Msg;
 import com.example.demo.pojo.task.Action;
 import com.example.demo.pojo.task.Role;
@@ -24,8 +25,8 @@ public class RoleEngine implements RoleManager {
     public Map<String, List<Action>> getActions(List<Role> roles, Object msgObj){
         log.debug("开始获取动作，初始规则数量: {}", roles.size());
         // 获取消息对象传导为父对象
-        Msg msg = (Msg) msgObj;
-        log.debug("消息类型: {}", msg.getType());
+        Event event = (Event) msgObj;
+        log.debug("消息类型: {}", event.getEventType());
         // 获取作用域中获取到的具体规则，键值为规则ID，值为动作列表
         Map<String, List<Action>> actions = new HashMap<>();
 
@@ -38,18 +39,22 @@ public class RoleEngine implements RoleManager {
         // 过滤掉暂未实现的消息类型
         initialSize = roles.size();
         roles.removeIf(role ->
-                !msg.getType().contains(role.getMatchMode().toString()));
+                !event.getEventType().toString().contains(role.getMatchMode().toString()));
         log.debug("过滤不匹配消息类型后规则数量: {} (移除了 {} 个)", roles.size(), initialSize - roles.size());
 
         for (Role role : roles){
             log.debug("处理规则: {}, 匹配模式: {}", role.getId(), role.getMatchMode());
             switch (role.getMatchMode()){
                 case text :
+                    Msg msg = (Msg) msgObj;
                     if (msg.getType().contains("text")){
                         matchText(role, msg, actions);
                     }
                     break;
                 case image :
+                case GroupIncrease :
+                case GroupDecrease :
+                    break;
                 default:
                     log.debug("暂不支持的匹配模式: {}", role.getMatchMode());
                     break;

@@ -82,9 +82,9 @@ public class Scope {
      * 作用域类型
      */
     public enum ScopeType {
-        all,
-        groupMsg,
-        privateMsg
+        All,
+        Group,
+        Private
     }
 
     /**

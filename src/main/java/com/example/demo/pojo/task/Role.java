@@ -35,6 +35,9 @@ public class Role {
     @JsonProperty("userId")
     private String userId;
 
+    /**
+     * 任务规则名称
+     */
     @JsonProperty("name")
     private String name;
 
@@ -87,8 +90,10 @@ public class Role {
      * 匹配类型
      */
     public enum MatchMode {
-        text,//发送文本
-        image//发送图片
+        text,//消息文本
+        image,//消息图片
+        GroupIncrease,//群成员增加
+        GroupDecrease//退群事件
     }
 
     /**
