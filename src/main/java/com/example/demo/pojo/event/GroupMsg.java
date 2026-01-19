@@ -1,4 +1,4 @@
-package com.example.demo.pojo.msg;
+package com.example.demo.pojo.event;
 
 import lombok.*;
 import lombok.experimental.SuperBuilder;

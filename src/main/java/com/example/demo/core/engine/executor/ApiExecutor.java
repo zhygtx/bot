@@ -1,6 +1,6 @@
 package com.example.demo.core.engine.executor;
 
-import com.example.demo.pojo.msg.GroupMsg;
+import com.example.demo.pojo.event.GroupMsg;
 import com.example.demo.pojo.task.Action;
 import com.example.demo.pojo.task.actionContent.Api;
 import com.example.demo.service.task.actionContent.ApiService;

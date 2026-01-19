@@ -1,7 +1,7 @@
 package com.example.demo.core.processor;
 
-import com.example.demo.pojo.msg.GroupMsg;
-import com.example.demo.pojo.msg.PrivateMsg;
+import com.example.demo.pojo.event.GroupMsg;
+import com.example.demo.pojo.event.PrivateMsg;
 import com.mikuac.shiro.core.Bot;
 import com.mikuac.shiro.dto.event.message.GroupMessageEvent;
 import com.mikuac.shiro.dto.event.message.PrivateMessageEvent;

@@ -87,8 +87,8 @@ public class Role {
      * 匹配类型
      */
     public enum MatchMode {
-        text,
-        image
+        text,//发送文本
+        image//发送图片
     }
 
     /**

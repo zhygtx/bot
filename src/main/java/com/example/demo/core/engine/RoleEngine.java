@@ -1,7 +1,7 @@
 package com.example.demo.core.engine;
 
 import com.example.demo.core.manager.RoleManager;
-import com.example.demo.pojo.msg.Msg;
+import com.example.demo.pojo.event.Msg;
 import com.example.demo.pojo.task.Action;
 import com.example.demo.pojo.task.Role;
 import lombok.extern.slf4j.Slf4j;

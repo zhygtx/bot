@@ -1,7 +1,7 @@
 package com.example.demo.core.engine.executor;
 
 
-import com.example.demo.pojo.msg.GroupMsg;
+import com.example.demo.pojo.event.GroupMsg;
 import com.example.demo.pojo.task.Action;
 import com.example.demo.service.task.actionContent.TextService;
 import com.mikuac.shiro.common.utils.MsgUtils;

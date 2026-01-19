@@ -2,8 +2,8 @@ package com.example.demo.handler;
 
 import com.example.demo.core.processor.MessageProcessor;
 import com.example.demo.core.processor.TaskProcessor;
-import com.example.demo.pojo.msg.GroupMsg;
-import com.example.demo.pojo.msg.PrivateMsg;
+import com.example.demo.pojo.event.GroupMsg;
+import com.example.demo.pojo.event.PrivateMsg;
 import com.mikuac.shiro.annotation.GroupMessageHandler;
 import com.mikuac.shiro.annotation.PrivateMessageHandler;
 import com.mikuac.shiro.annotation.common.Shiro;
