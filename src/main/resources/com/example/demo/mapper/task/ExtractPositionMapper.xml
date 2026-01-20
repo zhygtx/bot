@@ -5,7 +5,7 @@
 <mapper namespace="com.example.demo.mapper.task.ExtractPositionMapper">
 
     <!-- 插入提取位置 -->
-    <insert id="insert" parameterType="map">
+    <insert id="insert" parameterType="java.util.Map">
         INSERT INTO extract_position (role_id, extract_position)
         VALUES
         <foreach collection="extractPosition" item="position" separator=",">
