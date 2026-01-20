@@ -8,6 +8,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -95,11 +96,12 @@ public class Role {
         GroupIncrease,//群成员增加
         GroupDecrease//退群事件
     }
+    //todo 字段内容修改
 
     /**
      * 关联的动作内容
      */
-    private transient List<Action> action;
+    private transient List<Action> action = new ArrayList<>();
 
     /**
      * 预编译的Pattern对象

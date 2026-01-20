@@ -1,29 +1,34 @@
 package com.example.demo.service.task.impl;
 
-import com.example.demo.mapper.task.ScopeMapper;
+import com.example.demo.mapper.task.*;
+import com.example.demo.pojo.task.Action;
+import com.example.demo.pojo.task.Receiver;
 import com.example.demo.pojo.task.Role;
 import com.example.demo.pojo.task.Scope;
 import com.example.demo.service.task.RoleService;
 import com.example.demo.service.task.ScopeService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class ScopeServiceImpl implements ScopeService {
 
     private final RoleService roleService;
     private final ScopeMapper scopeMapper;
+    private final ReceiverMapper receiverMapper;
+    private final ActionMapper actionMapper;
+    private final RoleMapper roleMapper;
+    private final ExtractPositionMapper extractPositionMapper;
 
-    @Autowired
-    public ScopeServiceImpl(RoleService roleService, ScopeMapper scopeMapper) {
+    public ScopeServiceImpl(RoleService roleService, ScopeMapper scopeMapper, ReceiverMapper receiverMapper, ActionMapper actionMapper, RoleMapper roleMapper, ExtractPositionMapper extractPositionMapper) {
         this.roleService = roleService;
         this.scopeMapper = scopeMapper;
+        this.receiverMapper = receiverMapper;
+        this.actionMapper = actionMapper;
+        this.roleMapper = roleMapper;
+        this.extractPositionMapper = extractPositionMapper;
     }
 
     /**
@@ -33,12 +38,7 @@ public class ScopeServiceImpl implements ScopeService {
     @Override
     public List<Scope> getAllScopes() {
         List<Scope> scopes = scopeMapper.getAllScopes();
-        Map<String, List<Role>> allRoles = roleService.getAllRoles();
-        for (Scope scope : scopes) {
-            List<Role> roles = allRoles.get(scope.getId());
-            scope.setRoles(roles != null ? new ArrayList<>(roles) : new ArrayList<>());
-        }
-        return scopes;
+        return getScope(scopes);
     }
 
     /**
@@ -49,12 +49,8 @@ public class ScopeServiceImpl implements ScopeService {
     @Override
     public Scope getScopeById(String id) {
         Scope scope = scopeMapper.selectById(id);
-        if (scope != null) {
-            Map<String, List<Role>> allRoles = roleService.getAllRoles();
-            List<Role> roles = allRoles.get(scope.getId());
-            scope.setRoles(roles != null ? new ArrayList<>(roles) : new ArrayList<>());
-        }
-        return scope;
+        List<Scope> scopes = getScope(Collections.singletonList(scope));
+        return scopes.get(0) != null ? scopes.get(0) : new Scope();
     }
 
     /**
@@ -65,12 +61,7 @@ public class ScopeServiceImpl implements ScopeService {
     @Override
     public List<Scope> getScopesByUserId(String userId) {
         List<Scope> scopes = scopeMapper.selectByUserId(userId);
-        Map<String, List<Role>> allRoles = roleService.getAllRoles();
-        for (Scope scope : scopes) {
-            List<Role> roles = allRoles.get(scope.getId());
-            scope.setRoles(roles != null ? new ArrayList<>(roles) : new ArrayList<>());
-        }
-        return scopes;
+        return getScope(scopes);
     }
 
     /**
@@ -110,4 +101,46 @@ public class ScopeServiceImpl implements ScopeService {
         return scopeMapper.deleteById(id);
     }
 
+
+    /**
+     * 获取作用域列表
+     * @param scopes 空的作用域列表
+     * @return 填满数据的作用域列表
+     */
+    private List<Scope> getScope(List<Scope> scopes){
+        // 获取所有数据，避免多次查询数据库
+        List<Receiver> receivers = receiverMapper.getAll();
+        List<Action> actions = actionMapper.getAll();
+        List<Role> roles = roleMapper.getAll();
+        Map<String, Object> allRoles = extractPositionMapper.getAll();
+        // 填充Action
+        for (Action action : actions){
+            action.setReceivers(
+                    receivers.stream().
+                    filter(receiver -> receiver.getActionId().equals(action.getId()))
+                    .toList()
+            );
+        }
+        // 填充Role
+        for (Role role : roles){
+            role.setAction(
+                    actions.stream().
+                    filter(action -> action.getRoleId().equals(role.getId()))
+                    .toList()
+            );
+            //noinspection unchecked
+            role.setExtractPosition(
+                    (Set<Integer>) allRoles.get(role.getId())
+            );
+        }
+        // 填充Scope
+        for (Scope scope : scopes){
+            scope.setRoles(
+                    roles.stream().
+                    filter(role -> role.getScopeId().equals(scope.getId()))
+                    .toList()
+            );
+        }
+        return scopes;
+    }
 }

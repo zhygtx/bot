@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -86,11 +87,12 @@ public class Scope {
         Group,
         Private
     }
+    //todo 字段内容修改
 
     /**
      * 所拥有的触发规则
      */
-    private transient List<Role> roles;
+    private transient List<Role> roles = new ArrayList<>();
 
     /**
      * 作用用户权限枚举

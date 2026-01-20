@@ -34,11 +34,10 @@ public interface ActionMapper {
 
     /**
      * 根据规则ID获取动作列表
-     * @param roleId 规则ID
      * @return 动作列表
      */
-    @Select("SELECT * FROM action WHERE role_id = #{roleId}")
-    List<Action> selectByRoleId(@Param("roleId") String roleId);
+    @Select("SELECT * FROM action")
+    List<Action> getAll();
 
     /**
      * 插入动作

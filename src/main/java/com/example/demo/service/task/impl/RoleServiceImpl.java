@@ -36,43 +36,6 @@ public class RoleServiceImpl implements RoleService {
     }
 
     /**
-     * 获取所有任务触发规则，按作用域分组
-     * @return 所有任务触发规则
-     */
-    @Override
-    public Map<String, List<Role>> getAllRoles() {
-        Map<String, List<Role>> result = new HashMap<>();
-        List<Role> roles = roleMapper.getAllRoles();
-        // 遍历角色列表，为每个角色设置对应的操作权限，并按作用域ID分组存储到结果集中
-        for (Role role : roles){
-            // 获取当前角色对应的所有操作权限并设置到角色对象中
-            role.setAction(actionMapper.getActions(role.getId()));
-            // 获取当前规则所需要的提取位置
-            role.setExtractPosition(extractPositionMapper.getExtractPosition(role.getId()));
-            // 确保结果集中存在当前作用域ID对应的列表，如果不存在则创建新的空列表
-            result.put(role.getScopeId(), result.getOrDefault(role.getScopeId(), new ArrayList<>()));
-            // 将当前角色添加到对应作用域ID的列表中
-            result.get(role.getScopeId()).add(role);
-        }
-
-        return result;
-    }
-
-    /**
-     * 获取所有任务触发规则列表
-     * @return 任务触发规则列表
-     */
-    @Override
-    public List<Role> getAllRolesList() {
-        List<Role> roles = roleMapper.getAllRoles();
-        for (Role role : roles) {
-            role.setAction(actionMapper.getActions(role.getId()));
-            role.setExtractPosition(extractPositionMapper.getExtractPosition(role.getId()));
-        }
-        return roles;
-    }
-
-    /**
      * 根据ID获取任务触发规则
      * @param id 任务触发规则ID
      * @return 任务触发规则

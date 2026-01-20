@@ -13,7 +13,7 @@ public interface RoleMapper {
      * @return 任务规则列表
      */
     @Select("SELECT * FROM role")
-    List<Role> getAllRoles();
+    List<Role> getAll();
 
     /**
      * 根据ID获取任务规则
