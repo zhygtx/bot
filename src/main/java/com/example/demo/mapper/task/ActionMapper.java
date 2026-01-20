@@ -44,7 +44,7 @@ public interface ActionMapper {
      * @param action 动作
      * @return 插入数量
      */
-    @Insert("INSERT INTO action (id, name,role_id, user_id, need_at, action_type, data_id, is_concat, seq) VALUES (#{id},#{name},#{roleId}, #{userId}, #{needAt}, #{actionType}, #{dataId}, #{isConcat}, #{seq})")
+    @Insert("INSERT INTO action (id, name,role_id, user_id, need_at, action_type, data_id, seq) VALUES (#{id},#{name},#{roleId}, #{userId}, #{needAt}, #{actionType}, #{dataId}, #{seq})")
     int insert(Action action);
 
     /**
@@ -52,16 +52,15 @@ public interface ActionMapper {
      * @param action 动作
      * @return 更新数量
      */
-    @Update("UPDATE action SET role_id = #{roleId}, name =#{name}, need_at = #{needAt}, action_type = #{actionType}, data_id = #{dataId}, is_concat = #{isConcat}, seq = #{seq} WHERE id = #{id}")
+    @Update("UPDATE action SET role_id = #{roleId}, name =#{name}, need_at = #{needAt}, action_type = #{actionType}, data_id = #{dataId}, seq = #{seq} WHERE id = #{id}")
     int update(Action action);
 
     /**
      * 根据ID删除动作
      * @param id 动作ID
-     * @return 删除数量
      */
     @Delete("DELETE FROM action WHERE id = #{id}")
-    int deleteById(@Param("id") String id);
+    void deleteById(@Param("id") String id);
 
     /**
      * 根据规则ID删除动作

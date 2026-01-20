@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.mapper.task.ReceiverMapper">
+
+    <!-- 批量插入 -->
+    <insert id="insert" parameterType="java.util.List">
+        INSERT INTO receiver (id, user_id, action_id, receiver_type, receiver_qq)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.id}, #{item.userId}, #{item.actionId}, #{item.receiverType}, #{item.receiverQQ})
+        </foreach>
+    </insert>
+
+</mapper>

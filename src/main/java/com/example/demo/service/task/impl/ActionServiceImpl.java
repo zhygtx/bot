@@ -1,7 +1,9 @@
 package com.example.demo.service.task.impl;
 
 import com.example.demo.mapper.task.ActionMapper;
+import com.example.demo.mapper.task.ReceiverMapper;
 import com.example.demo.pojo.task.Action;
+import com.example.demo.pojo.task.Receiver;
 import com.example.demo.service.task.ActionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -16,10 +18,12 @@ import java.util.UUID;
 public class ActionServiceImpl implements ActionService {
 
     private final ActionMapper actionMapper;
+    private final ReceiverMapper receiverMapper;
 
     @Autowired
-    public ActionServiceImpl(ActionMapper actionMapper) {
+    public ActionServiceImpl(ActionMapper actionMapper, ReceiverMapper receiverMapper) {
         this.actionMapper = actionMapper;
+        this.receiverMapper = receiverMapper;
     }
 
 
@@ -30,7 +34,11 @@ public class ActionServiceImpl implements ActionService {
      */
     @Override
     public List<Action> getActions(String roleId){
-        return actionMapper.getActions(roleId);
+        List<Action> actions = actionMapper.getActions(roleId);
+        for (Action action : actions) {
+            action.setReceivers(receiverMapper.getByActionId(action.getId()));
+        }
+        return actions;
     }
 
     /**
@@ -40,7 +48,9 @@ public class ActionServiceImpl implements ActionService {
      */
     @Override
     public Action getActionById(String id) {
-        return actionMapper.selectById(id);
+        Action action = actionMapper.selectById(id);
+        action.setReceivers(receiverMapper.getByActionId(action.getId()));
+        return action;
     }
 
     /**
@@ -50,7 +60,11 @@ public class ActionServiceImpl implements ActionService {
      */
     @Override
     public List<Action> getActionsByUserId(String userId) {
-        return actionMapper.selectByUserId(userId);
+        List<Action> actions = actionMapper.selectByUserId(userId);
+        for (Action action : actions) {
+            action.setReceivers(receiverMapper.getByActionId(action.getId()));
+        }
+        return actions;
     }
 
     /**
@@ -62,6 +76,11 @@ public class ActionServiceImpl implements ActionService {
     public Action addAction(Action action) {
         action.setId(UUID.randomUUID().toString());
         actionMapper.insert(action);
+        for (Receiver receiver : action.getReceivers()){
+            receiver.setId(UUID.randomUUID().toString());
+            receiver.setUserId(action.getUserId());
+        }
+        receiverMapper.insert(action.getReceivers());
         return action;
     }
 
@@ -73,17 +92,23 @@ public class ActionServiceImpl implements ActionService {
     @Override
     public Action updateAction(Action action) {
         actionMapper.update(action);
+        receiverMapper.deleteByActionId(action.getId());
+        for (Receiver receiver : action.getReceivers()){
+            receiver.setId(UUID.randomUUID().toString());
+            receiver.setUserId(action.getUserId());
+        }
+        receiverMapper.insert(action.getReceivers());
         return action;
     }
 
     /**
      * 根据ID删除动作
      * @param id 动作ID
-     * @return 删除数量
      */
     @Override
-    public int deleteActionById(String id) {
-        return actionMapper.deleteById(id);
+    public void deleteActionById(String id) {
+        actionMapper.deleteById(id);
+        receiverMapper.deleteByActionId(id);
     }
 
     /**
@@ -93,6 +118,10 @@ public class ActionServiceImpl implements ActionService {
      */
     @Override
     public int deleteActionsByRoleId(String roleId) {
+        List<Action> actions = actionMapper.getActions(roleId);
+        for (Action action : actions){
+            receiverMapper.deleteByActionId(action.getId());
+        }
         return actionMapper.deleteByRoleId(roleId);
     }
 

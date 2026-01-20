@@ -47,9 +47,8 @@ public interface ActionService {
     /**
      * 根据ID删除动作
      * @param id 动作ID
-     * @return 删除数量
      */
-    int deleteActionById(String id);
+    void deleteActionById(String id);
 
     /**
      * 根据规则ID删除动作

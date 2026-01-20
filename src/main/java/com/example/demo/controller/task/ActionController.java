@@ -161,12 +161,8 @@ public class ActionController {
             return Result.error("无权限删除该动作");
         }
         
-        int result = actionService.deleteActionById(id);
-        if (result > 0) {
-            return Result.success("动作删除成功");
-        } else {
-            return Result.error("动作删除失败");
-        }
+        actionService.deleteActionById(id);
+        return  Result.success();
     }
 
     /**
