@@ -9,6 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -85,7 +86,7 @@ public class Role {
      * 提取文本位置
      */
     @JsonProperty("extractPosition")
-    private Set<Integer> extractPosition;
+    private Set<Integer> extractPosition = new HashSet<>();
 
     /**
      * 匹配类型

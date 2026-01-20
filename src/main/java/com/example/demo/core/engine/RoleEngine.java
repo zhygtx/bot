@@ -22,13 +22,13 @@ public class RoleEngine implements RoleManager {
      * @return 获取到的需要执行的动作
      */
     @Override
-    public Map<String, List<Action>> getActions(List<Role> roles, Object msgObj){
+    public List<Action> getActions(List<Role> roles, Object msgObj){
         log.debug("开始获取动作，初始规则数量: {}", roles.size());
         // 获取消息对象传导为父对象
         Event event = (Event) msgObj;
         log.debug("消息类型: {}", event.getEventType());
         // 获取作用域中获取到的具体规则，键值为规则ID，值为动作列表
-        Map<String, List<Action>> actions = new HashMap<>();
+        List<Action> actions = new ArrayList<>();
 
         // 过滤掉动作为空的类型
         int initialSize = roles.size();
@@ -52,8 +52,10 @@ public class RoleEngine implements RoleManager {
                     }
                     break;
                 case image :
+                    break;
                 case GroupIncrease :
                 case GroupDecrease :
+                    actions.addAll(role.getAction());
                     break;
                 default:
                     log.debug("暂不支持的匹配模式: {}", role.getMatchMode());
@@ -71,7 +73,7 @@ public class RoleEngine implements RoleManager {
      * @param msg 消息对象
      * @param actions 动作列表
      */
-    private void matchText(Role role, Msg msg , Map<String, List<Action>> actions){
+    private void matchText(Role role, Msg msg , List<Action> actions){
         log.debug("匹配文本消息，规则ID: {}, 正则表达式: {}", role.getId(), role.getPattern().pattern());
         
         Integer firstTextType = msg.getType().indexOf("text");
@@ -113,7 +115,7 @@ public class RoleEngine implements RoleManager {
                 log.debug("设置所有动作的提取文本: {}", extractText);
             }
 
-            actions.put(role.getId(), roleActions);
+            actions.addAll(roleActions);
             log.debug("添加动作到结果，规则ID: {}, 动作数量: {}", role.getId(), roleActions.size());
         } else {
             log.debug("文本匹配失败，规则ID: {}", role.getId());

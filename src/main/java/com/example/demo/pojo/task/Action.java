@@ -61,12 +61,7 @@ public class Action {
     @JsonProperty("dataId")
     private String dataId;
 
-    /**
-     * 是否拼接该动作链中上一条所需发送的消息
-     */
-    @Builder.Default
-    @JsonProperty("isConcat")
-    private boolean isConcat = false;
+    //todo:字段名修改，删除字段isConcat
 
     /**
      * 动作执行优先级，越小越先执行
@@ -86,4 +81,9 @@ public class Action {
      * 提取的文本内容
      */
     private transient List<String> extractText = new ArrayList<>();
+
+    /**
+     * 动作接收对象
+     */
+    private transient List<Receiver> receivers = new ArrayList<>();
 }
