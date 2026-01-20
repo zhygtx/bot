@@ -1,7 +1,6 @@
 package com.example.demo.core.engine.executor;
 
 
-import com.example.demo.pojo.event.GroupMsg;
 import com.example.demo.pojo.task.Action;
 import com.example.demo.service.task.actionContent.TextService;
 import com.mikuac.shiro.common.utils.MsgUtils;
@@ -43,12 +42,6 @@ public class TextExecutor {
                 log.debug("添加提取文本: {}", extractText);
                 builder.text(extractText);
             }
-        }
-
-        // 如果需要@用户，则添加@操作
-        if (action.isNeedAt()) {
-            log.debug("需要@用户，用户ID: {}", ((GroupMsg)msg).getUserId());
-            builder.at(((GroupMsg)msg).getUserId());
         }
 
         String result = builder.build();
