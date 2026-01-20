@@ -10,6 +10,6 @@ import java.util.List;
 public interface ReceiverMapper {
 
     //todo:数据库及其相关层完成
-    @Select("select * from bot")
+    @Select("select * from receiver")
     List<Receiver> getAll();
 }

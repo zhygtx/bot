@@ -22,17 +22,19 @@ public class ReceiverEngine implements ReceiverManager {
      */
     @Override
     public void sendMessage(Bot bot, Map<Receiver.ReceiverType, Map<Long,String>> receivers) {
-        receivers.forEach((receiverType, receiverMap) ->
-                receiverMap.forEach((receiverQQ, message) -> {
-            switch (receiverType) {
-                case Private:
-                    bot.sendPrivateMsg(receiverQQ, message,false);
-                    break;
-                case Group:
-                    bot.sendGroupMsg(receiverQQ, message, false);
-                    break;
-            }
-        }));
+        if (!receivers.isEmpty()){
+            receivers.forEach((receiverType, receiverMap) ->
+                    receiverMap.forEach((receiverQQ, message) -> {
+                        switch (receiverType) {
+                            case Private:
+                                bot.sendPrivateMsg(receiverQQ, message,false);
+                                break;
+                            case Group:
+                                bot.sendGroupMsg(receiverQQ, message, false);
+                                break;
+                        }
+                    }));
+        }
     }
 
 }

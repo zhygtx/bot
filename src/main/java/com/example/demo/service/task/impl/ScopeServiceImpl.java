@@ -112,7 +112,15 @@ public class ScopeServiceImpl implements ScopeService {
         List<Receiver> receivers = receiverMapper.getAll();
         List<Action> actions = actionMapper.getAll();
         List<Role> roles = roleMapper.getAll();
-        Map<String, Object> allRoles = extractPositionMapper.getAll();
+        List<Map<String, Integer>> extractPositionList = extractPositionMapper.getAll();
+        Map<String, Set<Integer>> extractPositionMap = new HashMap<>();
+        // 填充 extractPositionMap
+        for (Map<String, Integer> map : extractPositionList) {
+            String roleId = String.valueOf(map.get("role_id"));
+            Integer position = map.get("extract_position");
+
+            extractPositionMap.computeIfAbsent(roleId, k -> new HashSet<>()).add(position);
+        }
         // 填充Action
         for (Action action : actions){
             action.setReceivers(
@@ -128,9 +136,8 @@ public class ScopeServiceImpl implements ScopeService {
                     filter(action -> action.getRoleId().equals(role.getId()))
                     .toList()
             );
-            //noinspection unchecked
             role.setExtractPosition(
-                    (Set<Integer>) allRoles.get(role.getId())
+                    extractPositionMap.get(role.getId())
             );
         }
         // 填充Scope

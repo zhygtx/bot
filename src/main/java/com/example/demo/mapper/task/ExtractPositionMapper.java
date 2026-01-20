@@ -2,6 +2,7 @@ package com.example.demo.mapper.task;
 
 import org.apache.ibatis.annotations.*;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -15,9 +16,9 @@ public interface ExtractPositionMapper {
      * 获取作用域的提取位置
      * @return 角色ID与提取位置列表
      */
-    @Select("SELECT role_id, extract_position FROM extract_position")
-    @MapKey("roleId")
-    Map<String, Object> getAll();
+    @Select("SELECT role_id, extract_position FROM extract_position ORDER BY role_id")
+    @MapKey("role_id")
+    List<Map<String, Integer>> getAll();
 
     /**
      * 获取作用域的提取位置
