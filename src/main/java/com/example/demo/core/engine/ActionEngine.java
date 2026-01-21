@@ -50,23 +50,13 @@ public class ActionEngine implements ActionManager {
             String result = "";
             log.debug("执行动作: {}, 类型: {}", action.getId(), action.getActionType());
             //处理相关动作
-            switch (action.getActionType()){
-                case text:
-                    result = handleText(action, msg);
-                    break;
-                case image: log.debug("图片动作类型暂未实现");
-                    break;
-                case api:
-                    result = handleApi(action, msg);
-                    break;
-                case url:
-                    result = handleUrl(action, msg);
-                    break;
-                case template:
-                    result = handleTemplate(action, msg);
-                    break;
-                default: log.debug("未知动作类型: {}", action.getActionType());
-                    break;
+            switch (action.getActionType()) {
+                case text -> result = handleText(action, msg);
+                case image -> log.debug("图片动作类型暂未实现");
+                case api -> result = handleApi(action, msg);
+                case url -> result = handleUrl(action, msg);
+                case template -> result = handleTemplate(action, msg);
+                default -> log.debug("未知动作类型: {}", action.getActionType());
             }
             //处理接收对象
             if (result != null){
@@ -86,7 +76,16 @@ public class ActionEngine implements ActionManager {
                                 receivers.put(Receiver.ReceiverType.Group, Map.of(groupEvent.getGroupId(), result));
                             }
                         }else {
-                            receivers.put(receiver.getReceiverType(), Map.of(receiver.getReceiverQQ(), result));
+                            if (receiver.getReceiverType() == Receiver.ReceiverType.Private){
+                                receivers.put(Receiver.ReceiverType.Private, Map.of(receiver.getReceiverUserQQ(), result));
+                            }else {
+                                if (action.isNeedAt() && receiver.getReceiverUserQQ()>0 &&receiver.getReceiverType() == Receiver.ReceiverType.Group){
+                                    result += MsgUtils.builder()
+                                            .at(receiver.getReceiverUserQQ())
+                                            .build();
+                                }
+                                receivers.put(receiver.getReceiverType(), Map.of(receiver.getReceiverGroupQQ(), result));
+                            }
                         }
                     }
                 }else {

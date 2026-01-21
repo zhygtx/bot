@@ -37,10 +37,16 @@ public class Receiver {
     private ReceiverType receiverType = ReceiverType.Default;//默认为默认
 
     /**
-     * 接收对象QQ(群号或个人QQ号)
+     * 群号
      */
-    @JsonProperty("receiverQQ")
-    private Long receiverQQ;
+    @JsonProperty("receiverGroupQQ")
+    private Long receiverGroupQQ;
+
+    /**
+     * 用户QQ
+     */
+    @JsonProperty("receiverUserQQ")
+    private Long receiverUserQQ;
 
     /**
      * 接收角色枚举

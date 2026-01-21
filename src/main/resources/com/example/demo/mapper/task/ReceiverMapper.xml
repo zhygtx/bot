@@ -6,10 +6,10 @@
 
     <!-- 批量插入 -->
     <insert id="insert" parameterType="java.util.List">
-        INSERT INTO receiver (id, user_id, action_id, receiver_type, receiver_qq)
+        INSERT INTO receiver (id, user_id, action_id, receiver_type, receiver_group_qq, receiver_user_qq)
         VALUES
         <foreach collection="list" item="item" separator=",">
-            (#{item.id}, #{item.userId}, #{item.actionId}, #{item.receiverType}, #{item.receiverQQ})
+            (#{item.id}, #{item.userId}, #{item.actionId}, #{item.receiverType}, #{item.receiverGroupQQ}, #{item.receiverUserQQ})
         </foreach>
     </insert>
 
