@@ -140,6 +140,10 @@ public class DockerServiceImpl implements DockerService {
         List<Docker> dockerList = dockerMapper.selectNeedUpdate();
         log.debug("需要更新容器列表: {}", dockerList);
         for (Docker docker : dockerList) {
+            if (!dockerUtil.isContainerRunning(docker.getContainerId())){
+                log.debug("容器 {} 已停止运行，删除容器记录", docker.getContainerId());
+                dockerMapper.deleteByContainerId(docker.getContainerId());
+            }
             List<String> files = dockerUtil.listFilesInContainer(docker.getContainerId());
             log.debug("容器 {} 中文件列表: {}", docker.getContainerId(), files);
             if (files.contains("napcat_"+ docker.getBotQQ() + ".json") || files.contains("onebot11_"+ docker.getBotQQ() + ".json")){

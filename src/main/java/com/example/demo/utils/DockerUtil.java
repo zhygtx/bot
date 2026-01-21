@@ -4,6 +4,7 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
+import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.*;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
@@ -372,6 +373,21 @@ public class DockerUtil {
         } catch (Exception e) {
             log.error("列出容器 {} 中的文件时出错: {}", containerId, e.getMessage(), e);
             throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * 检查容器是否正在运行
+     * @param containerId 容器ID
+     * @return 运行状态
+     */
+    public Boolean isContainerRunning(String containerId) {
+        try {
+            InspectContainerResponse inspectContainerResponse = dockerClient.inspectContainerCmd(containerId).exec();
+            return inspectContainerResponse.getState().getRunning();
+        } catch (Exception e) {
+            log.error("检查容器 {} 运行状态时出错: {}", containerId, e.getMessage(), e);
+            return false;
         }
     }
 
