@@ -76,10 +76,7 @@ public class ActionServiceImpl implements ActionService {
     public Action addAction(Action action) {
         action.setId(UUID.randomUUID().toString());
         actionMapper.insert(action);
-        for (Receiver receiver : action.getReceivers()){
-            receiver.setId(UUID.randomUUID().toString());
-            receiver.setUserId(action.getUserId());
-        }
+        extracted(action);
         receiverMapper.insert(action.getReceivers());
         return action;
     }
@@ -93,10 +90,7 @@ public class ActionServiceImpl implements ActionService {
     public Action updateAction(Action action) {
         actionMapper.update(action);
         receiverMapper.deleteByActionId(action.getId());
-        for (Receiver receiver : action.getReceivers()){
-            receiver.setId(UUID.randomUUID().toString());
-            receiver.setUserId(action.getUserId());
-        }
+        extracted(action);
         receiverMapper.insert(action.getReceivers());
         return action;
     }
@@ -125,4 +119,21 @@ public class ActionServiceImpl implements ActionService {
         return actionMapper.deleteByRoleId(roleId);
     }
 
+    /**
+     * 抽取动作中的接收者并进行处理
+     * @param action 动作
+     */
+    private void extracted(Action action) {
+        for (Receiver receiver : action.getReceivers()){
+            receiver.setId(UUID.randomUUID().toString());
+            receiver.setUserId(action.getUserId());
+            receiver.setActionId(action.getId());
+            if (receiver.getReceiverUserQQ() == null){
+                receiver.setReceiverUserQQ(-1L);
+            }
+            if (receiver.getReceiverGroupQQ() == null) {
+                receiver.setReceiverGroupQQ(-1L);
+            }
+        }
+    }
 }

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class ScopeServiceImpl implements ScopeService {
@@ -125,16 +126,16 @@ public class ScopeServiceImpl implements ScopeService {
         for (Action action : actions){
             action.setReceivers(
                     receivers.stream().
-                    filter(receiver -> receiver.getActionId().equals(action.getId()))
-                    .toList()
+                            filter(receiver -> receiver.getActionId().equals(action.getId()))
+                            .collect(Collectors.toList())
             );
         }
         // 填充Role
         for (Role role : roles){
             role.setAction(
                     actions.stream().
-                    filter(action -> action.getRoleId().equals(role.getId()))
-                    .toList()
+                            filter(action -> action.getRoleId().equals(role.getId()))
+                            .collect(Collectors.toList())
             );
             role.setExtractPosition(
                     extractPositionMap.get(role.getId())
@@ -144,8 +145,8 @@ public class ScopeServiceImpl implements ScopeService {
         for (Scope scope : scopes){
             scope.setRoles(
                     roles.stream().
-                    filter(role -> role.getScopeId().equals(scope.getId()))
-                    .toList()
+                            filter(role -> role.getScopeId().equals(scope.getId()))
+                            .collect(Collectors.toList())
             );
         }
         return scopes;

@@ -34,6 +34,7 @@ public class MessageProcessor {
                 .botId(bot.getSelfId())
                 .type(new ArrayList<>())
                 .content(new HashMap<>())
+                .eventType(GroupMsg.Type.GroupMsg)
                 .build();
 
         long botId = bot.getSelfId();
@@ -77,6 +78,7 @@ public class MessageProcessor {
                 .botId(bot.getSelfId())
                 .type(new ArrayList<>())
                 .content(new HashMap<>())
+                .eventType(PrivateMsg.Type.PrivateMsg)
                 .build();
 
         int index = 0;
