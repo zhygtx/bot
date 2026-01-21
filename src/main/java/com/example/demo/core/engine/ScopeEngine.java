@@ -4,6 +4,7 @@ import com.example.demo.cache.ScopeCacheManager;
 import com.example.demo.core.manager.ScopeManager;
 import com.example.demo.handler.BotCoreEvent;
 import com.example.demo.pojo.event.Event;
+import com.example.demo.pojo.event.GroupEvent;
 import com.example.demo.pojo.event.GroupMsg;
 import com.example.demo.pojo.event.PrivateMsg;
 import com.example.demo.pojo.task.Role;
@@ -50,7 +51,7 @@ public class ScopeEngine implements ScopeManager {
         return switch (event.getEventType()) {
             case GroupMsg -> getRoles((GroupMsg) msg, scopeList);
             case PrivateMsg -> getRoles((PrivateMsg) msg, scopeList);
-            case GroupIncrease, GroupDecrease -> null;
+            case GroupIncrease, GroupDecrease -> getRoles((GroupEvent) msg, scopeList);
         };
     }
 
@@ -84,6 +85,20 @@ public class ScopeEngine implements ScopeManager {
         return scopeList.stream()
                 .filter(scope -> scope.getQqScopeId() == null ||
                         scope.getQqScopeId().equals(privateMsg.getUserId()))
+                .flatMap(scope -> scope.getRoles().stream())
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 获取作用域中获取到的具体规则
+     * @param groupEvent 群事件对象
+     * @return 作用域中获取到的具体规则
+     */
+    private List<Role> getRoles(GroupEvent groupEvent, List<Scope> scopeList) {
+        log.debug("处理群事件，群ID: {}, 用户ID: {}, 操作者ID: {}", groupEvent.getGroupId(), groupEvent.getUserId(), groupEvent.getOperatorId());
+        return scopeList.stream()
+                .filter(scope -> scope.getQqScopeId() == null ||
+                        scope.getQqScopeId().equals(groupEvent.getGroupId()))
                 .flatMap(scope -> scope.getRoles().stream())
                 .collect(Collectors.toList());
     }

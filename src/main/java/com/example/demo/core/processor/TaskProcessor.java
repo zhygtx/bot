@@ -39,14 +39,17 @@ public class TaskProcessor {
         // 获取作用域中获取到的具体规则
         List<Role> roles = scopeManager.getRoles(msg);
         log.debug("获取作用域中获取到的具体规则: {}",roles);
+        if (roles == null || roles.isEmpty()) return;
 
         //获取需要执行的动作
         List<Action> actions = roleManager.getActions(roles,msg);
         log.debug("获取需要执行的动作: {}",actions);
+        if (actions == null || actions.isEmpty()) return;
 
         //构建发送内容
         Map<Receiver.ReceiverType, Map<Long,String>>  receivers= actionManager.executeActions(actions,msg);
         log.debug("构建发送内容: {}",receivers);
+        if (receivers == null || receivers.isEmpty()) return;
 
         //发送消息
         receiverManager.sendMessage(bot,receivers);
