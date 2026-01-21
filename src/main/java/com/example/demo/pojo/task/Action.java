@@ -85,5 +85,6 @@ public class Action {
     /**
      * 动作接收对象
      */
-    private transient List<Receiver> receivers = new ArrayList<>();
+    @JsonProperty("receivers")
+    private List<Receiver> receivers = new ArrayList<>();
 }

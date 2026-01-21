@@ -39,7 +39,7 @@ public class RoleEngine implements RoleManager {
         // 过滤掉暂未实现的消息类型
         initialSize = roles.size();
         roles.removeIf(role ->
-                !event.getEventType().toString().contains(role.getMatchMode().toString()));
+                !List.of(Event.Type.values()).contains(event.getEventType()) || !role.getMatchMode().equals(Role.MatchMode.text));
         log.debug("过滤不匹配消息类型后规则数量: {} (移除了 {} 个)", roles.size(), initialSize - roles.size());
 
         for (Role role : roles){

@@ -31,7 +31,7 @@ public interface ReceiverMapper {
      * 批量插入
      * @param receivers 接收对象列表
      */
-    void insert(@Param("receivers") List<Receiver> receivers);
+    void insert(@Param("list") List<Receiver> receivers);
 
     /**
      * 批量删除
