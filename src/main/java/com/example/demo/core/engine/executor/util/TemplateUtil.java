@@ -21,10 +21,12 @@ import java.util.stream.Collectors;
 public class TemplateUtil {
 
     private final FissureService fissureService;
+    private final HTMLUtil htmlUtil;
 
     @Autowired
-    public TemplateUtil(FissureService fissureService) {
+    public TemplateUtil(FissureService fissureService, HTMLUtil htmlUtil) {
         this.fissureService = fissureService;
+        this.htmlUtil = htmlUtil;
     }
 
     /**
@@ -56,7 +58,7 @@ public class TemplateUtil {
         log.debug("排序完成，裂隙分组数量: {}", fissureMap.size());
 
         log.debug("开始生成裂隙图像");
-        Result<String> result = HTMLUtil.objectToImage(fissureMap, template);
+        Result<String> result = htmlUtil.objectToImage(fissureMap, template);
         log.debug("图像生成结果，代码: {}, 消息: {}", result.getCode(), result.getMessage());
 
         if (result.getCode() == 1){
