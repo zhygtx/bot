@@ -22,6 +22,11 @@ public class Event {
     private Type eventType;
 
     /**
+     * 事件原本数据
+     */
+    private Object data;
+
+    /**
      * 事件类型枚举
      */
     public enum Type {

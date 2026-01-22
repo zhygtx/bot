@@ -1,12 +1,13 @@
 package com.example.demo.core.engine.executor;
 
+import com.example.demo.pojo.event.Msg;
 import com.example.demo.pojo.task.Action;
 import com.example.demo.pojo.task.actionContent.Url;
 import com.example.demo.service.task.actionContent.UrlService;
+import com.example.demo.utils.StringTemplateUtil;
 import com.example.demo.utils.UrlUtil;
 import com.mikuac.shiro.common.utils.MsgUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -14,10 +15,11 @@ import org.springframework.stereotype.Component;
 public class UrlExecutor {
 
     private final UrlService urlService;
+    private final StringTemplateUtil stringTemplateUtil;
 
-    @Autowired
-    public UrlExecutor(UrlService urlService) {
+    public UrlExecutor(UrlService urlService, StringTemplateUtil stringTemplateUtil) {
         this.urlService = urlService;
+        this.stringTemplateUtil = stringTemplateUtil;
     }
 
     /**
@@ -48,16 +50,34 @@ public class UrlExecutor {
             url = new StringBuilder(url.substring(0, url.length() - 1));
             log.debug("参数拼接完成，完整URL: {}", url);
         }
+        url = new StringBuilder(stringTemplateUtil.render(url.toString(), ((Msg) msg).getData(), action.getExtractText()));
+        log.debug("URL渲染完成: {}", url);
         
         try{
             log.debug("开始解析URL: {}", url);
-            String imageUrl = UrlUtil.retrieveUrl(url.toString());
-            log.debug("URL解析成功，获取到图片URL: {}", imageUrl);
-            
-            result = MsgUtils.builder()
-                    .img(imageUrl)
-                    .build();
-            log.debug("构建消息成功: {}", result);
+            String urlData = UrlUtil.retrieveUrl(url.toString());
+            log.debug("URL解析成功，获取到数据: {}", urlData);
+
+            result = "";
+            if (urlData.startsWith("{")){//JSON数据
+                result = MsgUtils.builder()
+                        .json(urlData)
+                        .build();
+            }else if (urlData.matches("^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{4}|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)$")){//Base64数据
+                result = MsgUtils.builder()
+                        .img("base64://"+urlData)
+                        .build();
+            }else if (urlData.startsWith("http")){//HTTP数据
+                // 检查是否为图片 URL
+                result = MsgUtils.builder()
+                        .img(urlData)
+                        .build();
+            }else if (urlData.startsWith("base64://")){//Base64数据
+                result = MsgUtils.builder()
+                        .img(urlData)
+                        .build();
+            }
+
         } catch (Exception e){
             log.error("URL解析错误: {}", e.getMessage(), e);
             return "URL解析错误"+e.getMessage()+"\n";

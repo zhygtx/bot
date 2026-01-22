@@ -7,7 +7,6 @@ import com.gbx.warframe.worldstate.pojo.Fissure;
 import com.gbx.warframe.worldstate.service.FissureService;
 import com.mikuac.shiro.common.utils.MsgUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Comparator;
@@ -23,7 +22,6 @@ public class TemplateUtil {
     private final FissureService fissureService;
     private final HTMLUtil htmlUtil;
 
-    @Autowired
     public TemplateUtil(FissureService fissureService, HTMLUtil htmlUtil) {
         this.fissureService = fissureService;
         this.htmlUtil = htmlUtil;

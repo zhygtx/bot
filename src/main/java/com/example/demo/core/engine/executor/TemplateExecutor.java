@@ -1,13 +1,14 @@
 package com.example.demo.core.engine.executor;
 
 import com.example.demo.core.engine.executor.util.TemplateUtil;
+import com.example.demo.pojo.event.Event;
 import com.example.demo.pojo.task.Action;
 import com.example.demo.pojo.task.actionContent.Api;
 import com.example.demo.pojo.task.actionContent.Template;
 import com.example.demo.service.task.actionContent.ApiService;
 import com.example.demo.service.task.actionContent.TemplateService;
+import com.example.demo.utils.StringTemplateUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
@@ -20,12 +21,13 @@ public class TemplateExecutor {
     private final ApiService apiService;
     private final TemplateService templateService;
     private final TemplateUtil templateUtil;
+    private final StringTemplateUtil stringTemplateUtil;
 
-    @Autowired
-    public TemplateExecutor(TemplateService templateService, ApiService apiService, TemplateUtil templateUtil) {
+    public TemplateExecutor(TemplateService templateService, ApiService apiService, TemplateUtil templateUtil, StringTemplateUtil stringTemplateUtil) {
         this.templateService = templateService;
         this.apiService = apiService;
         this.templateUtil = templateUtil;
+        this.stringTemplateUtil = stringTemplateUtil;
     }
 
     /**
@@ -39,19 +41,22 @@ public class TemplateExecutor {
         
         Template template = templateService.getById(action.getDataId());
         log.debug("获取到模板，模板ID: {}, 类型: {}", template.getId(), template.getTemplateType());
-        
+
+        template.setContent(stringTemplateUtil.render(template.getContent(), ((Event) msg).getData(), action.getExtractText()));
+        log.debug("模板内容渲染完成: {}", template.getContent());
+
         String result = "";
         switch (template.getTemplateType()) {
             case text:
-                log.debug("模板类型为文本，执行文本处理逻辑");
+                log.debug("模板所需数据类型为文本，执行文本处理逻辑");
                 //文本处理逻辑
                 break;
             case url:
-                log.debug("模板类型为URL，执行URL处理逻辑");
+                log.debug("模板所需数据类型为URL，执行URL处理逻辑");
                 //url处理逻辑
                 break;
             case api:
-                log.debug("模板类型为API，执行API处理逻辑");
+                log.debug("模板所需数据类型为API，执行API处理逻辑");
                 result = api(template, action);
                 break;
             default:

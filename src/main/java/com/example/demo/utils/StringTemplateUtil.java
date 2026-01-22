@@ -16,14 +16,14 @@ import java.util.concurrent.ConcurrentHashMap;
  * - 未命中且无默认值时输出字符串 "null"
  */
 @Component
-public class TemplateUtils {
+public class StringTemplateUtil {
 
     private final ObjectMapper mapper;
 
     // 缓存预处理后的模板字符串，key 可以是原模板文本的 hash 或原模板本身
     private final ConcurrentHashMap<String, String> templateCache = new ConcurrentHashMap<>();
 
-    public TemplateUtils(ObjectMapper mapper) {
+    public StringTemplateUtil(ObjectMapper mapper) {
         this.mapper = mapper;
     }
 

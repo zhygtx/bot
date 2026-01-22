@@ -126,6 +126,7 @@ public class EventHandler implements BotMessageEventInterceptor {
                 .groupId(event.getGroupId())
                 .operatorId(event.getOperatorId())
                 .userId(event.getUserId())
+                .data(event)
                 .build();
         taskProcessor.taskProcess(bot,groupEvent);
         eventLogService.insert(EventLog.builder()
@@ -156,6 +157,7 @@ public class EventHandler implements BotMessageEventInterceptor {
                 .groupId(event.getGroupId())
                 .operatorId(event.getOperatorId())
                 .userId(event.getUserId())
+                .data(event)
                 .build();
         taskProcessor.taskProcess(bot,groupEvent);
         eventLogService.insert(EventLog.builder()

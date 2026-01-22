@@ -1,11 +1,12 @@
 package com.example.demo.core.engine.executor;
 
 
+import com.example.demo.pojo.event.Event;
 import com.example.demo.pojo.task.Action;
 import com.example.demo.service.task.actionContent.TextService;
+import com.example.demo.utils.StringTemplateUtil;
 import com.mikuac.shiro.common.utils.MsgUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -13,14 +14,15 @@ import org.springframework.stereotype.Component;
 public class TextExecutor {
 
     private final TextService textService;
+    private final StringTemplateUtil stringTemplateUtil;
 
-    @Autowired
-    public TextExecutor(TextService textService) {
+    public TextExecutor(TextService textService, StringTemplateUtil stringTemplateUtil) {
         this.textService = textService;
+        this.stringTemplateUtil = stringTemplateUtil;
     }
 
     /**
-     * 获取文本内容
+     * 构建发送的文本内容
      * @param action 动作对象
      * @param msg 群消息对象
      * @return 文本内容
@@ -31,6 +33,9 @@ public class TextExecutor {
         // 获取文本内容
         String textContent = textService.getText(action.getDataId()).getText();
         log.debug("获取到文本内容: {}", textContent);
+
+        textContent = stringTemplateUtil.render(textContent, ((Event) msg).getData(), action.getExtractText());
+        log.debug("文本内容渲染完成: {}", textContent);
         
         // 构建消息
         MsgUtils builder = MsgUtils.builder()
