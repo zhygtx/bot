@@ -2,9 +2,12 @@ package com.example.demo.handler;
 
 import com.example.demo.core.processor.MessageProcessor;
 import com.example.demo.core.processor.TaskProcessor;
+import com.example.demo.pojo.event.EventLog;
 import com.example.demo.pojo.event.GroupEvent;
 import com.example.demo.pojo.event.GroupMsg;
 import com.example.demo.pojo.event.PrivateMsg;
+import com.example.demo.service.EventLogService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mikuac.shiro.annotation.GroupDecreaseHandler;
 import com.mikuac.shiro.annotation.GroupIncreaseHandler;
 import com.mikuac.shiro.annotation.GroupMessageHandler;
@@ -17,6 +20,7 @@ import com.mikuac.shiro.dto.event.message.MessageEvent;
 import com.mikuac.shiro.dto.event.message.PrivateMessageEvent;
 import com.mikuac.shiro.dto.event.notice.GroupDecreaseNoticeEvent;
 import com.mikuac.shiro.dto.event.notice.GroupIncreaseNoticeEvent;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -29,11 +33,15 @@ public class EventHandler implements BotMessageEventInterceptor {
     private final BotCoreEvent botCoreEvent;
     private final TaskProcessor taskProcessor;
     private final MessageProcessor messageProcessor;
+    private final EventLogService eventLogService;
+    private final ObjectMapper objectMapper;
 
-    public EventHandler(BotCoreEvent botCoreEvent, TaskProcessor taskProcessor, MessageProcessor messageProcessor) {
+    public EventHandler(BotCoreEvent botCoreEvent, TaskProcessor taskProcessor, MessageProcessor messageProcessor, EventLogService eventLogService, ObjectMapper objectMapper) {
         this.botCoreEvent = botCoreEvent;
         this.taskProcessor = taskProcessor;
         this.messageProcessor = messageProcessor;
+        this.eventLogService = eventLogService;
+        this.objectMapper = objectMapper;
     }
 
     /**
@@ -65,20 +73,41 @@ public class EventHandler implements BotMessageEventInterceptor {
      * @param bot   Bot实例，用于与服务器通信
      * @param event 群消息事件对象，包含事件详细信息
      */
+    @SneakyThrows
     @GroupMessageHandler
     public void groupMessage(Bot bot, GroupMessageEvent event){
         log.debug("[群消息][BOT:{}] 群号: {}, 发送者: {}, 消息内容: {}",
                 bot.getSelfId(), event.getGroupId(), event.getUserId(), event.getMessage());
         GroupMsg groupMsg = messageProcessor.groupProcess(bot, event);
         taskProcessor.taskProcess(bot, groupMsg);
+        eventLogService.insert(EventLog.builder()
+                .selfId(bot.getSelfId())
+                .type("GroupMessageEvent")
+                .subType(event.getSubType())
+                .time(event.getTime())
+                .userId(event.getUserId())
+                .groupId(event.getGroupId())
+                .eventData(objectMapper.writeValueAsString(event))
+                .build()
+        );
     }
 
+    @SneakyThrows
     @PrivateMessageHandler
     public void privateMessage(Bot bot, PrivateMessageEvent event){
         log.debug("[私聊消息][BOT:{}] 发送者: {}, 消息内容: {}",
                 bot.getSelfId(), event.getUserId(), event.getMessage());
         PrivateMsg privateMsg = messageProcessor.privateProcess(bot, event);
         taskProcessor.taskProcess(bot, privateMsg);
+        eventLogService.insert(EventLog.builder()
+                .selfId(bot.getSelfId())
+                .type("PrivateMessageEvent")
+                .subType(event.getSubType())
+                .time(event.getTime())
+                .userId(event.getUserId())
+                .eventData(objectMapper.writeValueAsString(event))
+                .build()
+        );
     }
 
     /**
@@ -86,6 +115,7 @@ public class EventHandler implements BotMessageEventInterceptor {
      * @param bot   Bot实例，用于与服务器通信
      * @param event 群成员减少事件对象，包含事件详细信息
      */
+    @SneakyThrows
     @GroupDecreaseHandler
     public void GroupDecreaseHandler(Bot bot, GroupDecreaseNoticeEvent event){
         log.debug("[群成员减少][BOT:{}] 群号: {}, 处理人: {}, 被处理人: {}",
@@ -98,6 +128,16 @@ public class EventHandler implements BotMessageEventInterceptor {
                 .userId(event.getUserId())
                 .build();
         taskProcessor.taskProcess(bot,groupEvent);
+        eventLogService.insert(EventLog.builder()
+                .selfId(bot.getSelfId())
+                .type("GroupDecreaseNoticeEvent")
+                .subType(event.getSubType())
+                .time(event.getTime())
+                .userId(event.getUserId())
+                .groupId(event.getGroupId())
+                .eventData(objectMapper.writeValueAsString(event))
+                .build()
+        );
     }
 
     /**
@@ -105,6 +145,7 @@ public class EventHandler implements BotMessageEventInterceptor {
      * @param bot   Bot实例，用于与服务器通信
      * @param event 群成员增加事件对象，包含事件详细信息
      */
+    @SneakyThrows
     @GroupIncreaseHandler
     public void GroupIncreaseHandler(Bot bot, GroupIncreaseNoticeEvent event){
         log.debug("[群成员增加][BOT:{}] 群号: {}, 处理人: {}, 被处理人: {}",
@@ -117,5 +158,15 @@ public class EventHandler implements BotMessageEventInterceptor {
                 .userId(event.getUserId())
                 .build();
         taskProcessor.taskProcess(bot,groupEvent);
+        eventLogService.insert(EventLog.builder()
+                .selfId(bot.getSelfId())
+                .type("GroupIncreaseNoticeEvent")
+                .subType(event.getSubType())
+                .time(event.getTime())
+                .userId(event.getUserId())
+                .groupId(event.getGroupId())
+                .eventData(objectMapper.writeValueAsString(event))
+                .build()
+        );
     }
 }
