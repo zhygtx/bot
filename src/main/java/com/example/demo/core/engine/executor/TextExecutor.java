@@ -40,14 +40,6 @@ public class TextExecutor {
         // 构建消息
         MsgUtils builder = MsgUtils.builder()
                 .text(textContent);
-        log.debug("添加提取文本: {}", action.getExtractText().toString());
-
-        if (action.getExtractText() != null){
-            for (String extractText : action.getExtractText()) {
-                log.debug("添加提取文本: {}", extractText);
-                builder.text(extractText);
-            }
-        }
 
         String result = builder.build();
         log.debug("文本内容构建完成，结果: {}", result);
