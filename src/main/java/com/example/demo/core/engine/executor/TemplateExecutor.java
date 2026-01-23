@@ -70,7 +70,7 @@ public class TemplateExecutor {
         log.debug("开始执行模板API，模板ID: {}, 动作ID: {}", template.getId(), action.getId());
 
         Api api = apiService.getApiById(template.getDataId());
-        log.debug("获取到API，API名称: {}", api.getName());
+        log.debug("获取到API，API名称: {}", api.getApiType());
 
         Map<String, String> params = api.getParams();
         for (Map.Entry<String, String> entry : api.getParams().entrySet()){
@@ -79,14 +79,14 @@ public class TemplateExecutor {
         log.debug("参数渲染完成，参数列表: {}", params);
         
         String result = "";
-        switch (api.getName()){
+        switch (api.getApiType()){
             case getWarframeFissure:
                 log.debug("执行获取战区裂隙API，提取文本: {}", action.getExtractText().get(0));
                 Object object = apiExecutor.getWarframeFissure(params);
                 result = templateUtil.objectToImage(object,template);
                 break;
             default:
-                log.debug("未知API名称: {}", api.getName());
+                log.debug("未知API名称: {}", api.getApiType());
                 break;
         }
         log.debug("模板API执行完成，返回结果: {}", result);

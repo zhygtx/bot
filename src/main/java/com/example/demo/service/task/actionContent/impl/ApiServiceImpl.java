@@ -7,10 +7,11 @@ import com.example.demo.service.task.actionContent.ApiService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class ApiServiceImpl implements ApiService {
@@ -59,12 +60,16 @@ public class ApiServiceImpl implements ApiService {
     public Api addApi(Api api) {
         api.setId(UUID.randomUUID().toString());
         apiMapper.insert(api);
-        if (api.getParams() != null){
-            List<Map<String, String>> paramsList = new ArrayList<>();
-            for (Map.Entry<String, String> entry : api.getParams().entrySet()){
-                Map<String, String> params = Map.of(entry.getKey(), entry.getValue());
-                paramsList.add(params);
-            }
+        if (api.getParams() != null && !api.getParams().isEmpty()) {
+            List<Map<String, String>> paramsList = api.getParams().entrySet().stream()
+                    .map(entry -> {
+                        Map<String, String> param = new HashMap<>();
+                        param.put("key", entry.getKey());
+                        param.put("value", entry.getValue());
+                        return param;
+                    })
+                    .collect(Collectors.toList());
+
             apiParamsMapper.insert(paramsList, api.getId());
         }
         return api;
@@ -79,12 +84,16 @@ public class ApiServiceImpl implements ApiService {
     public Api updateApi(Api api) {
         apiMapper.update(api);
         apiParamsMapper.delete(api.getId());
-        if (api.getParams() != null){
-            List<Map<String, String>> paramsList = new ArrayList<>();
-            for (Map.Entry<String, String> entry : api.getParams().entrySet()){
-                Map<String, String> params = Map.of(entry.getKey(), entry.getValue());
-                paramsList.add(params);
-            }
+        if (api.getParams() != null && !api.getParams().isEmpty()) {
+            List<Map<String, String>> paramsList = api.getParams().entrySet().stream()
+                    .map(entry -> {
+                        Map<String, String> param = new HashMap<>();
+                        param.put("key", entry.getKey());
+                        param.put("value", entry.getValue());
+                        return param;
+                    })
+                    .collect(Collectors.toList());
+
             apiParamsMapper.insert(paramsList, api.getId());
         }
         return api;

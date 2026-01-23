@@ -31,8 +31,14 @@ public class Api {
      * api名称
      */
     @JsonProperty("name")
+    private String name;
+
+    /**
+     * api
+     */
+    @JsonProperty("apiType")
     @JsonFormat(shape = JsonFormat.Shape.STRING)
-    private apiName name;
+    private apiType apiType;
 
     /**
      * 参数<属性名，属性值>
@@ -43,7 +49,7 @@ public class Api {
     /**
      * 可调用的 api 名称
      */
-    public enum apiName {
+    public enum apiType {
         setGroupSpecialTitle,
         getWarframeFissure
     }

@@ -9,14 +9,6 @@ import java.util.List;
 public interface ApiMapper {
 
     /**
-     * 根据ID获取API动作细节
-     * @param id 动作ID
-     * @return API动作细节
-     */
-    @Select("SELECT * FROM api WHERE id = #{id}")
-    Api getApi(String id);
-
-    /**
      * 获取所有API调用内容
      * @return API调用内容列表
      */
@@ -44,7 +36,7 @@ public interface ApiMapper {
      * @param api API调用内容
      * @return 插入数量
      */
-    @Insert("INSERT INTO api (id, user_id, name) VALUES (#{id}, #{userId}, #{name})")
+    @Insert("INSERT INTO api (id, user_id, name, api_type) VALUES (#{id}, #{userId}, #{name},#{apiType})")
     int insert(Api api);
 
     /**
@@ -52,7 +44,7 @@ public interface ApiMapper {
      * @param api API调用内容
      * @return 更新数量
      */
-    @Update("UPDATE api SET user_id = #{userId}, name = #{name} WHERE id = #{id}")
+    @Update("UPDATE api SET name = #{name} WHERE id = #{id}")
     int update(Api api);
 
     /**

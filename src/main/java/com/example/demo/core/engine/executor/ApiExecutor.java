@@ -41,7 +41,7 @@ public class ApiExecutor {
         log.debug("开始执行API动作，动作ID: {}, 数据ID: {}", action.getId(), action.getDataId());
         
         Api api = apiService.getApiById(action.getDataId());
-        log.debug("获取到API信息，API名称: {}", api.getName());
+        log.debug("获取到API信息，API名称: {}", api.getApiType());
 
         Map<String, String> params = api.getParams();
         for (Map.Entry<String, String> entry : api.getParams().entrySet()){
@@ -50,10 +50,10 @@ public class ApiExecutor {
         log.debug("参数渲染完成，参数列表: {}", params);
 
         String result = "";
-        switch (api.getName()){
+        switch (api.getApiType()){
             case setGroupSpecialTitle -> result = setGroupSpecialTitle((GroupMsg) msg, params);
             case getWarframeFissure -> result = getWarframeFissure(params).toString();
-            default -> log.debug("未知API名称: {}", api.getName());
+            default -> log.debug("未知API名称: {}", api.getApiType());
         }
         log.debug("API执行完成，返回结果: {}", result);
         return result;
