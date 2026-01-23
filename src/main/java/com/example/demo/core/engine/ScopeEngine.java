@@ -51,7 +51,7 @@ public class ScopeEngine implements ScopeManager {
         return switch (event.getEventType()) {
             case GroupMsg -> getRoles((GroupMsg) msg, scopeList);
             case PrivateMsg -> getRoles((PrivateMsg) msg, scopeList);
-            case GroupIncrease, GroupDecrease -> getRoles((GroupEvent) msg, scopeList);
+            case GroupIncrease, GroupDecrease, GroupAddRequest -> getRoles((GroupEvent) msg, scopeList);
         };
     }
 

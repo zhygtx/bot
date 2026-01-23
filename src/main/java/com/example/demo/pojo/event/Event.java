@@ -44,6 +44,7 @@ public class Event {
         GroupMsg,//群消息
         PrivateMsg,//私聊消息
         GroupIncrease,//群成员增加
-        GroupDecrease//退群事件
+        GroupDecrease,//退群事件
+        GroupAddRequest//群加请求
     }
 }

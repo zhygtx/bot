@@ -57,6 +57,7 @@ public class RoleEngine implements RoleManager {
                     break;
                 case GroupIncrease :
                 case GroupDecrease :
+                case GroupAddRequest :
                     actions.addAll(role.getAction());
                     break;
                 default:

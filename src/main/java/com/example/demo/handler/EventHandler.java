@@ -8,10 +8,7 @@ import com.example.demo.pojo.event.GroupMsg;
 import com.example.demo.pojo.event.PrivateMsg;
 import com.example.demo.service.EventLogService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mikuac.shiro.annotation.GroupDecreaseHandler;
-import com.mikuac.shiro.annotation.GroupIncreaseHandler;
-import com.mikuac.shiro.annotation.GroupMessageHandler;
-import com.mikuac.shiro.annotation.PrivateMessageHandler;
+import com.mikuac.shiro.annotation.*;
 import com.mikuac.shiro.annotation.common.Shiro;
 import com.mikuac.shiro.core.Bot;
 import com.mikuac.shiro.core.BotMessageEventInterceptor;
@@ -20,11 +17,23 @@ import com.mikuac.shiro.dto.event.message.MessageEvent;
 import com.mikuac.shiro.dto.event.message.PrivateMessageEvent;
 import com.mikuac.shiro.dto.event.notice.GroupDecreaseNoticeEvent;
 import com.mikuac.shiro.dto.event.notice.GroupIncreaseNoticeEvent;
+import com.mikuac.shiro.dto.event.request.GroupAddRequestEvent;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 
+
+/**
+ * 事件处理类
+ * ↓↓ 请在以下位置添加枚举
+ * @see com.example.demo.core.engine.RoleEngine#getActions(List, Object) -> 枚举处添加事件
+ * @see com.example.demo.core.engine.ScopeEngine#getRoles(Object)  -> 枚举处添加动作
+ * @see com.example.demo.pojo.task.Role -> 枚举处添加任务
+ * @see com.example.demo.pojo.event.Event -> 枚举处添加事件
+ * ->数据库Role表添加任务枚举
+ */
 @Slf4j
 @Component("demoEventHandler")
 @Shiro
@@ -163,6 +172,35 @@ public class EventHandler implements BotMessageEventInterceptor {
         eventLogService.insert(EventLog.builder()
                 .selfId(bot.getSelfId())
                 .type("GroupIncreaseNoticeEvent")
+                .subType(event.getSubType())
+                .time(event.getTime())
+                .userId(event.getUserId())
+                .groupId(event.getGroupId())
+                .eventData(objectMapper.writeValueAsString(event))
+                .build()
+        );
+    }
+
+    /**
+     * 群成员增加请求事件
+     * @param bot   Bot实例，用于与服务器通信
+     * @param event 群成员增加请求事件对象，包含事件详细信息
+     */
+    @SneakyThrows
+    @GroupAddRequestHandler
+    public void GroupAddRequestHandler(Bot bot, GroupAddRequestEvent event){
+        GroupEvent groupEvent = GroupEvent.builder()
+                .eventType(GroupEvent.Type.GroupAddRequest)
+                .botId(bot.getSelfId())
+                .groupId(event.getGroupId())
+                .operatorId(event.getInvitorId())
+                .userId(event.getUserId())
+                .data(event)
+                .build();
+        taskProcessor.taskProcess(bot,groupEvent);
+        eventLogService.insert(EventLog.builder()
+                .selfId(bot.getSelfId())
+                .type("GroupAddRequestEvent")
                 .subType(event.getSubType())
                 .time(event.getTime())
                 .userId(event.getUserId())

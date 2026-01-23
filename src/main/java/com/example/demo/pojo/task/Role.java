@@ -3,10 +3,7 @@ package com.example.demo.pojo.task;
 import com.example.demo.interceptor.ExcludeFromMD5;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -95,7 +92,8 @@ public class Role {
         text,//消息文本
         image,//消息图片
         GroupIncrease,//群成员增加
-        GroupDecrease//退群事件
+        GroupDecrease,//退群事件
+        GroupAddRequest//加群请求
     }
     //todo 字段内容修改
 
