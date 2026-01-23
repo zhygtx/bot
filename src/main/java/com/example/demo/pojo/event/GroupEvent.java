@@ -18,11 +18,6 @@ public class GroupEvent extends Event{
     private Long userId;
 
     /**
-     * 群ID
-     */
-    private Long groupId;
-
-    /**
      * 处理人ID
      */
     private Long operatorId;

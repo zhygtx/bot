@@ -13,11 +13,6 @@ import java.util.Map;
 public class Msg extends Event{
 
     /**
-     * 发送者ID
-     */
-    private Long userId;
-
-    /**
      * 消息具体内容
      */
     private Map<Integer, Map<String, Object>> content;

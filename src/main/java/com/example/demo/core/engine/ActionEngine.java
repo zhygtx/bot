@@ -5,7 +5,7 @@ import com.example.demo.core.engine.executor.TemplateExecutor;
 import com.example.demo.core.engine.executor.TextExecutor;
 import com.example.demo.core.engine.executor.UrlExecutor;
 import com.example.demo.core.manager.ActionManager;
-import com.example.demo.pojo.event.GroupEvent;
+import com.example.demo.pojo.event.Event;
 import com.example.demo.pojo.event.PrivateMsg;
 import com.example.demo.pojo.task.Action;
 import com.example.demo.pojo.task.Receiver;
@@ -67,7 +67,7 @@ public class ActionEngine implements ActionManager {
                             if (msg instanceof PrivateMsg privateMsg){
                                 receivers.put(Receiver.ReceiverType.Private, Map.of(privateMsg.getUserId(), result));
                             }else {
-                                GroupEvent groupEvent = (GroupEvent) msg;
+                                Event groupEvent = (Event) msg;
                                 if(action.isNeedAt()){
                                     result += MsgUtils.builder()
                                             .at(groupEvent.getUserId())

@@ -16,6 +16,17 @@ public class Event {
      */
     private Long botId;
 
+
+    /**
+     * 发送者ID
+     */
+    private Long userId;
+
+    /**
+     * 群ID
+     */
+    private Long groupId;
+
     /**
      * 消息类型
      */

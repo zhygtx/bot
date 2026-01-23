@@ -12,11 +12,6 @@ import lombok.experimental.SuperBuilder;
 public class GroupMsg extends Msg{
 
     /**
-     * 群ID
-     */
-    private Long groupId;
-
-    /**
      * 是否@了Bot
      */
     @Builder.Default
