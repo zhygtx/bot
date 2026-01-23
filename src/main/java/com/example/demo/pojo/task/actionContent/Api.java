@@ -7,6 +7,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Map;
+
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
@@ -31,6 +33,12 @@ public class Api {
     @JsonProperty("name")
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     private apiName name;
+
+    /**
+     * 参数<属性名，属性值>
+     */
+    @JsonProperty("params")
+    private transient Map<String, String> params;
 
     /**
      * 可调用的 api 名称

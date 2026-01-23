@@ -1,41 +1,27 @@
 package com.example.demo.service.task.actionContent.impl;
 
 import com.example.demo.mapper.task.actionContent.ApiMapper;
+import com.example.demo.mapper.task.actionContent.ApiParamsMapper;
 import com.example.demo.pojo.task.actionContent.Api;
 import com.example.demo.service.task.actionContent.ApiService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
 public class ApiServiceImpl implements ApiService {
 
     private final ApiMapper apiMapper;
+    private final ApiParamsMapper apiParamsMapper;
 
     @Autowired
-    public ApiServiceImpl(ApiMapper apiMapper) {
+    public ApiServiceImpl(ApiMapper apiMapper, ApiParamsMapper apiParamsMapper) {
         this.apiMapper = apiMapper;
-    }
-
-    /**
-     * 获取API动作细节
-     * @param id 动作ID
-     * @return API动作细节
-     */
-    @Override
-    public Api getApi(String id){
-        return apiMapper.getApi(id);
-    }
-
-    /**
-     * 获取所有API调用内容
-     * @return API调用内容列表
-     */
-    @Override
-    public List<Api> getAllApis() {
-        return apiMapper.getAllApis();
+        this.apiParamsMapper = apiParamsMapper;
     }
 
     /**
@@ -45,7 +31,9 @@ public class ApiServiceImpl implements ApiService {
      */
     @Override
     public Api getApiById(String id) {
-        return apiMapper.selectById(id);
+        Api api = apiMapper.selectById(id);
+        api.setParams(apiParamsMapper.select(id));
+        return api;
     }
 
     /**
@@ -55,7 +43,11 @@ public class ApiServiceImpl implements ApiService {
      */
     @Override
     public List<Api> getApisByUserId(String userId) {
-        return apiMapper.selectByUserId(userId);
+        List<Api> apis = apiMapper.getAllApis();
+        for (Api api : apis) {
+            api.setParams(apiParamsMapper.select(api.getId()));
+        }
+        return apis;
     }
 
     /**
@@ -67,6 +59,14 @@ public class ApiServiceImpl implements ApiService {
     public Api addApi(Api api) {
         api.setId(UUID.randomUUID().toString());
         apiMapper.insert(api);
+        if (api.getParams() != null){
+            List<Map<String, String>> paramsList = new ArrayList<>();
+            for (Map.Entry<String, String> entry : api.getParams().entrySet()){
+                Map<String, String> params = Map.of(entry.getKey(), entry.getValue());
+                paramsList.add(params);
+            }
+            apiParamsMapper.insert(paramsList, api.getId());
+        }
         return api;
     }
 
@@ -78,6 +78,15 @@ public class ApiServiceImpl implements ApiService {
     @Override
     public Api updateApi(Api api) {
         apiMapper.update(api);
+        apiParamsMapper.delete(api.getId());
+        if (api.getParams() != null){
+            List<Map<String, String>> paramsList = new ArrayList<>();
+            for (Map.Entry<String, String> entry : api.getParams().entrySet()){
+                Map<String, String> params = Map.of(entry.getKey(), entry.getValue());
+                paramsList.add(params);
+            }
+            apiParamsMapper.insert(paramsList, api.getId());
+        }
         return api;
     }
 
@@ -88,6 +97,8 @@ public class ApiServiceImpl implements ApiService {
      */
     @Override
     public int deleteApiById(String id) {
-        return apiMapper.deleteById(id);
+        int result = apiMapper.deleteById(id);
+        apiParamsMapper.delete(id);
+        return result;
     }
 }

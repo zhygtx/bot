@@ -11,6 +11,8 @@ import com.example.demo.utils.StringTemplateUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.Map;
+
 /**
  * 模板执行器
  */
@@ -22,12 +24,14 @@ public class TemplateExecutor {
     private final TemplateService templateService;
     private final TemplateUtil templateUtil;
     private final StringTemplateUtil stringTemplateUtil;
+    private final ApiExecutor apiExecutor;
 
-    public TemplateExecutor(TemplateService templateService, ApiService apiService, TemplateUtil templateUtil, StringTemplateUtil stringTemplateUtil) {
+    public TemplateExecutor(TemplateService templateService, ApiService apiService, TemplateUtil templateUtil, StringTemplateUtil stringTemplateUtil, ApiExecutor apiExecutor) {
         this.templateService = templateService;
         this.apiService = apiService;
         this.templateUtil = templateUtil;
         this.stringTemplateUtil = stringTemplateUtil;
+        this.apiExecutor = apiExecutor;
     }
 
     /**
@@ -47,21 +51,10 @@ public class TemplateExecutor {
 
         String result = "";
         switch (template.getTemplateType()) {
-            case text:
-                log.debug("模板所需数据类型为文本，执行文本处理逻辑");
-                //文本处理逻辑
-                break;
-            case url:
-                log.debug("模板所需数据类型为URL，执行URL处理逻辑");
-                //url处理逻辑
-                break;
-            case api:
-                log.debug("模板所需数据类型为API，执行API处理逻辑");
-                result = api(template, action);
-                break;
-            default:
-                log.debug("未知模板类型: {}", template.getTemplateType());
-                break;
+            case text -> log.debug("模板所需数据类型为文本，执行文本处理逻辑");
+            case url  -> log.debug("模板所需数据类型为URL，执行URL处理逻辑");
+            case api  -> result = api(template, action, msg);
+            default   ->log.debug("未知模板类型: {}", template.getTemplateType());
         }
         log.debug("模板执行完成，返回结果: {}", result);
         return result;
@@ -73,17 +66,24 @@ public class TemplateExecutor {
      * @param action 动作对象
      * @return 执行结果
      */
-    private String api(Template template, Action action){
+    private String api(Template template, Action action, Object msg){
         log.debug("开始执行模板API，模板ID: {}, 动作ID: {}", template.getId(), action.getId());
-        
-        Api api = apiService.getApi(template.getDataId());
+
+        Api api = apiService.getApiById(template.getDataId());
         log.debug("获取到API，API名称: {}", api.getName());
+
+        Map<String, String> params = api.getParams();
+        for (Map.Entry<String, String> entry : api.getParams().entrySet()){
+            params.put(entry.getKey(), stringTemplateUtil.render(entry.getValue(), msg, action.getExtractText()));
+        }
+        log.debug("参数渲染完成，参数列表: {}", params);
         
         String result = "";
         switch (api.getName()){
             case getWarframeFissure:
                 log.debug("执行获取战区裂隙API，提取文本: {}", action.getExtractText().get(0));
-                result = templateUtil.getWarframeFissure(action.getExtractText().get(0),template);
+                Object object = apiExecutor.getWarframeFissure(params);
+                result = templateUtil.objectToImage(object,template);
                 break;
             default:
                 log.debug("未知API名称: {}", api.getName());

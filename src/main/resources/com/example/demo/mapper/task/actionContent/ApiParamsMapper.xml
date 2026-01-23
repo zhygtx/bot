@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.mapper.task.actionContent.ApiParamsMapper">
+
+    <insert id="insert" parameterType="java.util.Map">
+        INSERT INTO api_params (api_id, param_key, param_value)
+        VALUES
+        <foreach collection="paramsList" item="param" separator=",">
+            (#{apiId}, #{param.key}, #{param.value})
+        </foreach>
+    </insert>
+
+</mapper>

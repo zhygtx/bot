@@ -5,20 +5,6 @@ import com.example.demo.pojo.task.actionContent.Api;
 import java.util.List;
 
 public interface ApiService {
-
-    /**
-     * 获取API动作细节
-     * @param id 动作ID
-     * @return API动作细节
-     */
-    Api getApi(String id);
-
-    /**
-     * 获取所有API调用内容
-     * @return API调用内容列表
-     */
-    List<Api> getAllApis();
-
     /**
      * 根据ID获取API调用内容
      * @param id API调用内容ID
