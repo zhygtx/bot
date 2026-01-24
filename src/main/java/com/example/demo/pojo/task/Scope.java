@@ -107,7 +107,7 @@ public class Scope {
         private static final Map<String, Integer> STRING_ROLE_LEVELS = new HashMap<>();
 
         static {
-            ROLE_LEVELS.put(all, 4);
+            ROLE_LEVELS.put(all, 0);
             ROLE_LEVELS.put(owner, 3);
             ROLE_LEVELS.put(admin, 2);
             ROLE_LEVELS.put(member, 1);
@@ -122,7 +122,7 @@ public class Scope {
             if (requiredLevel == null) {
                 return false;
             }
-            return ROLE_LEVELS.get(this) >= requiredLevel;
+            return ROLE_LEVELS.get(this) <= requiredLevel;
         }
     }
 

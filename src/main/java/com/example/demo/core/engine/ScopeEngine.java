@@ -61,7 +61,12 @@ public class ScopeEngine implements ScopeManager {
      * @return 作用域中获取到的具体规则
      */
     private List<Role> getRoles(GroupMsg groupMsg,List<Scope> scopeList) {
-        log.debug("处理群消息，群ID: {}, 用户ID: {}", groupMsg.getGroupId(), groupMsg.getUserId());
+        log.info("处理群消息，群ID: {}, 用户ID: {}, 用户权限: {} ,Bot权限: {}, \n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t" +
+                        "消息内容: {}",
+                groupMsg.getGroupId(), groupMsg.getUserId(), groupMsg.getUserRole(),
+                botCoreEvent.getBotGroupRoles(groupMsg.getBotId()).get(groupMsg.getGroupId()),
+                groupMsg.getContent()
+        );
 
         return scopeList.stream()
                 .filter(scope -> scope.isAt() == groupMsg.isAt() || !scope.isAt())
