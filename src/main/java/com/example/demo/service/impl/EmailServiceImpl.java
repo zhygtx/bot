@@ -4,7 +4,6 @@ import com.example.demo.pojo.Result;
 import com.example.demo.service.EmailService;
 import jakarta.mail.internet.MimeMessage;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -22,7 +21,6 @@ public class EmailServiceImpl implements EmailService {
     private final TemplateEngine templateEngine;
     private final JavaMailSender javaMailSender;
 
-    @Autowired
     public EmailServiceImpl(JavaMailSender javaMailSender, TemplateEngine templateEngine, RedisTemplate<String, Object> redisTemplate) {
         this.javaMailSender = javaMailSender;
         this.templateEngine = templateEngine;

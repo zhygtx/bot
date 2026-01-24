@@ -6,6 +6,7 @@ import com.example.demo.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -70,6 +71,7 @@ public class UserServiceImpl implements UserService {
      * @param user 用户信息
      */
     @Override
+    @Transactional
     public void insertUser(User user) {
         user.setId(UUID.randomUUID().toString());
         LocalDateTime now = LocalDateTime.now();
@@ -97,6 +99,7 @@ public class UserServiceImpl implements UserService {
      * @param user 用户信息
      */
     @Override
+    @Transactional
     public void updateUser(User user,String userId){
         User existingUser = userMapper.selectById(userId);
         user.setAccount(existingUser.getAccount());
@@ -116,6 +119,7 @@ public class UserServiceImpl implements UserService {
      * @param user 用户信息
      */
     @Override
+    @Transactional
     public void updatePwd(User user){
         user.setUpdateTime(LocalDateTime.now());
         user.setPwd(passwordEncoder.encode(user.getPwd()));
@@ -127,6 +131,7 @@ public class UserServiceImpl implements UserService {
      * @param user 用户信息
      */
     @Override
+    @Transactional
     public void updateEmail(User user) {
         user.setAccount(user.getAccount());
         user.setEmail(user.getEmail());

@@ -71,6 +71,7 @@ public class ScopeServiceImpl implements ScopeService {
      * @return 作用域
      */
     @Override
+    @Transactional
     public Scope addScope(Scope scope) {
         scope.setId(UUID.randomUUID().toString());
         scopeMapper.insert(scope);
@@ -83,6 +84,7 @@ public class ScopeServiceImpl implements ScopeService {
      * @return 作用域
      */
     @Override
+    @Transactional
     public Scope updateScope(Scope scope) {
         scopeMapper.update(scope);
         return scope;

@@ -3,8 +3,8 @@ package com.example.demo.service.task.actionContent.impl;
 import com.example.demo.mapper.task.actionContent.TextMapper;
 import com.example.demo.pojo.task.actionContent.Text;
 import com.example.demo.service.task.actionContent.TextService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -14,7 +14,6 @@ public class TextServiceImpl implements TextService {
 
     private final TextMapper textMapper;
 
-    @Autowired
     public TextServiceImpl(TextMapper textMapper) {
         this.textMapper = textMapper;
     }
@@ -64,6 +63,7 @@ public class TextServiceImpl implements TextService {
      * @param text 文本内容
      */
     @Override
+    @Transactional
     public void addText(Text text) {
         text.setId(UUID.randomUUID().toString());
         textMapper.insert(text);
@@ -75,6 +75,7 @@ public class TextServiceImpl implements TextService {
      * @return 文本内容
      */
     @Override
+    @Transactional
     public Text updateText(Text text) {
         textMapper.update(text);
         return text;
@@ -86,6 +87,7 @@ public class TextServiceImpl implements TextService {
      * @return 删除数量
      */
     @Override
+    @Transactional
     public int deleteTextById(String id) {
         return textMapper.deleteById(id);
     }

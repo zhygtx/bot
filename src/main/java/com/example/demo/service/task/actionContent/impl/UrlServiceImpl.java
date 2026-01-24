@@ -3,8 +3,8 @@ package com.example.demo.service.task.actionContent.impl;
 import com.example.demo.mapper.task.actionContent.UrlMapper;
 import com.example.demo.pojo.task.actionContent.Url;
 import com.example.demo.service.task.actionContent.UrlService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
@@ -15,7 +15,6 @@ public class UrlServiceImpl implements UrlService {
 
     private final UrlMapper urlMapper;
 
-    @Autowired
     public UrlServiceImpl(UrlMapper urlMapper) {
         this.urlMapper = urlMapper;
     }
@@ -49,6 +48,7 @@ public class UrlServiceImpl implements UrlService {
     }
 
     @Override
+    @Transactional
     public Url addUrl(Url url) {
         url.setId(UUID.randomUUID().toString());
         // 插入URL
@@ -59,6 +59,7 @@ public class UrlServiceImpl implements UrlService {
     }
 
     @Override
+    @Transactional
     public Url updateUrl(Url url) {
         // 更新URL
         urlMapper.update(url);
@@ -70,6 +71,7 @@ public class UrlServiceImpl implements UrlService {
     }
 
     @Override
+    @Transactional
     public int deleteUrlById(String id) {
         // 删除URL参数
         urlMapper.deleteUrlParamsByUrlId(id);

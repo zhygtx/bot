@@ -3,8 +3,8 @@ package com.example.demo.service.task.actionContent.impl;
 import com.example.demo.mapper.task.actionContent.TemplateMapper;
 import com.example.demo.pojo.task.actionContent.Template;
 import com.example.demo.service.task.actionContent.TemplateService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -17,7 +17,6 @@ public class TemplateServiceImpl implements TemplateService {
 
     private final TemplateMapper templateMapper;
 
-    @Autowired
     public TemplateServiceImpl(TemplateMapper templateMapper) {
         this.templateMapper = templateMapper;
     }
@@ -67,6 +66,7 @@ public class TemplateServiceImpl implements TemplateService {
      * @return 模板
      */
     @Override
+    @Transactional
     public Template addTemplate(Template template) {
         template.setId(UUID.randomUUID().toString());
         templateMapper.insert(template);
@@ -79,6 +79,7 @@ public class TemplateServiceImpl implements TemplateService {
      * @return 模板
      */
     @Override
+    @Transactional
     public Template updateTemplate(Template template) {
         templateMapper.update(template);
         return template;
@@ -90,6 +91,7 @@ public class TemplateServiceImpl implements TemplateService {
      * @return 删除数量
      */
     @Override
+    @Transactional
     public int deleteTemplateById(String id) {
         return templateMapper.deleteById(id);
     }

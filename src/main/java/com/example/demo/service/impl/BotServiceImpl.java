@@ -5,8 +5,8 @@ import com.example.demo.mapper.UserMapper;
 import com.example.demo.pojo.BotInfo;
 import com.example.demo.pojo.Result;
 import com.example.demo.service.BotService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Set;
 import java.util.UUID;
@@ -20,7 +20,6 @@ public class BotServiceImpl implements BotService {
     private final BotMapper botMapper;
     private final UserMapper userMapper;
 
-    @Autowired
     public BotServiceImpl(BotMapper botMapper, UserMapper userMapper) {
         this.botMapper = botMapper;
         this.userMapper = userMapper;
@@ -41,6 +40,7 @@ public class BotServiceImpl implements BotService {
      * @param online 是否在线
      */
     @Override
+    @Transactional
     public void updateOnline(Long botQQ, boolean online){
         botMapper.updateOnline(botQQ, online);
     }
@@ -51,6 +51,7 @@ public class BotServiceImpl implements BotService {
      * @param botQQ 机器人QQ
      */
     @Override
+    @Transactional
     public Result<?> insert(String userId, String name, Long botQQ) {
         if (botMapper.existsByBotQQ(botQQ)) {
             return Result.error("该bot已被注册");
@@ -70,6 +71,7 @@ public class BotServiceImpl implements BotService {
       * @param userId 用户ID
      */
     @Override
+    @Transactional
     public void delete(String userId){
         userMapper.updateBotQQ(userId, null);
         botMapper.delete(userId);
@@ -82,6 +84,7 @@ public class BotServiceImpl implements BotService {
      * @param botQQ 机器人QQ
      */
     @Override
+    @Transactional
     public void update(String userId, String name, Long botQQ){
         BotInfo bot = botMapper.selectByUserId(userId);
         bot.setName(name);

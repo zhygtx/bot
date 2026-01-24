@@ -8,12 +8,12 @@ import com.example.demo.service.task.ActionService;
 import com.example.demo.service.task.RoleService;
 import com.example.demo.utils.MD5Util;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.NoSuchAlgorithmException;
-import java.util.*;
+import java.util.List;
+import java.util.UUID;
 
 /**
  * 任务触发规则服务实现类
@@ -27,7 +27,6 @@ public class RoleServiceImpl implements RoleService {
     private final ExtractPositionMapper extractPositionMapper;
     private final ActionService actionService;
 
-    @Autowired
     public RoleServiceImpl(ActionMapper actionMapper, RoleMapper roleMapper, ExtractPositionMapper extractPositionMapper, ActionService actionService) {
         this.actionMapper = actionMapper;
         this.roleMapper = roleMapper;
@@ -86,6 +85,7 @@ public class RoleServiceImpl implements RoleService {
      * @return 任务触发规则
      */
     @Override
+    @Transactional
     public Role addRole(Role role) {
         try {
             role.setMD5(MD5Util.calculateClassMD5(role));
@@ -116,6 +116,7 @@ public class RoleServiceImpl implements RoleService {
      * @return 任务触发规则
      */
     @Override
+    @Transactional
     public Role updateRole(Role role) {
         roleMapper.update(role);
         if (!role.getExtractPosition().isEmpty()){

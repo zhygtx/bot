@@ -4,8 +4,8 @@ import com.example.demo.mapper.task.actionContent.ApiMapper;
 import com.example.demo.mapper.task.actionContent.ApiParamsMapper;
 import com.example.demo.pojo.task.actionContent.Api;
 import com.example.demo.service.task.actionContent.ApiService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
 import java.util.List;
@@ -19,7 +19,6 @@ public class ApiServiceImpl implements ApiService {
     private final ApiMapper apiMapper;
     private final ApiParamsMapper apiParamsMapper;
 
-    @Autowired
     public ApiServiceImpl(ApiMapper apiMapper, ApiParamsMapper apiParamsMapper) {
         this.apiMapper = apiMapper;
         this.apiParamsMapper = apiParamsMapper;
@@ -57,6 +56,7 @@ public class ApiServiceImpl implements ApiService {
      * @return API调用内容
      */
     @Override
+    @Transactional
     public Api addApi(Api api) {
         api.setId(UUID.randomUUID().toString());
         apiMapper.insert(api);
@@ -81,6 +81,7 @@ public class ApiServiceImpl implements ApiService {
      * @return API调用内容
      */
     @Override
+    @Transactional
     public Api updateApi(Api api) {
         apiMapper.update(api);
         apiParamsMapper.delete(api.getId());
@@ -105,6 +106,7 @@ public class ApiServiceImpl implements ApiService {
      * @return 删除数量
      */
     @Override
+    @Transactional
     public int deleteApiById(String id) {
         int result = apiMapper.deleteById(id);
         apiParamsMapper.delete(id);

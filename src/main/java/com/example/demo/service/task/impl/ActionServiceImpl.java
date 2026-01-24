@@ -5,8 +5,8 @@ import com.example.demo.mapper.task.ReceiverMapper;
 import com.example.demo.pojo.task.Action;
 import com.example.demo.pojo.task.Receiver;
 import com.example.demo.service.task.ActionService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -20,7 +20,6 @@ public class ActionServiceImpl implements ActionService {
     private final ActionMapper actionMapper;
     private final ReceiverMapper receiverMapper;
 
-    @Autowired
     public ActionServiceImpl(ActionMapper actionMapper, ReceiverMapper receiverMapper) {
         this.actionMapper = actionMapper;
         this.receiverMapper = receiverMapper;
@@ -73,6 +72,7 @@ public class ActionServiceImpl implements ActionService {
      * @return 动作
      */
     @Override
+    @Transactional
     public Action addAction(Action action) {
         action.setId(UUID.randomUUID().toString());
         actionMapper.insert(action);
@@ -87,6 +87,7 @@ public class ActionServiceImpl implements ActionService {
      * @return 动作
      */
     @Override
+    @Transactional
     public Action updateAction(Action action) {
         actionMapper.update(action);
         receiverMapper.deleteByActionId(action.getId());
@@ -100,6 +101,7 @@ public class ActionServiceImpl implements ActionService {
      * @param id 动作ID
      */
     @Override
+    @Transactional
     public void deleteActionById(String id) {
         actionMapper.deleteById(id);
         receiverMapper.deleteByActionId(id);
@@ -111,6 +113,7 @@ public class ActionServiceImpl implements ActionService {
      * @return 删除数量
      */
     @Override
+    @Transactional
     public int deleteActionsByRoleId(String roleId) {
         List<Action> actions = actionMapper.getActions(roleId);
         for (Action action : actions){
