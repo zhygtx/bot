@@ -1,10 +1,15 @@
 package com.example.demo.core.engine.executor;
 
+import com.example.demo.pojo.event.EventLog;
 import com.example.demo.pojo.event.GroupMsg;
 import com.example.demo.pojo.task.Action;
 import com.example.demo.pojo.task.actionContent.Api;
+import com.example.demo.service.EventLogService;
 import com.example.demo.service.task.actionContent.ApiService;
 import com.example.demo.utils.StringTemplateUtil;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gbx.warframe.worldstate.pojo.Fissure;
 import com.gbx.warframe.worldstate.service.FissureService;
 import com.mikuac.shiro.core.Bot;
@@ -27,14 +32,19 @@ public class ApiExecutor {
     @Resource
     private BotContainer botContainer;
 
+    @Resource
+    private ObjectMapper objectMapper;
+
     private final ApiService apiService;
     private final StringTemplateUtil stringTemplateUtil;
     private final FissureService fissureService;
+    private final EventLogService eventLogService;
 
-    public ApiExecutor(ApiService apiService, StringTemplateUtil stringTemplateUtil, FissureService fissureService) {
+    public ApiExecutor(ApiService apiService, StringTemplateUtil stringTemplateUtil, FissureService fissureService, EventLogService eventLogService) {
         this.apiService = apiService;
         this.stringTemplateUtil = stringTemplateUtil;
         this.fissureService = fissureService;
+        this.eventLogService = eventLogService;
     }
 
     public String executeApi(Action action, Object msg){
@@ -53,6 +63,7 @@ public class ApiExecutor {
         switch (api.getApiType()){
             case setGroupSpecialTitle -> result = setGroupSpecialTitle((GroupMsg) msg, params);
             case getWarframeFissure -> result = getWarframeFissure(params).toString();
+            case setGroupAddRequest -> result = setGroupAddRequest((GroupMsg) msg, params);
             default -> log.debug("未知API名称: {}", api.getApiType());
         }
         log.debug("API执行完成，返回结果: {}", result);
@@ -121,5 +132,28 @@ public class ApiExecutor {
                 ));
         log.debug("排序完成，裂隙分组数量: {}", fissureMap.size());
         return fissureMap;
+    }
+
+    /**
+     * 添加群成员
+     * @param groupMsg 群消息对象
+     * @param params 参数列表
+     * @return 添加结果
+     */
+    private String setGroupAddRequest(GroupMsg groupMsg, Map<String, String> params) {
+        log.debug("开始添加群成员，群ID: {}, 用户ID: {}",
+                groupMsg.getGroupId(), groupMsg.getUserId());
+        List<EventLog> eventLogs = eventLogService.getByGroupAndType(groupMsg.getGroupId(), "GroupAddRequestEvent");
+        eventLogs.sort(Comparator.comparing(EventLog::getTime).reversed());
+        EventLog eventLog = eventLogs.get(0);
+        JsonNode data = new ObjectMapper().createObjectNode();
+        try {
+            data = objectMapper.readTree(eventLog.getEventData());
+        } catch (JsonProcessingException e) {
+            log.warn("JSON 解析失败", e);
+        }
+        Bot bot = botContainer.robots.get(groupMsg.getBotId());
+        bot.setGroupAddRequest(data.get("flag").asText(), data.get("sub_type").asText(), Boolean.parseBoolean(params.get("approve")), params.get("reason"));
+        return null;
     }
 }

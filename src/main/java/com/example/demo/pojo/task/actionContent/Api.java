@@ -48,9 +48,11 @@ public class Api {
 
     /**
      * 可调用的 api 名称
+     * @see com.example.demo.core.engine.executor.ApiExecutor
      */
     public enum apiType {
-        setGroupSpecialTitle,
-        getWarframeFissure
+        setGroupSpecialTitle,//设置群组特殊头衔
+        getWarframeFissure,//获取裂隙信息
+        setGroupAddRequest//添加群请求
     }
 }

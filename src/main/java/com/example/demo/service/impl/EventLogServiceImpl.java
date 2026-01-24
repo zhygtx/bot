@@ -51,9 +51,20 @@ public class EventLogServiceImpl implements EventLogService {
     }
 
     /**
+     * 根据群组和类型获取事件日志
+     * @param group 群组ID
+     * @param type 事件类型
+     * @return 事件日志列表
+     */
+    @Override
+    public List<EventLog> getByGroupAndType(Long group, String type){
+        return eventLogMapper.getByGroupAndType(group, type);
+    }
+
+    /**
      * 定时任务：每分钟检查并处理日志
      */
-    @Scheduled(fixedRate = 60000) // 60秒 = 1分钟
+    @Scheduled(fixedRate = 1000) // 60秒 = 1分钟
     public void scheduledProcess() {
         if (count.get() > 0 && !isProcessing.get()) {
             processBatchInsert();
@@ -98,7 +109,6 @@ public class EventLogServiceImpl implements EventLogService {
                 eventLogMapper.insert(batchLogs);
                 // 原子性地减少计数器
                 count.addAndGet(-batchLogs.size());
-                log.info("批量插入了 {} 条日志", batchLogs.size());
             }
         } finally {
             isProcessing.set(false);
