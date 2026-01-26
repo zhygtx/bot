@@ -59,11 +59,36 @@ public class EventHandler implements BotMessageEventInterceptor {
      * @param event 消息事件对象，包含事件详细信息
      * @return true 表示处理该事件，false 表示不处理该事件
      */
+    @SneakyThrows
     @Override
     public boolean preHandle(Bot bot, MessageEvent event) {
         Long userId = event.getUserId();
         if (botCoreEvent.getBotQqs().contains(userId)) {
             log.debug("[{}]拦截到bot消息: , 发送消息的bot: {}", bot.getSelfId(), userId);
+            if (event instanceof GroupMessageEvent groupMessageEvent){
+                GroupMsg groupMsg = messageProcessor.groupProcess(bot, groupMessageEvent);
+                eventLogService.insert(EventLog.builder()
+                        .selfId(bot.getSelfId())
+                        .type("GroupMessageEvent")
+                        .subType(groupMessageEvent.getSubType())
+                        .time(groupMessageEvent.getTime())
+                        .userId(groupMessageEvent.getUserId())
+                        .groupId(groupMessageEvent.getGroupId())
+                        .msgType(objectMapper.writeValueAsString(groupMsg.getType()))
+                        .eventData(objectMapper.writeValueAsString(event))
+                        .build());
+            } else if (event instanceof PrivateMessageEvent privateMessageEvent) {
+                PrivateMsg privateMsg = messageProcessor.privateProcess(bot, privateMessageEvent);
+                eventLogService.insert(EventLog.builder()
+                        .selfId(bot.getSelfId())
+                        .type("PrivateMessageEvent")
+                        .subType(privateMessageEvent.getSubType())
+                        .time(privateMessageEvent.getTime())
+                        .userId(privateMessageEvent.getUserId())
+                        .msgType(objectMapper.writeValueAsString(privateMsg.getType()))
+                        .eventData(objectMapper.writeValueAsString(privateMessageEvent))
+                        .build());
+            }
             return false;
         }
         return true;
@@ -96,11 +121,17 @@ public class EventHandler implements BotMessageEventInterceptor {
                 .time(event.getTime())
                 .userId(event.getUserId())
                 .groupId(event.getGroupId())
+                .msgType(objectMapper.writeValueAsString(groupMsg.getType()))
                 .eventData(objectMapper.writeValueAsString(event))
                 .build()
         );
     }
 
+    /**
+     * 私聊消息处理
+     * @param bot   Bot实例，用于与服务器通信
+     * @param event 私聊消息事件对象，包含事件详细信息
+     */
     @SneakyThrows
     @PrivateMessageHandler
     public void privateMessage(Bot bot, PrivateMessageEvent event){
@@ -114,6 +145,7 @@ public class EventHandler implements BotMessageEventInterceptor {
                 .subType(event.getSubType())
                 .time(event.getTime())
                 .userId(event.getUserId())
+                .msgType(objectMapper.writeValueAsString(privateMsg.getType()))
                 .eventData(objectMapper.writeValueAsString(event))
                 .build()
         );

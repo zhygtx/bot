@@ -5,7 +5,7 @@
 <mapper namespace="com.example.demo.mapper.EventLogMapper">
 
 <insert id="insert" parameterType="java.util.List">
-    INSERT INTO event_log (self_id, type, sub_type, time, user_id, group_id, event_data)
+    INSERT INTO event_log (self_id, type, sub_type, time, user_id, group_id, msg_type, event_data)
     VALUES
     <foreach collection="events" item="event" separator=",">
         (
@@ -15,6 +15,7 @@
         #{event.time},
         #{event.userId},
         #{event.groupId},
+        #{event.msgType},
         #{event.eventData}
         )
     </foreach>

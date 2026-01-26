@@ -57,7 +57,7 @@ public class EventLogServiceImpl implements EventLogService {
      * @return 事件日志列表
      */
     @Override
-    public List<EventLog> getByGroupAndType(Long group, String type){
+    public List<EventLog> getEventLogs(Long group, String type){
         return eventLogMapper.getByGroupAndType(group, type);
     }
 

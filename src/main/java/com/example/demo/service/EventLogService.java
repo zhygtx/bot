@@ -18,7 +18,7 @@ public interface EventLogService {
      * @param type 日志类型
      * @return 事件日志列表
      */
-    List<EventLog> getByGroupAndType(Long group, String type);
+    List<EventLog> getEventLogs(Long group, String type);
 
     /**
      *  定时任务：每分钟检查并处理日志

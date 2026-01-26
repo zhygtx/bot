@@ -143,7 +143,7 @@ public class ApiExecutor {
     private String setGroupAddRequest(GroupMsg groupMsg, Map<String, String> params) {
         log.debug("开始添加群成员，群ID: {}, 用户ID: {}",
                 groupMsg.getGroupId(), groupMsg.getUserId());
-        List<EventLog> eventLogs = eventLogService.getByGroupAndType(groupMsg.getGroupId(), "GroupAddRequestEvent");
+        List<EventLog> eventLogs = eventLogService.getEventLogs(groupMsg.getGroupId(), "GroupAddRequestEvent");
         eventLogs.sort(Comparator.comparing(EventLog::getTime).reversed());
         EventLog eventLog = eventLogs.get(0);
         JsonNode data = new ObjectMapper().createObjectNode();

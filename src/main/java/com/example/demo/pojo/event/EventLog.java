@@ -42,6 +42,11 @@ public class EventLog {
     private Long groupId;
 
     /**
+     *  消息类型
+     */
+    private String msgType;
+
+    /**
      *  事件数据源
      */
     private String eventData;
