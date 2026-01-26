@@ -83,6 +83,9 @@ public class TemplateExecutor {
             case getWarframeFissure:
                 log.debug("执行获取战区裂隙API，提取文本: {}", action.getExtractText().get(0));
                 Object object = apiExecutor.getWarframeFissure(params);
+                if (object instanceof String){
+                    return (String) object;
+                }
                 result = templateUtil.objectToImage(object,template);
                 break;
             default:
