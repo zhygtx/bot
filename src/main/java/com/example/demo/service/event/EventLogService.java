@@ -1,4 +1,4 @@
-package com.example.demo.service;
+package com.example.demo.service.event;
 
 import com.example.demo.pojo.event.EventLog;
 

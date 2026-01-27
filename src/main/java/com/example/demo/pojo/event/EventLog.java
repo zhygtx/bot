@@ -47,6 +47,11 @@ public class EventLog {
     private String msgType;
 
     /**
+     * 消息内容
+     */
+    private String msg;
+
+    /**
      *  事件数据源
      */
     private String eventData;

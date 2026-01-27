@@ -6,7 +6,7 @@ import com.example.demo.pojo.event.EventLog;
 import com.example.demo.pojo.event.GroupEvent;
 import com.example.demo.pojo.event.GroupMsg;
 import com.example.demo.pojo.event.PrivateMsg;
-import com.example.demo.service.EventLogService;
+import com.example.demo.service.event.EventLogService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mikuac.shiro.annotation.*;
 import com.mikuac.shiro.annotation.common.Shiro;
@@ -75,6 +75,7 @@ public class EventHandler implements BotMessageEventInterceptor {
                         .userId(groupMessageEvent.getUserId())
                         .groupId(groupMessageEvent.getGroupId())
                         .msgType(objectMapper.writeValueAsString(groupMsg.getType()))
+                        .msg(objectMapper.writeValueAsString(groupMsg.getContent()))
                         .eventData(objectMapper.writeValueAsString(event))
                         .build());
             } else if (event instanceof PrivateMessageEvent privateMessageEvent) {
@@ -86,6 +87,7 @@ public class EventHandler implements BotMessageEventInterceptor {
                         .time(privateMessageEvent.getTime())
                         .userId(privateMessageEvent.getUserId())
                         .msgType(objectMapper.writeValueAsString(privateMsg.getType()))
+                        .msg(objectMapper.writeValueAsString(privateMsg.getContent()))
                         .eventData(objectMapper.writeValueAsString(privateMessageEvent))
                         .build());
             }
@@ -122,6 +124,7 @@ public class EventHandler implements BotMessageEventInterceptor {
                 .userId(event.getUserId())
                 .groupId(event.getGroupId())
                 .msgType(objectMapper.writeValueAsString(groupMsg.getType()))
+                .msg(objectMapper.writeValueAsString(groupMsg.getContent()))
                 .eventData(objectMapper.writeValueAsString(event))
                 .build()
         );
@@ -146,6 +149,7 @@ public class EventHandler implements BotMessageEventInterceptor {
                 .time(event.getTime())
                 .userId(event.getUserId())
                 .msgType(objectMapper.writeValueAsString(privateMsg.getType()))
+                .msg(objectMapper.writeValueAsString(privateMsg.getContent()))
                 .eventData(objectMapper.writeValueAsString(event))
                 .build()
         );

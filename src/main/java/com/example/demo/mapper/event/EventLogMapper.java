@@ -1,4 +1,4 @@
-package com.example.demo.mapper;
+package com.example.demo.mapper.event;
 
 import com.example.demo.pojo.event.EventLog;
 import org.apache.ibatis.annotations.Mapper;

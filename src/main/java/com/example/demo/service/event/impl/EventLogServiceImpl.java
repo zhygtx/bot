@@ -1,8 +1,8 @@
-package com.example.demo.service.impl;
+package com.example.demo.service.event.impl;
 
-import com.example.demo.mapper.EventLogMapper;
+import com.example.demo.mapper.event.EventLogMapper;
 import com.example.demo.pojo.event.EventLog;
-import com.example.demo.service.EventLogService;
+import com.example.demo.service.event.EventLogService;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;

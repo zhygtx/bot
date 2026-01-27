@@ -4,7 +4,7 @@ import com.example.demo.pojo.event.EventLog;
 import com.example.demo.pojo.event.GroupMsg;
 import com.example.demo.pojo.task.Action;
 import com.example.demo.pojo.task.actionContent.Api;
-import com.example.demo.service.EventLogService;
+import com.example.demo.service.event.EventLogService;
 import com.example.demo.service.task.actionContent.ApiService;
 import com.example.demo.utils.StringTemplateUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
