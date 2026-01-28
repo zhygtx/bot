@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.mapper.event.ChatContextMapper">
+
+    <!-- 批量更新 summaryId -->
+    <!-- 将多条UPDATE语句改为单条执行 -->
+    <update id="update" parameterType="java.util.Map">
+        UPDATE chat_context
+        SET summary_id = #{summaryId}
+        WHERE id IN
+        <foreach collection="chatContexts" item="context" open="(" close=")" separator=",">
+            #{context.id}
+        </foreach>
+    </update>
+
+</mapper>

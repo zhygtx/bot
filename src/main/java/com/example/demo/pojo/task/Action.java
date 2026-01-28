@@ -74,7 +74,7 @@ public class Action {
      * 动作类型枚举
      */
     public enum ActionType {
-        text,image,api,url,template
+        text,image,api,url,template,ai
     }
 
     /**

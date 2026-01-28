@@ -1,9 +1,6 @@
 package com.example.demo.core.engine;
 
-import com.example.demo.core.engine.executor.ApiExecutor;
-import com.example.demo.core.engine.executor.TemplateExecutor;
-import com.example.demo.core.engine.executor.TextExecutor;
-import com.example.demo.core.engine.executor.UrlExecutor;
+import com.example.demo.core.engine.executor.*;
 import com.example.demo.core.manager.ActionManager;
 import com.example.demo.pojo.event.Event;
 import com.example.demo.pojo.event.PrivateMsg;
@@ -26,13 +23,15 @@ public class ActionEngine implements ActionManager {
     private final TextExecutor textExecutor;
     private final ApiExecutor apiExecutor;
     private final TemplateExecutor templateExecutor;
+    private final AiExecutor aiExecutor;
 
     @Autowired
-    public ActionEngine(TextExecutor textExecutor, ApiExecutor apiExecutor, UrlExecutor urlExecutor, TemplateExecutor templateExecutor) {
+    public ActionEngine(TextExecutor textExecutor, ApiExecutor apiExecutor, UrlExecutor urlExecutor, TemplateExecutor templateExecutor, AiExecutor aiExecutor) {
         this.textExecutor = textExecutor;
         this.apiExecutor = apiExecutor;
         this.urlExecutor = urlExecutor;
         this.templateExecutor = templateExecutor;
+        this.aiExecutor = aiExecutor;
     }
 
     /**
@@ -56,6 +55,7 @@ public class ActionEngine implements ActionManager {
                 case api -> result = handleApi(action, msg);
                 case url -> result = handleUrl(action, msg);
                 case template -> result = handleTemplate(action, msg);
+                case ai -> result = handleAi(action, msg);
                 default -> log.debug("未知动作类型: {}", action.getActionType());
             }
             //处理接收对象
@@ -152,6 +152,13 @@ public class ActionEngine implements ActionManager {
         log.debug("处理模板动作: {}, dataId: {}", action.getId(), action.getDataId());
         String result = templateExecutor.executeTemplate(action, msgObj);
         log.debug("模板动作执行结果: {}", result);
+        return result;
+    }
+
+    private String handleAi(Action action, Object msg) {
+        log.debug("处理AI动作: {}, dataId: {}", action.getId(), action.getDataId());
+        String result = aiExecutor.executeAi(action, msg);
+        log.debug("AI动作执行结果: {}", result);
         return result;
     }
 }
