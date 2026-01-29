@@ -15,7 +15,6 @@ public interface ReceiverMapper {
      * 获取所有接收对象
      * @return 接收对象列表
      */
-    //todo:数据库及其相关层完成
     @Select("select * from receiver")
     List<Receiver> getAll();
 

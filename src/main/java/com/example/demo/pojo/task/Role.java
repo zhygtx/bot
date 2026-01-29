@@ -95,7 +95,6 @@ public class Role {
         GroupDecrease,//退群事件
         GroupAddRequest//加群请求
     }
-    //todo 字段内容修改
 
     /**
      * 关联的动作内容

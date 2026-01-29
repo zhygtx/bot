@@ -87,7 +87,6 @@ public class Scope {
         Group,
         Private
     }
-    //todo 字段内容修改
 
     /**
      * 所拥有的触发规则

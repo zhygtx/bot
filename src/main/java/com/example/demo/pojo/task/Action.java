@@ -61,8 +61,6 @@ public class Action {
     @JsonProperty("dataId")
     private String dataId;
 
-    //todo:字段名修改，删除字段isConcat
-
     /**
      * 动作执行优先级，越小越先执行
      */
