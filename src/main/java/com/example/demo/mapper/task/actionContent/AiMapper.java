@@ -29,7 +29,7 @@ public interface AiMapper {
      * @param ai AI配置
      * @return 插入数量
      */
-    @Insert("INSERT INTO ai (id, user_id, name, setting, api_key, compress_pct, model) VALUES (#{id}, #{userId}, #{name}, #{setting}, #{apiKey}, #{compressPct}, #{model})")
+    @Insert("INSERT INTO ai (id, user_id, name, setting, api_key, compress_pct, model, net_search) VALUES (#{id}, #{userId}, #{name}, #{setting}, #{apiKey}, #{compressPct}, #{model}, #{netSearch})")
     int insert(Ai ai);
 
     /**
@@ -37,7 +37,7 @@ public interface AiMapper {
      * @param ai AI配置
      * @return 更新数量
      */
-    @Update("UPDATE ai SET name = #{name}, setting = #{setting}, api_key = #{apiKey}, compress_pct = #{compressPct}, model = #{model} WHERE id = #{id}")
+    @Update("UPDATE ai SET name = #{name}, setting = #{setting}, api_key = #{apiKey}, compress_pct = #{compressPct}, model = #{model}, net_search = #{netSearch} WHERE id = #{id}")
     int update(Ai ai);
 
     /**

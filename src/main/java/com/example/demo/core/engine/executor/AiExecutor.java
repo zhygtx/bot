@@ -1,8 +1,5 @@
 package com.example.demo.core.engine.executor;
 
-import com.alibaba.dashscope.aigc.multimodalconversation.MultiModalConversationResult;
-import com.alibaba.dashscope.common.MultiModalMessage;
-import com.alibaba.dashscope.common.Role;
 import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.exception.UploadFileException;
 import com.example.demo.pojo.event.ChatContext;
@@ -14,13 +11,15 @@ import com.example.demo.pojo.task.actionContent.Ai;
 import com.example.demo.service.event.ChatContextService;
 import com.example.demo.service.task.actionContent.AiService;
 import com.example.demo.utils.AiUtil;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Component
@@ -41,6 +40,21 @@ public class AiExecutor {
         return msgExecute(action, objMsg);
     }
 
+    private static final String SUMMARY_PROMPT = """
+    请将以下对话历史压缩成一个精炼的上下文摘要，要求：
+    1. 保留核心对话内容和关键信息
+    2. 维持原始对话的角色设定和背景信息
+    3. 突出重要决策点和结论
+    4. 字数控制在原长度的30%以内
+    5. 保持逻辑连贯性，便于后续对话理解
+    
+    摘要格式：
+    【角色设定】[身份、背景、性格]
+    【对话主题】[主要讨论内容]
+    【关键进展】[重要节点和结论]
+    【当前状态】[未解决事项和下一步方向]
+    """;
+
     /**
      * 群消息处理
      */
@@ -48,7 +62,6 @@ public class AiExecutor {
     private String msgExecute(Action action, Object objMsg){
         Ai ai =aiService.getAiById(action.getDataId());
 
-        List<String> aiAbility = Ai.Model.getAbility(ai.getModel());
         //获取历史消息
         List<ChatContext> chatContexts = new ArrayList<>();
         if (objMsg instanceof GroupMsg groupMsg){
@@ -58,61 +71,39 @@ public class AiExecutor {
         }
         Msg msg = (Msg) objMsg;
 
-        List<MultiModalMessage> messages = new ArrayList<>();
+        List<Object> messages = new ArrayList<>();
 
         //1添加AI设定与历史上下文
-        MultiModalMessage settingMessage = MultiModalMessage.builder()
-                .role(Role.SYSTEM.getValue())
-                .content(List.of(Collections.singletonMap("text", ai.getSetting())))
-                .build();
-        messages.add(settingMessage);
+        messages.add(aiUtil.setting(ai));
         if (!chatContexts.isEmpty() && chatContexts.get(0).getIsSummary()){
-            MultiModalMessage summaryMessage = MultiModalMessage.builder()
-                    .role(Role.SYSTEM.getValue())
-                    .content(List.of(Collections.singletonMap("text", "历史消息总结:" + chatContexts.get(0).getMsg())))
-                    .build();
-            messages.add(summaryMessage);
+            messages.add(aiUtil.content(ai, chatContexts.get(0)));
             chatContexts.remove(0);
         }
 
         //2添加上下文消息(如果为空的话就没加入内容)
         for (ChatContext chatContext : chatContexts){
-            MultiModalMessage userMessage = MultiModalMessage.builder()
-                    .content(new ArrayList<>(List.of(Collections.singletonMap("text","用户" + chatContext.getUserId()+":"))))
-                    .role(chatContext.getSenderType().equals("user") ? Role.USER.getValue() : Role.ASSISTANT.getValue()) // 根据消息来源设置角色
-                    .build();
-
-            //转换消息上下文的内容
-            List<String> msgType = objectMapper.readValue(chatContext.getMsgType(), new TypeReference<>() {});
-            Map<Integer, Map<String, Object>> msgContent = objectMapper.readValue(chatContext.getMsg(), new TypeReference<>() {});
-
-            //添加消息
-            for (int i = 0; i < msgType.size(); i++){
-                switch (msgType.get(i)){
-                    //根据模型能力判断是否添加内容，如果模型能力不包含该内容则跳过该内容
-                    case "text" -> {if (aiAbility.contains("text"))    userMessage.getContent().add(Collections.singletonMap("text",msgContent.get(i).get("text")));}
-                    case "image" -> {if (aiAbility.contains("image"))  userMessage.getContent().add(Collections.singletonMap("image", msgContent.get(i).get("url")));}
-                }
-            }
-
+            Object userMessage = aiUtil.content(ai, chatContext);
             messages.add(userMessage);
         }
 
         //3添加当前消息
-        MultiModalMessage userMessage = MultiModalMessage.builder()
-                .role(Role.USER.getValue())
-                .content(new ArrayList<>(List.of(Collections.singletonMap("text","用户" + msg.getUserId()+":" ))))
+        //结构化当前消息
+        ChatContext userChatContext = ChatContext.builder()
+                .id(UUID.randomUUID().toString())
+                .botId(msg.getBotId())
+                .role("user")
+                .groupId(msg.getGroupId())
+                .userId(msg.getUserId())
+                .msgType(objectMapper.writeValueAsString(msg.getType()))
+                .msg(objectMapper.writeValueAsString(msg.getContent()))
+                .isSummary(false)
+                .summaryId(chatContexts.isEmpty() ? null : chatContexts.get(chatContexts.size() - 1).getSummaryId())
+                .time(System.currentTimeMillis())
                 .build();
-        for (int i = 0; i < msg.getType().size(); i++){
-            switch (msg.getType().get(i)){
-                case "text" ->{if (aiAbility.contains("text"))     userMessage.getContent().add(Collections.singletonMap("text",msg.getContent().get(i).get("text")));}
-                case "image" ->{if (aiAbility.contains("image"))   userMessage.getContent().add(Collections.singletonMap("image", msg.getContent().get(i).get("url")));}
-            }
-        }
-        messages.add(userMessage);
+        messages.add(aiUtil.content(ai, userChatContext));
 
         //4调用Ai
-        MultiModalConversationResult result;
+        Object result;
         try {
             result = aiUtil.call(ai, messages);
         } catch (NoApiKeyException | UploadFileException e) {
@@ -127,27 +118,15 @@ public class AiExecutor {
         }
 
 
-        String resultMsg = result.getOutput().getChoices().get(0).getMessage().getContent().get(0).get("text").toString();
-        Integer useToken = result.getUsage().getTotalTokens();
+        String resultMsg = aiUtil.getResultMsg(result);
+        Integer useToken = aiUtil.getToken(result);
 
         //5将此次消息与回复内容结构化
-        ChatContext userChatContext = ChatContext.builder()
-                .id(UUID.randomUUID().toString())
-                .botId(msg.getBotId())
-                .senderType("user")
-                .groupId(msg.getGroupId())
-                .userId(msg.getUserId())
-                .msgType(objectMapper.writeValueAsString(msg.getType()))
-                .msg(objectMapper.writeValueAsString(msg.getContent()))
-                .isSummary(false)
-                .summaryId(chatContexts.isEmpty() ? null : chatContexts.get(chatContexts.size() - 1).getSummaryId())
-                .useToken(useToken)
-                .time(System.currentTimeMillis())
-                .build();
+        userChatContext.setUseToken(useToken);
         ChatContext aiChatContext = ChatContext.builder()
                 .id(UUID.randomUUID().toString())
                 .botId(msg.getBotId())
-                .senderType("assistant")
+                .role("assistant")
                 .groupId(msg.getGroupId())
                 .userId(msg.getUserId())
                 .msgType(objectMapper.writeValueAsString(List.of("text")))
@@ -161,28 +140,25 @@ public class AiExecutor {
 
         //6查看是否需要并进行压缩上下文
         if (Ai.Model.getMaxToken(ai.getModel()) * ai.getCompressPct() <= useToken){
-            List<MultiModalMessage> summaryMessages = messages.subList(0, messages.size()/2);
-            MultiModalMessage summaryMessage = MultiModalMessage.builder()
-                    .role(Role.SYSTEM.getValue())
-                    .content(List.of(Collections.singletonMap("text", """
-                            请将我们之前的对话压缩成一个上下文摘要，要求准确精炼尽量减少输出内容,不需要语气词与颜文字之类的任何其他无关内容
-                            包含：
-                            1. 角色基础设定（身份、背景、性格特点）
-                            2. 对话情境（时间、地点、当前状况）
-                            3. 已发生的关键事件（按时间顺序）
-                            4. 角色当前的心理状态和目标
-                            5. 悬而未决的问题
-                            输出格式：【角色设定】...【当前情境】...【关键事件】...【心理状态】...【待解决问题】...""")))
+            List<Object> summaryMessages = messages.subList(0, messages.size()/2);
+
+            //添加压缩提示
+            ChatContext summaryMessage = ChatContext.builder()
+                    .role("system")
+                    .msgType(objectMapper.writeValueAsString(List.of("text")))
+                    .msg(objectMapper.writeValueAsString(Collections.singletonMap(0,(Collections.singletonMap("text", SUMMARY_PROMPT)))))
                     .build();
-            summaryMessages.add(summaryMessage);
-            MultiModalConversationResult summaryResult = aiUtil.call(ai, summaryMessages);
-            String summaryMsg ="对话历史总结：" +summaryResult.getOutput().getChoices().get(0).getMessage().getContent().get(0).get("text").toString();
-            Integer summaryUseToken = summaryResult.getUsage().getTotalTokens();
+            summaryMessages.add(aiUtil.content(ai, summaryMessage));
+
+            Object summaryResult = aiUtil.call(ai, summaryMessages);
+            String summaryMsg ="对话历史总结：" +aiUtil.getResultMsg(summaryResult);
+            Integer summaryUseToken = aiUtil.getToken(summaryResult);
+
             String summaryChatContextId = UUID.randomUUID().toString();
             ChatContext summaryChatContext = ChatContext.builder()
                     .id(summaryChatContextId)
                     .botId(msg.getBotId())
-                    .senderType("assistant")
+                    .role("system")
                     .groupId(msg.getGroupId())
                     .userId(msg.getUserId())
                     .msgType(objectMapper.writeValueAsString(List.of("text")))

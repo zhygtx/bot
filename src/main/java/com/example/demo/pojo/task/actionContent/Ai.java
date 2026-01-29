@@ -56,6 +56,12 @@ public class Ai {
     private Model model;
 
     /**
+     * 是否联网搜索
+     */
+    @JsonProperty("netSearch")
+    private Boolean netSearch;
+
+    /**
      * 模型枚举类
      */
     @Getter
@@ -71,12 +77,16 @@ public class Ai {
             this.modelName = modelName;
         }
 
-        private static final Map<Model, Long> MODEL_MAP = new HashMap<>();
+        private static final Map<Model, Long> MODEL_TOKEN = new HashMap<>();
+        private static final Map<Model, Boolean> MODEL_BOOLEAN_MAP = new HashMap<>();
 
         static {
-            MODEL_MAP.put(qwen3_vl_plus_2025_12_19, 32000L);
-            MODEL_MAP.put(qwen3_vl_flash, 32000L);
-            MODEL_MAP.put(qwen_flash, 128000L);
+            MODEL_TOKEN.put(qwen3_vl_plus_2025_12_19, 32000L);
+            MODEL_TOKEN.put(qwen3_vl_flash, 32000L);
+            MODEL_TOKEN.put(qwen_flash, 128000L);
+            MODEL_BOOLEAN_MAP.put(qwen3_vl_plus_2025_12_19, false);
+            MODEL_BOOLEAN_MAP.put(qwen3_vl_flash, false);
+            MODEL_BOOLEAN_MAP.put(qwen_flash, true);
         }
 
         /**
@@ -91,8 +101,22 @@ public class Ai {
             }
         }
 
+        /**
+         * 获取模型最大Token数
+         * @param modelName 模型名称
+         * @return 模型最大Token数
+         */
         public static Long getMaxToken(Model modelName) {
-            return MODEL_MAP.get(modelName);
+            return MODEL_TOKEN.get(modelName);
+        }
+
+        /**
+         * 获取模型是否支持联网搜索
+         * @param modelName 模型名称
+         * @return 模型是否支持联网搜索
+         */
+        public static Boolean getIsNetSearch(Model modelName) {
+            return MODEL_BOOLEAN_MAP.get(modelName);
         }
     }
 }
