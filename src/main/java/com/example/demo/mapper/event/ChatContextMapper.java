@@ -15,8 +15,8 @@ public interface ChatContextMapper {
      * 插入一条聊天上下文
      * @param chatContext 聊天上下文
      */
-    @Insert("INSERT INTO chat_context (id,bot_id, sender_type, group_id, user_id, msg_type, msg, is_summary, summary_id, use_token, time) " +
-            "VALUES (#{id},#{botId}, #{senderType}, #{groupId}, #{userId}, #{msgType}, #{msg}, #{isSummary}, #{summaryId}, #{useToken}, #{time})")
+    @Insert("INSERT INTO chat_context (id,bot_id, role, group_id, user_id, msg_type, msg, is_summary, summary_id, use_token, time) " +
+            "VALUES (#{id},#{botId}, #{role}, #{groupId}, #{userId}, #{msgType}, #{msg}, #{isSummary}, #{summaryId}, #{useToken}, #{time})")
     void insert(ChatContext chatContext);
 
     /**

@@ -27,7 +27,7 @@ public class ChatContext {
     /**
      * 发送者类型
      */
-    private String senderType;
+    private String role;
 
     /**
      * 群ID
