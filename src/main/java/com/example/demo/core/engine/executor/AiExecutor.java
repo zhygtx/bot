@@ -12,6 +12,7 @@ import com.example.demo.pojo.event.PrivateMsg;
 import com.example.demo.pojo.task.Action;
 import com.example.demo.pojo.task.actionContent.Ai;
 import com.example.demo.service.event.ChatContextService;
+import com.example.demo.service.task.actionContent.AiService;
 import com.example.demo.utils.AiUtil;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -28,21 +29,13 @@ public class AiExecutor {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final ChatContextService chatContextService;
     private final AiUtil aiUtil;
+    private final AiService aiService;
 
-    private AiExecutor(ChatContextService chatContextService, AiUtil aiUtil) {
+    public AiExecutor(ChatContextService chatContextService, AiUtil aiUtil, AiService aiService) {
         this.chatContextService = chatContextService;
         this.aiUtil = aiUtil;
+        this.aiService = aiService;
     }
-
-    private final Ai ai = Ai.builder()
-            .id("1")
-            .userId("1")
-            .name("AI")
-            .compressPct(0.7)
-            .apiKey("sk-645dacce78a0436d8611a3b598989712")
-            .setting("你一个群猫娘，是群里面的吉祥物，喜欢在回复中附带颜文字来表示心情，但是不需要使用描述动作")
-            .model(Ai.Model.qwen3_vl_plus_2025_12_19)
-            .build();
 
     public String executeAi(Action action, Object objMsg){
         return msgExecute(action, objMsg);
@@ -53,6 +46,8 @@ public class AiExecutor {
      */
     @SneakyThrows
     private String msgExecute(Action action, Object objMsg){
+        Ai ai =aiService.getAiById(action.getDataId());
+
         List<String> aiAbility = Ai.Model.getAbility(ai.getModel());
         //获取历史消息
         List<ChatContext> chatContexts = new ArrayList<>();
@@ -96,7 +91,7 @@ public class AiExecutor {
                 switch (msgType.get(i)){
                     //根据模型能力判断是否添加内容，如果模型能力不包含该内容则跳过该内容
                     case "text" -> {if (aiAbility.contains("text"))    userMessage.getContent().add(Collections.singletonMap("text",msgContent.get(i).get("text")));}
-                    case "image" -> {if (aiAbility.contains("image"))  userMessage.getContent().add(Collections.singletonMap("url", msgContent.get(i).get("url")));}
+                    case "image" -> {if (aiAbility.contains("image"))  userMessage.getContent().add(Collections.singletonMap("image", msgContent.get(i).get("url")));}
                 }
             }
 
@@ -111,7 +106,7 @@ public class AiExecutor {
         for (int i = 0; i < msg.getType().size(); i++){
             switch (msg.getType().get(i)){
                 case "text" ->{if (aiAbility.contains("text"))     userMessage.getContent().add(Collections.singletonMap("text",msg.getContent().get(i).get("text")));}
-                case "image" ->{if (aiAbility.contains("image"))   userMessage.getContent().add(Collections.singletonMap("url", msg.getContent().get(i).get("url")));}
+                case "image" ->{if (aiAbility.contains("image"))   userMessage.getContent().add(Collections.singletonMap("image", msg.getContent().get(i).get("url")));}
             }
         }
         messages.add(userMessage);
