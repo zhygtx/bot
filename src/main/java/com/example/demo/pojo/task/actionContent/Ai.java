@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @NoArgsConstructor
@@ -76,6 +77,18 @@ public class Ai {
             MODEL_MAP.put(qwen3_vl_plus_2025_12_19, 32000L);
             MODEL_MAP.put(qwen3_vl_flash, 32000L);
             MODEL_MAP.put(qwen_flash, 128000L);
+        }
+
+        /**
+         * 获取模型解读能力
+         * @param model 模型
+         * @return 模型解读能力
+         */
+        public static List<String> getAbility(Model model) {
+            switch (model){
+            case qwen3_vl_plus_2025_12_19, qwen3_vl_flash -> {return List.of("text","image","video");}
+            default -> {return List.of("text");}
+            }
         }
 
         public static Long getMaxToken(Model modelName) {

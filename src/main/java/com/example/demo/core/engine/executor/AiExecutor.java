@@ -53,6 +53,7 @@ public class AiExecutor {
      */
     @SneakyThrows
     private String msgExecute(Action action, Object objMsg){
+        List<String> aiAbility = Ai.Model.getAbility(ai.getModel());
         //获取历史消息
         List<ChatContext> chatContexts = new ArrayList<>();
         if (objMsg instanceof GroupMsg groupMsg){
@@ -93,8 +94,9 @@ public class AiExecutor {
             //添加消息
             for (int i = 0; i < msgType.size(); i++){
                 switch (msgType.get(i)){
-                    case "text"-> userMessage.getContent().add(Collections.singletonMap("text",msgContent.get(i).get("text")));
-                    case "image" ->userMessage.getContent().add(Collections.singletonMap("url", msgContent.get(i).get("url")));
+                    //根据模型能力判断是否添加内容，如果模型能力不包含该内容则跳过该内容
+                    case "text" -> {if (aiAbility.contains("text"))    userMessage.getContent().add(Collections.singletonMap("text",msgContent.get(i).get("text")));}
+                    case "image" -> {if (aiAbility.contains("image"))  userMessage.getContent().add(Collections.singletonMap("url", msgContent.get(i).get("url")));}
                 }
             }
 
@@ -108,8 +110,8 @@ public class AiExecutor {
                 .build();
         for (int i = 0; i < msg.getType().size(); i++){
             switch (msg.getType().get(i)){
-                case "text" ->userMessage.getContent().add(Collections.singletonMap("text",msg.getContent().get(i).get("text")));
-                case "image"->userMessage.getContent().add(Collections.singletonMap("url", msg.getContent().get(i).get("url")));
+                case "text" ->{if (aiAbility.contains("text"))     userMessage.getContent().add(Collections.singletonMap("text",msg.getContent().get(i).get("text")));}
+                case "image" ->{if (aiAbility.contains("image"))   userMessage.getContent().add(Collections.singletonMap("url", msg.getContent().get(i).get("url")));}
             }
         }
         messages.add(userMessage);
