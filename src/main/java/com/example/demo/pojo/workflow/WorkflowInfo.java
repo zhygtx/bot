@@ -1,0 +1,57 @@
+package com.example.demo.pojo.workflow;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class WorkflowInfo {
+
+    /**
+     * 工作流ID
+     */
+    private String id;
+
+    /**
+     * 工作流创建者ID
+     */
+    private String userId;
+
+    /**
+     * 工作流名称
+     */
+    private String name;
+
+    /**
+     * 工作流描述
+     */
+    private String description;
+
+    /**
+     * 工作流节点列表
+     */
+    private List<Node> nodes;
+
+    /**
+     * 工作流条件列表
+     */
+    private List<Condition> conditions;
+
+    /**
+     * 工作流创建时间
+     */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime createTime;
+
+    /**
+     * 工作流更新时间
+     */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime updateTime;
+}

@@ -1,4 +1,4 @@
-package com.example.demo.utils;
+package com.example.demo.util;
 
 import com.example.demo.interceptor.ExcludeFromMD5;
 import org.springframework.web.multipart.MultipartFile;

@@ -7,7 +7,7 @@ import com.example.demo.pojo.Result;
 import com.example.demo.pojo.User;
 import com.example.demo.service.EmailService;
 import com.example.demo.service.UserService;
-import com.example.demo.utils.DockerUtil;
+import com.example.demo.util.DockerUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
