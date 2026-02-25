@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.demo.mapper.WorkflowMapper">
+
+    <!-- 工作流信息表字段映射 -->
+    <resultMap id="workflowInfoMap" type="com.example.demo.pojo.workflow.WorkflowInfo">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="name" property="name"/>
+        <result column="description" property="description"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <!-- 关联节点信息 -->
+        <collection property="nodes" ofType="com.example.demo.pojo.workflow.Node">
+            <id column="node_id" property="id"/>
+            <result column="node_plugin_id" property="pluginId"/>
+            <result column="node_method_class_id" property="methodClassId"/>
+            <result column="node_method_id" property="methodId"/>
+            <result column="in_degree" property="inDegree"/>
+            <!-- 关联插件信息 -->
+            <association property="pluginInfo" javaType="com.example.demo.pojo.plugin.PluginInfo">
+                <id column="plugin_id" property="id"/>
+                <result column="plugin_name" property="name"/>
+                <result column="plugin_description" property="description"/>
+                <result column="plugin_version" property="version"/>
+            </association>
+            <!-- 关联方法类信息 -->
+            <association property="methodClassInfo" javaType="com.example.demo.pojo.plugin.MethodClassInfo">
+                <id column="method_class_id" property="id"/>
+                <result column="method_class_name" property="className"/>
+                <result column="method_class_simple_name" property="simpleClassName"/>
+            </association>
+            <!-- 关联方法信息 -->
+            <association property="methodInfo" javaType="com.example.demo.pojo.plugin.MethodInfo">
+                <id column="method_id" property="id"/>
+                <result column="method_name" property="name"/>
+                <result column="method_return_type" property="returnType"/>
+            </association>
+            <!-- 关联数据映射 -->
+            <collection property="dataMaps" ofType="com.example.demo.pojo.workflow.DataMap">
+                <id column="data_map_id" property="id"/>
+                <result column="data_map_node_id" property="nodeId"/>
+                <result column="source_node_id" property="sourceNodeId"/>
+                <result column="source" property="source"/>
+                <result column="target" property="target"/>
+                <result column="source_type" property="sourceType"/>
+                <result column="target_type" property="targetType"/>
+            </collection>
+            <!-- 关联节点默认值 -->
+            <collection property="nodeDefaults" ofType="com.example.demo.pojo.workflow.NodeDefaults">
+                <id column="node_defaults_id" property="id"/>
+                <result column="node_defaults_node_id" property="nodeId"/>
+                <result column="param_index" property="paramIndex"/>
+                <result column="default_value" property="defaultValue"/>
+                <result column="default_value_type" property="defaultValueType"/>
+            </collection>
+            <!-- 关联前置节点 -->
+            <collection property="preNodeId" ofType="java.lang.String">
+                <constructor>
+                    <arg column="pre_node_id"/>
+                </constructor>
+            </collection>
+            <!-- 关联后置节点 -->
+            <collection property="nextNodeId" ofType="java.lang.String">
+                <constructor>
+                    <arg column="next_node_id"/>
+                </constructor>
+            </collection>
+        </collection>
+        <!-- 关联条件信息 -->
+        <collection property="conditions" ofType="com.example.demo.pojo.workflow.Condition">
+            <id column="condition_id" property="id"/>
+            <result column="condition_workflow_id" property="workflowId"/>
+            <result column="condition_node_id" property="nodeId"/>
+            <result column="field_name" property="fieldName"/>
+            <result column="preset_content" property="presetContent"/>
+            <result column="content_type" property="contentType"/>
+            <result column="action" property="action"/>
+            <result column="else_action" property="elseAction"/>
+            <result column="operator" property="operator"/>
+        </collection>
+    </resultMap>
+
+    <!-- 插入工作流信息 -->
+    <insert id="insertWorkflow" parameterType="com.example.demo.pojo.workflow.WorkflowInfo">
+        INSERT INTO workflow_info (
+            id, user_id, name, description, create_time, update_time
+        ) VALUES (
+            #{id}, #{userId}, #{name}, #{description}, #{createTime}, #{updateTime}
+        )
+    </insert>
+
+    <!-- 根据ID查询工作流信息 -->
+    <select id="selectWorkflowById" resultMap="workflowInfoMap">
+        SELECT 
+            w.id, w.user_id, w.name, w.description, w.create_time, w.update_time,
+            n.id as node_id, n.plugin_id as node_plugin_id, n.method_class_id as node_method_class_id, 
+            n.method_id as node_method_id, n.in_degree,
+            dm.id as data_map_id, dm.node_id as data_map_node_id, dm.source_node_id, dm.source, 
+            dm.target, dm.source_type, dm.target_type,
+            np.pre_node_id,
+            nn.next_node_id,
+            nd.id as node_defaults_id, nd.node_id as node_defaults_node_id, nd.param_index, 
+            nd.default_value, nd.default_value_type,
+            p.id as plugin_id, p.name as plugin_name, p.description as plugin_description, p.version as plugin_version,
+            mc.id as method_class_id, mc.class_name as method_class_name, mc.simple_class_name as method_class_simple_name,
+            m.id as method_id, m.name as method_name, m.return_type as method_return_type,
+            c.id as condition_id, c.workflow_id as condition_workflow_id, c.node_id as condition_node_id, 
+            c.field_name, c.preset_content, c.content_type, c.action, c.else_action, c.operator
+        FROM workflow_info w
+        LEFT JOIN node n ON w.id = n.id
+        LEFT JOIN data_map dm ON n.id = dm.node_id
+        LEFT JOIN node_pre_relation np ON n.id = np.node_id
+        LEFT JOIN node_next_relation nn ON n.id = nn.node_id
+        LEFT JOIN node_defaults nd ON n.id = nd.node_id
+        LEFT JOIN plugin_info p ON n.plugin_id = p.id
+        LEFT JOIN method_class_info mc ON n.method_class_id = mc.id
+        LEFT JOIN method_info m ON n.method_id = m.id
+        LEFT JOIN `condition` c ON w.id = c.workflow_id
+        WHERE w.id = #{id}
+    </select>
+
+    <!-- 查询所有工作流信息 -->
+    <select id="selectAllWorkflows" resultMap="workflowInfoMap">
+        SELECT 
+            w.id, w.user_id, w.name, w.description, w.create_time, w.update_time,
+            n.id as node_id, n.plugin_id as node_plugin_id, n.method_class_id as node_method_class_id, 
+            n.method_id as node_method_id, n.in_degree,
+            dm.id as data_map_id, dm.node_id as data_map_node_id, dm.source_node_id, dm.source, 
+            dm.target, dm.source_type, dm.target_type,
+            np.pre_node_id,
+            nn.next_node_id,
+            nd.id as node_defaults_id, nd.node_id as node_defaults_node_id, nd.param_index, 
+            nd.default_value, nd.default_value_type,
+            p.id as plugin_id, p.name as plugin_name, p.description as plugin_description, p.version as plugin_version,
+            mc.id as method_class_id, mc.class_name as method_class_name, mc.simple_class_name as method_class_simple_name,
+            m.id as method_id, m.name as method_name, m.return_type as method_return_type,
+            c.id as condition_id, c.workflow_id as condition_workflow_id, c.node_id as condition_node_id, 
+            c.field_name, c.preset_content, c.content_type, c.action, c.else_action, c.operator
+        FROM workflow_info w
+        LEFT JOIN node n ON w.id = n.id
+        LEFT JOIN data_map dm ON n.id = dm.node_id
+        LEFT JOIN node_pre_relation np ON n.id = np.node_id
+        LEFT JOIN node_next_relation nn ON n.id = nn.node_id
+        LEFT JOIN node_defaults nd ON n.id = nd.node_id
+        LEFT JOIN plugin_info p ON n.plugin_id = p.id
+        LEFT JOIN method_class_info mc ON n.method_class_id = mc.id
+        LEFT JOIN method_info m ON n.method_id = m.id
+        LEFT JOIN `condition` c ON w.id = c.workflow_id
+    </select>
+
+    <!-- 更新工作流信息 -->
+    <update id="updateWorkflow" parameterType="com.example.demo.pojo.workflow.WorkflowInfo">
+        UPDATE workflow_info SET 
+            user_id = #{userId}, 
+            name = #{name}, 
+            description = #{description}, 
+            update_time = #{updateTime}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 删除工作流信息 -->
+    <delete id="deleteWorkflow">
+        DELETE FROM workflow_info WHERE id = #{id}
+    </delete>
+
+    <!-- 根据用户ID查询工作流信息 -->
+    <select id="selectWorkflowsByUserId" resultMap="workflowInfoMap">
+        SELECT 
+            w.id, w.user_id, w.name, w.description, w.create_time, w.update_time,
+            n.id as node_id, n.plugin_id as node_plugin_id, n.method_class_id as node_method_class_id, 
+            n.method_id as node_method_id, n.in_degree,
+            dm.id as data_map_id, dm.node_id as data_map_node_id, dm.source_node_id, dm.source, 
+            dm.target, dm.source_type, dm.target_type,
+            np.pre_node_id,
+            nn.next_node_id,
+            nd.id as node_defaults_id, nd.node_id as node_defaults_node_id, nd.param_index, 
+            nd.default_value, nd.default_value_type,
+            p.id as plugin_id, p.name as plugin_name, p.description as plugin_description, p.version as plugin_version,
+            mc.id as method_class_id, mc.class_name as method_class_name, mc.simple_class_name as method_class_simple_name,
+            m.id as method_id, m.name as method_name, m.return_type as method_return_type,
+            c.id as condition_id, c.workflow_id as condition_workflow_id, c.node_id as condition_node_id, 
+            c.field_name, c.preset_content, c.content_type, c.action, c.else_action, c.operator
+        FROM workflow_info w
+        LEFT JOIN node n ON w.id = n.id
+        LEFT JOIN data_map dm ON n.id = dm.node_id
+        LEFT JOIN node_pre_relation np ON n.id = np.node_id
+        LEFT JOIN node_next_relation nn ON n.id = nn.node_id
+        LEFT JOIN node_defaults nd ON n.id = nd.node_id
+        LEFT JOIN plugin_info p ON n.plugin_id = p.id
+        LEFT JOIN method_class_info mc ON n.method_class_id = mc.id
+        LEFT JOIN method_info m ON n.method_id = m.id
+        LEFT JOIN `condition` c ON w.id = c.workflow_id
+        WHERE w.user_id = #{userId}
+    </select>
+
+</mapper>

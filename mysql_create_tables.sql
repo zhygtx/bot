@@ -1,0 +1,137 @@
+-- 插件信息表
+CREATE TABLE `plugin_info` (
+  `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '插件id',
+  `name` VARCHAR(255) NOT NULL COMMENT '插件名称',
+  `description` TEXT COMMENT '插件描述',
+  `version` VARCHAR(50) NOT NULL COMMENT '插件版本',
+  `compatible_version` VARCHAR(50) COMMENT '插件兼容的版本',
+  `author_id` VARCHAR(36) NOT NULL COMMENT '插件作者（即userId）',
+  `path` VARCHAR(500) NOT NULL COMMENT '插件存储路径',
+  `entity_package` VARCHAR(255) COMMENT '插件实体类包名',
+  `method_package` VARCHAR(255) COMMENT '插件方法类包名',
+  `create_time` DATETIME NOT NULL COMMENT '创建时间',
+  `update_time` DATETIME NOT NULL COMMENT '更新时间',
+  `is_public` BOOLEAN NOT NULL DEFAULT FALSE COMMENT '是否公开',
+  `file_size` BIGINT COMMENT '文件大小(字节)',
+  `file_md5` VARCHAR(32) COMMENT '文件MD5校验码'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='插件信息表';
+
+-- 实体类信息表
+CREATE TABLE `entity_info` (
+  `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '实体类id',
+  `description` TEXT COMMENT '实体类描述',
+  `name` VARCHAR(255) NOT NULL COMMENT '实体类简写名称',
+  `plugin_id` VARCHAR(36) NOT NULL COMMENT '实体类所属插件id',
+  `entity_name` VARCHAR(255) NOT NULL COMMENT '实体全限定名',
+  `attributes` TEXT COMMENT '实体类属性信息(JSON格式)',
+  FOREIGN KEY (`plugin_id`) REFERENCES `plugin_info` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='实体类信息表';
+
+-- 方法类信息表
+CREATE TABLE `method_class_info` (
+  `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '方法类id',
+  `description` TEXT COMMENT '类描述',
+  `plugin_id` VARCHAR(36) NOT NULL COMMENT '所属插件id',
+  `class_name` VARCHAR(255) NOT NULL COMMENT '类全限定名',
+  `simple_class_name` VARCHAR(255) NOT NULL COMMENT '简单类名',
+  `package_name` VARCHAR(255) NOT NULL COMMENT '包名',
+  FOREIGN KEY (`plugin_id`) REFERENCES `plugin_info` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='方法类信息表';
+
+-- 方法信息表
+CREATE TABLE `method_info` (
+  `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '方法id',
+  `description` TEXT COMMENT '方法描述',
+  `method_class_id` VARCHAR(36) NOT NULL COMMENT '方法所属方法类ID',
+  `name` VARCHAR(255) NOT NULL COMMENT '方法名',
+  `return_type` VARCHAR(255) NOT NULL COMMENT '方法返回值类型',
+  FOREIGN KEY (`method_class_id`) REFERENCES `method_class_info` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='方法信息表';
+
+-- 参数信息表
+CREATE TABLE `parameter_info` (
+  `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '参数id',
+  `description` TEXT COMMENT '参数描述',
+  `method_id` VARCHAR(36) NOT NULL COMMENT '参数所属方法id',
+  `name` VARCHAR(255) NOT NULL COMMENT '参数名',
+  `type` VARCHAR(255) NOT NULL COMMENT '参数类型',
+  FOREIGN KEY (`method_id`) REFERENCES `method_info` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='参数信息表';
+
+-- 工作流信息表
+CREATE TABLE `workflow_info` (
+  `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '工作流ID',
+  `user_id` VARCHAR(36) NOT NULL COMMENT '工作流创建者ID',
+  `name` VARCHAR(255) NOT NULL COMMENT '工作流名称',
+  `description` TEXT COMMENT '工作流描述',
+  `create_time` DATETIME NOT NULL COMMENT '工作流创建时间',
+  `update_time` DATETIME NOT NULL COMMENT '工作流更新时间'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='工作流信息表';
+
+-- 工作流节点表
+CREATE TABLE `node` (
+  `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '节点ID',
+  `plugin_id` VARCHAR(36) NOT NULL COMMENT '插件ID',
+  `method_class_id` VARCHAR(36) NOT NULL COMMENT '方法类ID',
+  `method_id` VARCHAR(36) NOT NULL COMMENT '方法ID',
+  `in_degree` INT NOT NULL DEFAULT 0 COMMENT '入度',
+  FOREIGN KEY (`plugin_id`) REFERENCES `plugin_info` (`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`method_class_id`) REFERENCES `method_class_info` (`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`method_id`) REFERENCES `method_info` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='工作流节点表';
+
+-- 节点前置关系表（处理多对多关系）
+CREATE TABLE `node_pre_relation` (
+  `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '关系ID',
+  `node_id` VARCHAR(36) NOT NULL COMMENT '节点ID',
+  `pre_node_id` VARCHAR(36) NOT NULL COMMENT '前置节点ID',
+  FOREIGN KEY (`node_id`) REFERENCES `node` (`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`pre_node_id`) REFERENCES `node` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='节点前置关系表';
+
+-- 节点后置关系表（处理多对多关系）
+CREATE TABLE `node_next_relation` (
+  `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '关系ID',
+  `node_id` VARCHAR(36) NOT NULL COMMENT '节点ID',
+  `next_node_id` VARCHAR(36) NOT NULL COMMENT '后置节点ID',
+  FOREIGN KEY (`node_id`) REFERENCES `node` (`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`next_node_id`) REFERENCES `node` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='节点后置关系表';
+
+-- 条件表
+CREATE TABLE `condition` (
+  `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '条件ID',
+  `workflow_id` VARCHAR(36) NOT NULL COMMENT '所属工作流ID',
+  `node_id` VARCHAR(36) NOT NULL COMMENT '所判断的数据产生者节点ID',
+  `field_name` VARCHAR(255) NOT NULL COMMENT '判断的数据字段名称',
+  `preset_content` TEXT COMMENT '预设内容（位于比较右侧）',
+  `content_type` ENUM('STRING', 'NUMBER', 'BOOLEAN') NOT NULL COMMENT '预设内容类型',
+  `action` ENUM('CONTINUE', 'BREAK', 'END') NOT NULL COMMENT '满足条件时执行内容',
+  `else_action` ENUM('CONTINUE', 'BREAK', 'END') NOT NULL COMMENT '不满足条件时执行内容',
+  `operator` ENUM('EQUALS', 'NOT_EQUALS', 'GREATER_THAN', 'GREATER_THAN_OR_EQUALS', 'LESS_THAN', 'LESS_THAN_OR_EQUALS', 'CONTAINS', 'NOT_CONTAINS', 'REGEX', 'IS_NULL', 'IS_NOT_NULL') NOT NULL COMMENT '判断条件操作符',
+  FOREIGN KEY (`workflow_id`) REFERENCES `workflow_info` (`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`node_id`) REFERENCES `node` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='条件表';
+
+-- 数据映射表
+CREATE TABLE `data_map` (
+  `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '映射关系ID',
+  `node_id` VARCHAR(36) NOT NULL COMMENT '所属节点ID',
+  `source_node_id` VARCHAR(36) NOT NULL COMMENT '源数据所属节点',
+  `source` VARCHAR(255) NOT NULL COMMENT '源数据字段名称',
+  `target` VARCHAR(255) NOT NULL COMMENT '目标方法参数名称',
+  `source_type` VARCHAR(255) NOT NULL COMMENT '源数据字段类型',
+  `target_type` VARCHAR(255) NOT NULL COMMENT '目标方法参数类型',
+  FOREIGN KEY (`node_id`) REFERENCES `node` (`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`source_node_id`) REFERENCES `node` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='数据映射表';
+
+-- 节点默认值表
+CREATE TABLE `node_defaults` (
+  `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '默认值ID',
+  `node_id` VARCHAR(36) NOT NULL COMMENT '节点ID',
+  `param_index` INT NOT NULL COMMENT '方法的第几个参数',
+  `default_value` TEXT COMMENT '默认值',
+  `default_value_type` ENUM('String', 'Integer', 'Double', 'Boolean') NOT NULL COMMENT '默认值类型',
+  FOREIGN KEY (`node_id`) REFERENCES `node` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='节点默认值表';

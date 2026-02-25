@@ -167,7 +167,7 @@ public class WorkflowUtil {
         if (finalResults.isEmpty()) {
             return mapper.createObjectNode();
         } else if (finalResults.size() == 1) {
-            return finalResults.getFirst();
+            return finalResults.get(0);
         } else {
             // 多个结束节点，返回结果数组
             return mapper.valueToTree(finalResults);
@@ -203,7 +203,7 @@ public class WorkflowUtil {
      * @return 节点ID
      */
     public String getNextZeroInDegreeNode(List<Set<String>> inDegreeBuckets) {
-        Set<String> zeroDegreeNodes = inDegreeBuckets.getFirst();
+        Set<String> zeroDegreeNodes = inDegreeBuckets.get(0);
         if (zeroDegreeNodes.isEmpty()) {
             return null;
         }

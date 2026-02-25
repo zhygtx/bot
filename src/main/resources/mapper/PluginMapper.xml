@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.demo.mapper.PluginMapper">
+
+    <!-- 插件信息表字段映射 -->
+    <resultMap id="pluginInfoMap" type="com.example.demo.pojo.plugin.PluginInfo">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="description" property="description"/>
+        <result column="version" property="version"/>
+        <result column="compatible_version" property="compatibleVersion"/>
+        <result column="author_id" property="authorId"/>
+        <result column="path" property="path"/>
+        <result column="entity_package" property="entityPackage"/>
+        <result column="method_package" property="methodPackage"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="is_public" property="isPublic"/>
+        <result column="file_size" property="fileSize"/>
+        <result column="file_md5" property="fileMd5"/>
+        <!-- 关联实体类信息 -->
+        <collection property="entityInfoList" ofType="com.example.demo.pojo.plugin.EntityInfo">
+            <id column="entity_id" property="id"/>
+            <result column="entity_description" property="description"/>
+            <result column="entity_name" property="name"/>
+            <result column="entity_plugin_id" property="pluginId"/>
+            <result column="entity_entity_name" property="entityName"/>
+            <result column="entity_attributes" property="attributes"/>
+        </collection>
+        <!-- 关联方法类信息 -->
+        <collection property="methodClassInfoList" ofType="com.example.demo.pojo.plugin.MethodClassInfo">
+            <id column="method_class_id" property="id"/>
+            <result column="method_class_description" property="description"/>
+            <result column="method_class_plugin_id" property="pluginId"/>
+            <result column="method_class_class_name" property="className"/>
+            <result column="method_class_simple_class_name" property="simpleClassName"/>
+            <result column="method_class_package_name" property="packageName"/>
+            <!-- 关联方法信息 -->
+            <collection property="methods" ofType="com.example.demo.pojo.plugin.MethodInfo">
+                <id column="method_id" property="id"/>
+                <result column="method_description" property="description"/>
+                <result column="method_method_class_id" property="methodClassId"/>
+                <result column="method_name" property="name"/>
+                <result column="method_return_type" property="returnType"/>
+                <!-- 关联参数信息 -->
+                <collection property="parameters" ofType="com.example.demo.pojo.plugin.ParameterInfo">
+                    <id column="parameter_id" property="id"/>
+                    <result column="parameter_description" property="description"/>
+                    <result column="parameter_method_id" property="methodId"/>
+                    <result column="parameter_name" property="name"/>
+                    <result column="parameter_type" property="type"/>
+                </collection>
+            </collection>
+        </collection>
+    </resultMap>
+
+    <!-- 插入插件信息 -->
+    <insert id="insertPlugin" parameterType="com.example.demo.pojo.plugin.PluginInfo">
+        INSERT INTO plugin_info (
+            id, name, description, version, compatible_version, author_id, 
+            path, entity_package, method_package, create_time, update_time, 
+            is_public, file_size, file_md5
+        ) VALUES (
+            #{id}, #{name}, #{description}, #{version}, #{compatibleVersion}, #{authorId}, 
+            #{path}, #{entityPackage}, #{methodPackage}, #{createTime}, #{updateTime}, 
+            #{isPublic}, #{fileSize}, #{fileMd5}
+        )
+    </insert>
+
+    <!-- 根据ID查询插件信息 -->
+    <select id="selectPluginById" resultMap="pluginInfoMap">
+        SELECT 
+            p.id, p.name, p.description, p.version, p.compatible_version, p.author_id, 
+            p.path, p.entity_package, p.method_package, p.create_time, p.update_time, 
+            p.is_public, p.file_size, p.file_md5,
+            e.id as entity_id, e.description as entity_description, e.name as entity_name, 
+            e.plugin_id as entity_plugin_id, e.entity_name as entity_entity_name, e.attributes as entity_attributes,
+            mc.id as method_class_id, mc.description as method_class_description, 
+            mc.plugin_id as method_class_plugin_id, mc.class_name as method_class_class_name, 
+            mc.simple_class_name as method_class_simple_class_name, mc.package_name as method_class_package_name,
+            m.id as method_id, m.description as method_description, m.method_class_id as method_method_class_id, 
+            m.name as method_name, m.return_type as method_return_type,
+            param.id as parameter_id, param.description as parameter_description, 
+            param.method_id as parameter_method_id, param.name as parameter_name, param.type as parameter_type
+        FROM plugin_info p
+        LEFT JOIN entity_info e ON p.id = e.plugin_id
+        LEFT JOIN method_class_info mc ON p.id = mc.plugin_id
+        LEFT JOIN method_info m ON mc.id = m.method_class_id
+        LEFT JOIN parameter_info param ON m.id = param.method_id
+        WHERE p.id = #{id}
+    </select>
+
+    <!-- 查询所有插件信息 -->
+    <select id="selectAllPlugins" resultMap="pluginInfoMap">
+        SELECT 
+            p.id, p.name, p.description, p.version, p.compatible_version, p.author_id, 
+            p.path, p.entity_package, p.method_package, p.create_time, p.update_time, 
+            p.is_public, p.file_size, p.file_md5,
+            e.id as entity_id, e.description as entity_description, e.name as entity_name, 
+            e.plugin_id as entity_plugin_id, e.entity_name as entity_entity_name, e.attributes as entity_attributes,
+            mc.id as method_class_id, mc.description as method_class_description, 
+            mc.plugin_id as method_class_plugin_id, mc.class_name as method_class_class_name, 
+            mc.simple_class_name as method_class_simple_class_name, mc.package_name as method_class_package_name,
+            m.id as method_id, m.description as method_description, m.method_class_id as method_method_class_id, 
+            m.name as method_name, m.return_type as method_return_type,
+            param.id as parameter_id, param.description as parameter_description, 
+            param.method_id as parameter_method_id, param.name as parameter_name, param.type as parameter_type
+        FROM plugin_info p
+        LEFT JOIN entity_info e ON p.id = e.plugin_id
+        LEFT JOIN method_class_info mc ON p.id = mc.plugin_id
+        LEFT JOIN method_info m ON mc.id = m.method_class_id
+        LEFT JOIN parameter_info param ON m.id = param.method_id
+    </select>
+
+    <!-- 更新插件信息 -->
+    <update id="updatePlugin" parameterType="com.example.demo.pojo.plugin.PluginInfo">
+        UPDATE plugin_info SET 
+            name = #{name}, 
+            description = #{description}, 
+            version = #{version}, 
+            compatible_version = #{compatibleVersion}, 
+            author_id = #{authorId}, 
+            path = #{path}, 
+            entity_package = #{entityPackage}, 
+            method_package = #{methodPackage}, 
+            update_time = #{updateTime}, 
+            is_public = #{isPublic}, 
+            file_size = #{fileSize}, 
+            file_md5 = #{fileMd5}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 删除插件信息 -->
+    <delete id="deletePlugin">
+        DELETE FROM plugin_info WHERE id = #{id}
+    </delete>
+
+    <!-- 根据用户ID查询插件信息 -->
+    <select id="selectPluginsByAuthorId" resultMap="pluginInfoMap">
+        SELECT 
+            p.id, p.name, p.description, p.version, p.compatible_version, p.author_id, 
+            p.path, p.entity_package, p.method_package, p.create_time, p.update_time, 
+            p.is_public, p.file_size, p.file_md5,
+            e.id as entity_id, e.description as entity_description, e.name as entity_name, 
+            e.plugin_id as entity_plugin_id, e.entity_name as entity_entity_name, e.attributes as entity_attributes,
+            mc.id as method_class_id, mc.description as method_class_description, 
+            mc.plugin_id as method_class_plugin_id, mc.class_name as method_class_class_name, 
+            mc.simple_class_name as method_class_simple_class_name, mc.package_name as method_class_package_name,
+            m.id as method_id, m.description as method_description, m.method_class_id as method_method_class_id, 
+            m.name as method_name, m.return_type as method_return_type,
+            param.id as parameter_id, param.description as parameter_description, 
+            param.method_id as parameter_method_id, param.name as parameter_name, param.type as parameter_type
+        FROM plugin_info p
+        LEFT JOIN entity_info e ON p.id = e.plugin_id
+        LEFT JOIN method_class_info mc ON p.id = mc.plugin_id
+        LEFT JOIN method_info m ON mc.id = m.method_class_id
+        LEFT JOIN parameter_info param ON m.id = param.method_id
+        WHERE p.author_id = #{authorId}
+    </select>
+
+    <!-- 查询公开插件 -->
+    <select id="selectPublicPlugins" resultMap="pluginInfoMap">
+        SELECT 
+            p.id, p.name, p.description, p.version, p.compatible_version, p.author_id, 
+            p.path, p.entity_package, p.method_package, p.create_time, p.update_time, 
+            p.is_public, p.file_size, p.file_md5,
+            e.id as entity_id, e.description as entity_description, e.name as entity_name, 
+            e.plugin_id as entity_plugin_id, e.entity_name as entity_entity_name, e.attributes as entity_attributes,
+            mc.id as method_class_id, mc.description as method_class_description, 
+            mc.plugin_id as method_class_plugin_id, mc.class_name as method_class_class_name, 
+            mc.simple_class_name as method_class_simple_class_name, mc.package_name as method_class_package_name,
+            m.id as method_id, m.description as method_description, m.method_class_id as method_method_class_id, 
+            m.name as method_name, m.return_type as method_return_type,
+            param.id as parameter_id, param.description as parameter_description, 
+            param.method_id as parameter_method_id, param.name as parameter_name, param.type as parameter_type
+        FROM plugin_info p
+        LEFT JOIN entity_info e ON p.id = e.plugin_id
+        LEFT JOIN method_class_info mc ON p.id = mc.plugin_id
+        LEFT JOIN method_info m ON mc.id = m.method_class_id
+        LEFT JOIN parameter_info param ON m.id = param.method_id
+        WHERE p.is_public = true
+    </select>
+
+</mapper>
