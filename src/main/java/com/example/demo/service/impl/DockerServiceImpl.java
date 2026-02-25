@@ -1,6 +1,6 @@
-package com.example.demo.docker.impl;
+package com.example.demo.service.impl;
 
-import com.example.demo.docker.DockerService;
+import com.example.demo.service.DockerService;
 import com.example.demo.mapper.DockerMapper;
 import com.example.demo.pojo.Docker;
 import com.example.demo.pojo.Result;
@@ -17,7 +17,6 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@SuppressWarnings("LoggingSimilarMessage")
 @Service
 @Slf4j
 public class DockerServiceImpl implements DockerService {
@@ -87,16 +86,6 @@ public class DockerServiceImpl implements DockerService {
     @Override
     public Docker getByUserId(String userId){
         return dockerMapper.selectByUserId(userId);
-    }
-
-    /**
-     * 删除容器
-     * @param containerId 容器ID
-     */
-    @Override
-    public void deleteContainer(String containerId){
-        dockerUtil.deleteContainer(containerId);
-        dockerMapper.deleteByContainerId(containerId);
     }
 
     /**

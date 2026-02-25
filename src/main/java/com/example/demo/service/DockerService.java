@@ -1,4 +1,4 @@
-package com.example.demo.docker;
+package com.example.demo.service;
 
 import com.example.demo.pojo.Docker;
 import com.example.demo.pojo.Result;
@@ -22,12 +22,6 @@ public interface DockerService {
      * @return docker信息
      */
     Docker getByUserId(String userId);
-
-    /**
-     * 删除容器
-     * @param containerId 容器ID
-     */
-    void deleteContainer(String containerId);
 
     /**
      * 删除容器

@@ -118,29 +118,4 @@ public class JWTUtil {
         Date expiresAt = decodedJWT.getExpiresAt();
         return expiresAt.before(new Date());
     }
-
-    /**
-     * 刷新令牌
-     * @param userId 用户ID
-     * @param account 账户名
-     * @return 新的令牌
-     */
-    public String refreshToken(String userId, String account) {
-        // 先删除旧的token
-        deleteToken(userId);
-        // 生成新的token
-        return generateToken(userId, account);
-    }
-
-    /**
-     * 获取令牌剩余过期时间（毫秒）
-     * @param token 令牌
-     * @return 剩余时间，负数表示已过期
-     */
-    public Long getTokenRemainingExpiration(String token) {
-        token = token.replace("Bearer ", "");
-        DecodedJWT decodedJWT = JWT.decode(token);
-        Date expiresAt = decodedJWT.getExpiresAt();
-        return expiresAt.getTime() - System.currentTimeMillis();
-    }
 }
