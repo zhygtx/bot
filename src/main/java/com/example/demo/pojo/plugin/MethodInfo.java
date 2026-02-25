@@ -37,7 +37,7 @@ public class MethodInfo {
     /**
      * 方法参数列表（JSON格式）
      */
-    private List<ParameterInfo> parameterList;
+    private List<ParameterInfo> parameters;
 
     /**
      * 方法返回值类型

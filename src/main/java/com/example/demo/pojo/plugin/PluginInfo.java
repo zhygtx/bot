@@ -38,7 +38,7 @@ public class PluginInfo {
     private String compatibleVersion;
 
     /**
-     * 插件作者
+     * 插件作者（即userId）
      */
     private String authorId;
 

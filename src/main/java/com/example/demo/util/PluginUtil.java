@@ -3,6 +3,7 @@ package com.example.demo.util;
 import com.example.demo.pojo.plugin.EntityInfo;
 import com.example.demo.pojo.plugin.MethodClassInfo;
 import com.example.demo.pojo.plugin.MethodInfo;
+import com.example.demo.pojo.plugin.ParameterInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -158,8 +159,21 @@ public class PluginUtil {
                         methodInfo.setDescription("自动扫描的方法");
                         methodInfo.setReturnType(method.getReturnType().getSimpleName());
 
+                        // 解析方法参数并创建 ParameterInfo 列表
                         Map<String, Object> paramMap = ReflectionUtil.parseMethodSignature(method);
-                        methodInfo.setParameterList(mapper.writeValueAsString(paramMap));
+                        List<ParameterInfo> parameters = new ArrayList<>();
+                        for (Map.Entry<String, Object> entry1 : paramMap.entrySet()) {
+                            if (!"returnType".equals(entry1.getKey())) {
+                                ParameterInfo paramInfo = new ParameterInfo();
+                                paramInfo.setId(UUID.randomUUID().toString());
+                                paramInfo.setDescription("自动扫描的参数");
+                                paramInfo.setMethodId(methodId);
+                                paramInfo.setName(entry1.getKey());
+                                paramInfo.setType(entry1.getValue().toString());
+                                parameters.add(paramInfo);
+                            }
+                        }
+                        methodInfo.setParameters(parameters);
 
                         classMethods.add(methodInfo);
                         methodMap.computeIfAbsent(classId, k -> new ArrayList<>()).add(methodInfo);

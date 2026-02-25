@@ -2,9 +2,9 @@ package com.example.demo.util;
 
 import com.example.demo.pojo.plugin.MethodClassInfo;
 import com.example.demo.pojo.plugin.MethodInfo;
+import com.example.demo.pojo.plugin.ParameterInfo;
 import com.example.demo.pojo.plugin.PluginInfo;
 import com.example.demo.pojo.workflow.*;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
@@ -521,12 +521,9 @@ public class WorkflowUtil {
      */
     public Object[] prepareMethodParameters(Node node, MethodInfo methodInfo) {
         try {
-            // 修复：使用泛型Map避免原始类型警告
-            Map<String, Object> parameterInfo = mapper.readValue(
-                    methodInfo.getParameterList(),
-                    new TypeReference<>() {}
-            );
-            int parameterCount = parameterInfo.size() - 1; // 减去returnType
+            // 获取参数列表
+            List<ParameterInfo> parametersList = methodInfo.getParameters();
+            int parameterCount = parametersList.size();
 
             Object[] parameters = new Object[parameterCount];
 
@@ -593,15 +590,13 @@ public class WorkflowUtil {
      */
     public int findParameterIndex(MethodInfo methodInfo, String parameterName) {
         try {
-            // 修复：使用泛型类型避免原始类型警告
-            Map<String, Object> parameterInfo = mapper.readValue(
-                    methodInfo.getParameterList(),
-                    new TypeReference<>() {
-                    }
-            );
-            List<String> parameterNames = new ArrayList<>(parameterInfo.keySet());
-            parameterNames.remove("returnType"); // 移除返回值类型
-            return parameterNames.indexOf(parameterName);
+            List<ParameterInfo> parameters = methodInfo.getParameters();
+            for (int i = 0; i < parameters.size(); i++) {
+                if (parameters.get(i).getName().equals(parameterName)) {
+                    return i;
+                }
+            }
+            return -1; // 未找到参数
         } catch (Exception e) {
             throw new RuntimeException("查找参数索引失败", e);
         }
@@ -661,22 +656,13 @@ public class WorkflowUtil {
      */
     public void fillNullParametersWithDefaults(Object[] parameters, MethodInfo methodInfo) {
         try {
-            // 修复：使用TypeReference来避免未检查的泛型赋值警告
-            Map<String, Object> parameterInfo = mapper.readValue(
-                    methodInfo.getParameterList(),
-                    new TypeReference<>() {
-                    }
-            );
-            List<String> parameterNames = new ArrayList<>(parameterInfo.keySet());
-
-            // 移除返回值类型
-            parameterNames.remove("returnType");
+            List<ParameterInfo> parametersList = methodInfo.getParameters();
 
             // 为每个null参数设置对应类型的默认值
-            for (int i = 0; i < parameters.length && i < parameterNames.size(); i++) {
+            for (int i = 0; i < parameters.length && i < parametersList.size(); i++) {
                 if (parameters[i] == null) {
-                    String parameterName = parameterNames.get(i);
-                    String parameterType = (String) parameterInfo.get(parameterName);
+                    ParameterInfo paramInfo = parametersList.get(i);
+                    String parameterType = paramInfo.getType();
                     parameters[i] = getDefaultValueForType(parameterType);
                 }
             }
