@@ -16,21 +16,25 @@ public class MethodInfo {
 
     /**
      * 方法id
+     * 系统生成系统与用户均不可修改
      */
     private String id;
 
     /**
      * 方法描述
+     * 系统生成默认为空用户可修改
      */
     private String description;
 
     /**
      * 方法所属方法类ID
+     * 系统生成系统与用户均不可修改
      */
     private String methodClassId;
 
     /**
      * 方法名
+     * 系统生成系统与用户均不可修改
      */
     private String name;
 
@@ -41,6 +45,7 @@ public class MethodInfo {
 
     /**
      * 方法返回值类型
+     * 系统生成系统与用户均不可修改
      */
     private String returnType;
 }

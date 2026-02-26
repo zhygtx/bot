@@ -2,17 +2,91 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.example.demo.mapper.PluginMapper">
 
+    <!-- SQL片段定义 -->
+    <!-- 插件信息查询语句 -->
+    <sql id="pluginSelectStatement">
+        SELECT 
+            p.id, p.name, p.description, p.author_id, 
+            p.latest_version, p.version_count, 
+            p.create_time, p.update_time,p.is_public,
+            pv.id as plugin_version_id, pv.plugin_id as plugin_version_plugin_id, pv.version as plugin_version_version, 
+            pv.path as plugin_version_path, pv.file_size as plugin_version_file_size, pv.file_md5 as plugin_version_file_md5, 
+            pv.create_time as plugin_version_create_time, pv.changelog as plugin_version_changelog, 
+            pv.entity_package as plugin_version_entity_package, pv.method_package as plugin_version_method_package, 
+            pv.compatible_version as plugin_version_compatible_version,
+            e.id as entity_id, e.description as entity_description, e.name as entity_name, 
+            e.plugin_version_id as entity_plugin_version_id, e.entity_name as entity_entity_name, e.attributes as entity_attributes,
+            mc.id as method_class_id, mc.description as method_class_description, 
+            mc.plugin_version_id as method_class_plugin_version_id, mc.class_name as method_class_class_name, 
+            mc.simple_class_name as method_class_simple_class_name, mc.package_name as method_class_package_name,
+            m.id as method_id, m.description as method_description, m.method_class_id as method_method_class_id, 
+            m.name as method_name, m.return_type as method_return_type,
+            param.id as parameter_id, param.description as parameter_description, 
+            param.method_id as parameter_method_id, param.name as parameter_name, param.type as parameter_type
+        FROM plugin_info p
+        LEFT JOIN plugin_version pv ON p.id = pv.plugin_id
+        LEFT JOIN entity_info e ON pv.id = e.plugin_version_id
+        LEFT JOIN method_class_info mc ON pv.id = mc.plugin_version_id
+        LEFT JOIN method_info m ON mc.id = m.method_class_id
+        LEFT JOIN parameter_info param ON m.id = param.method_id
+    </sql>
+
+    <!-- 批量插入插件版本及相关数据 -->
+    <sql id="batchInsertPluginVersions">
+        <if test="pluginVersionList != null and pluginVersionList.size() > 0">
+            <foreach collection="pluginVersionList" item="version" separator=";">
+                INSERT INTO plugin_version (id, plugin_id, version, path, file_size, file_md5, create_time, changelog, entity_package, method_package, compatible_version) VALUES
+                (#{version.id}, #{id}, #{version.version}, #{version.path}, #{version.fileSize}, #{version.fileMd5}, #{version.createTime}, #{version.changelog}, #{version.entityPackage}, #{version.methodPackage}, #{version.compatibleVersion});
+
+                <if test="version.entityInfoList != null and version.entityInfoList.size() > 0">
+                    INSERT INTO entity_info (id, plugin_version_id, name, entity_name, attributes) VALUES
+                    <foreach collection="version.entityInfoList" item="entity" separator=",">
+                        (#{entity.id}, #{version.id}, #{entity.name}, #{entity.entityName}, #{entity.attributes})
+                    </foreach>;
+                </if>
+
+                <if test="version.methodClassInfoList != null and version.methodClassInfoList.size() > 0">
+                    INSERT INTO method_class_info (id, plugin_version_id, class_name, simple_class_name, package_name) VALUES
+                    <foreach collection="version.methodClassInfoList" item="methodClass" separator=",">
+                        (#{methodClass.id}, #{version.id}, #{methodClass.className}, #{methodClass.simpleClassName}, #{methodClass.packageName})
+                    </foreach>;
+
+                    <!-- 预处理方法数据，减少循环嵌套 -->
+                    <foreach collection="version.methodClassInfoList" item="methodClass" separator=";">
+                        <if test="methodClass.methods != null and methodClass.methods.size() > 0">
+                            INSERT INTO method_info (id, method_class_id, name, return_type) VALUES
+                            <foreach collection="methodClass.methods" item="method" separator=",">
+                                (#{method.id}, #{methodClass.id}, #{method.name}, #{method.returnType})
+                            </foreach>;
+
+                            <!-- 批量处理参数 -->
+                            <foreach collection="methodClass.methods" item="method">
+                                <if test="method.parameters != null and method.parameters.size() > 0">
+                                    INSERT INTO parameter_info (id, method_id, name, type) VALUES
+                                    <foreach collection="method.parameters" item="param" separator=",">
+                                        (#{param.id}, #{method.id}, #{param.name}, #{param.type})
+                                    </foreach>;
+                                </if>
+                            </foreach>
+                        </if>
+                    </foreach>
+                </if>
+            </foreach>
+        </if>
+    </sql>
+
     <!-- 插件信息表字段映射 -->
     <resultMap id="pluginInfoMap" type="com.example.demo.pojo.plugin.PluginInfo">
         <id column="id" property="id"/>
         <result column="name" property="name"/>
         <result column="description" property="description"/>
         <result column="author_id" property="authorId"/>
-        <result column="current_version" property="currentVersion"/>
+
         <result column="latest_version" property="latestVersion"/>
         <result column="version_count" property="versionCount"/>
         <result column="create_time" property="createTime"/>
         <result column="update_time" property="updateTime"/>
+        <result column="is_public" property="isPublic"/>
         <!-- 关联插件版本信息 -->
         <collection property="pluginVersionList" ofType="com.example.demo.pojo.plugin.PluginVersion">
             <id column="plugin_version_id" property="id"/>
@@ -65,72 +139,30 @@
 
     <!-- 插入插件信息 -->
     <insert id="insertPlugin" parameterType="com.example.demo.pojo.plugin.PluginInfo">
+        <!-- 插入插件基本信息 -->
         INSERT INTO plugin_info (
             id, name, description, author_id, 
-            current_version, latest_version, version_count, 
-            create_time, update_time
+            latest_version, version_count, 
+            create_time, update_time, is_public
         ) VALUES (
             #{id}, #{name}, #{description}, #{authorId}, 
-            #{currentVersion}, #{latestVersion}, #{versionCount}, 
-            #{createTime}, #{updateTime}
-        )
+            #{latestVersion}, #{versionCount}, 
+            #{createTime}, #{updateTime}, #{isPublic}
+        );
+
+        <!-- 批量插入插件版本及相关数据 -->
+        <include refid="batchInsertPluginVersions"/>
     </insert>
 
     <!-- 根据ID查询插件信息 -->
     <select id="selectPluginById" resultMap="pluginInfoMap">
-        SELECT 
-            p.id, p.name, p.description, p.author_id, 
-            p.entity_package, p.method_package, p.current_version, p.latest_version, p.version_count, 
-            p.create_time, p.update_time,
-            pv.id as plugin_version_id, pv.plugin_id as plugin_version_plugin_id, pv.version as plugin_version_version, 
-            pv.path as plugin_version_path, pv.file_size as plugin_version_file_size, pv.file_md5 as plugin_version_file_md5, 
-            pv.create_time as plugin_version_create_time, pv.changelog as plugin_version_changelog, 
-            pv.entity_package as plugin_version_entity_package, pv.method_package as plugin_version_method_package, 
-            pv.compatible_version as plugin_version_compatible_version,
-            e.id as entity_id, e.description as entity_description, e.name as entity_name, 
-            e.plugin_version_id as entity_plugin_version_id, e.entity_name as entity_entity_name, e.attributes as entity_attributes,
-            mc.id as method_class_id, mc.description as method_class_description, 
-            mc.plugin_version_id as method_class_plugin_version_id, mc.class_name as method_class_class_name, 
-            mc.simple_class_name as method_class_simple_class_name, mc.package_name as method_class_package_name,
-            m.id as method_id, m.description as method_description, m.method_class_id as method_method_class_id, 
-            m.name as method_name, m.return_type as method_return_type,
-            param.id as parameter_id, param.description as parameter_description, 
-            param.method_id as parameter_method_id, param.name as parameter_name, param.type as parameter_type
-        FROM plugin_info p
-        LEFT JOIN plugin_version pv ON p.id = pv.plugin_id
-        LEFT JOIN entity_info e ON pv.id = e.plugin_version_id
-        LEFT JOIN method_class_info mc ON pv.id = mc.plugin_version_id
-        LEFT JOIN method_info m ON mc.id = m.method_class_id
-        LEFT JOIN parameter_info param ON m.id = param.method_id
+        <include refid="pluginSelectStatement"/>
         WHERE p.id = #{id}
     </select>
 
     <!-- 查询所有插件信息 -->
     <select id="selectAllPlugins" resultMap="pluginInfoMap">
-        SELECT 
-            p.id, p.name, p.description, p.author_id, 
-            p.entity_package, p.method_package, p.current_version, p.latest_version, p.version_count, 
-            p.create_time, p.update_time,
-            pv.id as plugin_version_id, pv.plugin_id as plugin_version_plugin_id, pv.version as plugin_version_version, 
-            pv.path as plugin_version_path, pv.file_size as plugin_version_file_size, pv.file_md5 as plugin_version_file_md5, 
-            pv.create_time as plugin_version_create_time, pv.changelog as plugin_version_changelog, 
-            pv.entity_package as plugin_version_entity_package, pv.method_package as plugin_version_method_package, 
-            pv.compatible_version as plugin_version_compatible_version,
-            e.id as entity_id, e.description as entity_description, e.name as entity_name, 
-            e.plugin_version_id as entity_plugin_version_id, e.entity_name as entity_entity_name, e.attributes as entity_attributes,
-            mc.id as method_class_id, mc.description as method_class_description, 
-            mc.plugin_version_id as method_class_plugin_version_id, mc.class_name as method_class_class_name, 
-            mc.simple_class_name as method_class_simple_class_name, mc.package_name as method_class_package_name,
-            m.id as method_id, m.description as method_description, m.method_class_id as method_method_class_id, 
-            m.name as method_name, m.return_type as method_return_type,
-            param.id as parameter_id, param.description as parameter_description, 
-            param.method_id as parameter_method_id, param.name as parameter_name, param.type as parameter_type
-        FROM plugin_info p
-        LEFT JOIN plugin_version pv ON p.id = pv.plugin_id
-        LEFT JOIN entity_info e ON pv.id = e.plugin_version_id
-        LEFT JOIN method_class_info mc ON pv.id = mc.plugin_version_id
-        LEFT JOIN method_info m ON mc.id = m.method_class_id
-        LEFT JOIN parameter_info param ON m.id = param.method_id
+        <include refid="pluginSelectStatement"/>
     </select>
 
     <!-- 更新插件信息 -->
@@ -142,10 +174,7 @@
     UPDATE plugin_info SET
         name = #{name},
         description = #{description},
-        author_id = #{authorId},
-        current_version = #{currentVersion},
-        latest_version = #{latestVersion},
-        version_count = #{versionCount},
+        is_public = #{isPublic},
         update_time = #{updateTime}
     WHERE id = #{id};
 
@@ -158,44 +187,7 @@
     ]]>
 
         <!-- 批量插入优化 -->
-        <if test="pluginVersionList != null and pluginVersionList.size() > 0">
-            <foreach collection="pluginVersionList" item="version" separator=";">
-                INSERT INTO plugin_version (id, plugin_id, version, path, file_size, file_md5, create_time, changelog, entity_package, method_package, compatible_version) VALUES
-                (#{version.id}, #{id}, #{version.version}, #{version.path}, #{version.fileSize}, #{version.fileMd5}, #{version.createTime}, #{version.changelog}, #{version.entityPackage}, #{version.methodPackage}, #{version.compatibleVersion});
-
-                <if test="version.entityInfoList != null and version.entityInfoList.size() > 0">
-                    INSERT INTO entity_info (id, plugin_version_id, name, entity_name, attributes) VALUES
-                    <foreach collection="version.entityInfoList" item="entity" separator=",">
-                        (#{entity.id}, #{version.id}, #{entity.name}, #{entity.entityName}, #{entity.attributes})
-                    </foreach>;
-                </if>
-
-                <if test="version.methodClassInfoList != null and version.methodClassInfoList.size() > 0">
-                    INSERT INTO method_class_info (id, plugin_version_id, class_name, simple_class_name, package_name) VALUES
-                    <foreach collection="version.methodClassInfoList" item="methodClass" separator=",">
-                        (#{methodClass.id}, #{version.id}, #{methodClass.className}, #{methodClass.simpleClassName}, #{methodClass.packageName})
-                    </foreach>;
-
-                    <!-- 预处理方法数据，减少循环嵌套 -->
-                    <foreach collection="version.methodClassInfoList" item="methodClass" separator=";">
-                        <if test="methodClass.methods != null and methodClass.methods.size() > 0">
-                            INSERT INTO method_info (id, method_class_id, name, return_type) VALUES
-                            <foreach collection="methodClass.methods" item="method" separator=",">
-                                (#{method.id}, #{methodClass.id}, #{method.name}, #{method.returnType})
-                            </foreach>;
-
-                            <!-- 批量处理参数 -->
-                            <foreach collection="methodClass.methods" item="method">
-                                <if test="method.parameters != null and method.parameters.size() > 0">
-                            INSERT INTO parameter_info (id, method_id, name, type) VALUES
-                            <foreach collection="method.parameters" item="param" separator=",">
-                                (#{param.id}, #{method.id}, #{param.name}, #{param.type})
-                            </foreach>;
-                        </if>
-                    </foreach>
-                </if>
-            </foreach>
-        </if>
+        <include refid="batchInsertPluginVersions"/>
 
         COMMIT;
     </update>
@@ -207,47 +199,13 @@
 
     <!-- 根据用户ID查询插件信息 -->
     <select id="selectByAuthorId" resultMap="pluginInfoMap">
-        SELECT 
-            p.id, p.name, p.description, p.version, p.compatible_version, p.author_id, 
-            p.path, p.entity_package, p.method_package, p.create_time, p.update_time, 
-            p.is_public, p.file_size, p.file_md5,
-            e.id as entity_id, e.description as entity_description, e.name as entity_name, 
-            e.plugin_version_id as entity_plugin_version_id, e.entity_name as entity_entity_name, e.attributes as entity_attributes,
-            mc.id as method_class_id, mc.description as method_class_description, 
-            mc.plugin_version_id as method_class_plugin_version_id, mc.class_name as method_class_class_name, 
-            mc.simple_class_name as method_class_simple_class_name, mc.package_name as method_class_package_name,
-            m.id as method_id, m.description as method_description, m.method_class_id as method_method_class_id, 
-            m.name as method_name, m.return_type as method_return_type,
-            param.id as parameter_id, param.description as parameter_description, 
-            param.method_id as parameter_method_id, param.name as parameter_name, param.type as parameter_type
-        FROM plugin_info p
-        LEFT JOIN entity_info e ON p.id = e.plugin_id
-        LEFT JOIN method_class_info mc ON p.id = mc.plugin_id
-        LEFT JOIN method_info m ON mc.id = m.method_class_id
-        LEFT JOIN parameter_info param ON m.id = param.method_id
+        <include refid="pluginSelectStatement"/>
         WHERE p.author_id = #{authorId}
     </select>
 
     <!-- 查询公开插件 -->
     <select id="selectPublic" resultMap="pluginInfoMap">
-        SELECT 
-            p.id, p.name, p.description, p.version, p.compatible_version, p.author_id, 
-            p.path, p.entity_package, p.method_package, p.create_time, p.update_time, 
-            p.is_public, p.file_size, p.file_md5,
-            e.id as entity_id, e.description as entity_description, e.name as entity_name, 
-            e.plugin_version_id as entity_plugin_version_id, e.entity_name as entity_entity_name, e.attributes as entity_attributes,
-            mc.id as method_class_id, mc.description as method_class_description, 
-            mc.plugin_version_id as method_class_plugin_version_id, mc.class_name as method_class_class_name, 
-            mc.simple_class_name as method_class_simple_class_name, mc.package_name as method_class_package_name,
-            m.id as method_id, m.description as method_description, m.method_class_id as method_method_class_id, 
-            m.name as method_name, m.return_type as method_return_type,
-            param.id as parameter_id, param.description as parameter_description, 
-            param.method_id as parameter_method_id, param.name as parameter_name, param.type as parameter_type
-        FROM plugin_info p
-        LEFT JOIN entity_info e ON p.id = e.plugin_id
-        LEFT JOIN method_class_info mc ON p.id = mc.plugin_id
-        LEFT JOIN method_info m ON mc.id = m.method_class_id
-        LEFT JOIN parameter_info param ON m.id = param.method_id
+        <include refid="pluginSelectStatement"/>
         WHERE p.is_public = true
     </select>
 

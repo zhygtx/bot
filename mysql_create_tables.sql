@@ -4,11 +4,11 @@ CREATE TABLE `plugin_info` (
   `name` VARCHAR(255) NOT NULL COMMENT '插件名称',
   `description` TEXT COMMENT '插件描述',
   `author_id` VARCHAR(36) NOT NULL COMMENT '插件作者（即userId）',
-  `current_version` VARCHAR(50) COMMENT '当前版本号',
   `latest_version` VARCHAR(50) COMMENT '最新版本号',
   `version_count` INT DEFAULT 0 COMMENT '版本总数',
   `create_time` DATETIME NOT NULL COMMENT '创建时间',
-  `update_time` DATETIME NOT NULL COMMENT '更新时间'
+  `update_time` DATETIME NOT NULL COMMENT '更新时间',
+  `is_public` TINYINT DEFAULT 0 not null COMMENT '是否公开'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='插件信息表';
 
 -- 插件版本表

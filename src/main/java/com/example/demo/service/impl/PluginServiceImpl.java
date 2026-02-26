@@ -3,6 +3,7 @@ package com.example.demo.service.impl;
 import com.example.demo.pojo.plugin.EntityInfo;
 import com.example.demo.pojo.plugin.MethodClassInfo;
 import com.example.demo.pojo.plugin.PluginInfo;
+import com.example.demo.pojo.plugin.PluginVersion;
 import com.example.demo.service.PluginService;
 import com.example.demo.util.PluginUtil;
 import lombok.SneakyThrows;
@@ -10,12 +11,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
-import java.util.jar.JarFile;
 
 @Slf4j
 @Service
@@ -30,42 +28,64 @@ public class PluginServiceImpl implements PluginService {
     @SneakyThrows
     @Override
     public PluginInfo analyzePlugin(PluginInfo pluginInfo) {
-        // 创建JarFile对象，用于读取JAR文件内容
-        JarFile jarFile = new JarFile(pluginInfo.getPath());
-        File file = new File(pluginInfo.getPath());
-
-        // 创建ClassLoader用于加载类
-        URL jarUrl = file.toURI().toURL();
-        URLClassLoader classLoader = new URLClassLoader(new URL[]{jarUrl},
-                Thread.currentThread().getContextClassLoader());
+        // 从插件版本列表中获取第一个版本
+        PluginVersion pluginVersion = pluginInfo.getPluginVersionList() != null && !pluginInfo.getPluginVersionList().isEmpty() 
+                ? pluginInfo.getPluginVersionList().get(0) 
+                : new PluginVersion();
+        
+        // 获取插件路径
+        String jarPath = pluginVersion.getPath();
+        File file = new File(jarPath);
 
         try {
             // 初始化PluginInfo对象
-            pluginInfo.setId(UUID.randomUUID().toString());
-            pluginInfo.setName(pluginUtil.extractPluginName(pluginInfo.getPath()));
-            pluginInfo.setCreateTime(LocalDateTime.now());
+            if (pluginInfo.getId() == null) {
+                pluginInfo.setId(UUID.randomUUID().toString());
+            }
+            if (pluginInfo.getName() == null) {
+                // 从文件名提取插件名称
+                String fileName = file.getName();
+                pluginInfo.setName(fileName.replace(".jar", ""));
+            }
+            if (pluginInfo.getCreateTime() == null) {
+                pluginInfo.setCreateTime(LocalDateTime.now());
+            }
             pluginInfo.setUpdateTime(LocalDateTime.now());
-            pluginInfo.setIsPublic(true);
-            pluginInfo.setFileSize(file.length());
-            pluginInfo.setFileMd5(pluginUtil.calculateMD5(file));
+            
+            // 初始化插件版本信息
+            if (pluginVersion.getId() == null) {
+                pluginVersion.setId(UUID.randomUUID().toString());
+                pluginVersion.setPluginId(pluginInfo.getId());
+                pluginVersion.setVersion("1.0.0"); // 默认版本
+                pluginVersion.setPath(jarPath);
+                pluginVersion.setFileSize(file.length());
+                // 计算文件MD5
+                pluginVersion.setFileMd5(calculateMD5(file));
+                pluginVersion.setCreateTime(LocalDateTime.now());
+                pluginVersion.setChangelog("初始版本");
+                pluginVersion.setCompatibleVersion("{}");
+            }
 
             // 扫描实体类信息
-            List<EntityInfo> entityInfos = pluginUtil.scanEntities(jarFile, classLoader, pluginInfo.getEntityPackage(), pluginInfo.getId());
-            pluginInfo.setEntityInfoList(entityInfos);
+            List<EntityInfo> entityInfos = pluginUtil.scanEntities(pluginVersion);
+            pluginVersion.setEntityInfoList(entityInfos);
 
             // 扫描方法类信息
-            List<MethodClassInfo> methodClassInfos = pluginUtil.scanMethodClasses(jarFile, classLoader, pluginInfo.getMethodPackage(), pluginInfo.getId());
-            pluginInfo.setMethodClassInfoList(methodClassInfos);
+            List<MethodClassInfo> methodClassInfos = pluginUtil.scanMethodClasses(pluginVersion);
+            pluginVersion.setMethodClassInfoList(methodClassInfos);
 
-            // 设置方法类信息列表
-            pluginInfo.setMethodClassInfoList(methodClassInfos);
+            // 设置插件版本信息
+            pluginInfo.setLatestVersion(pluginVersion.getVersion());
+            pluginInfo.setVersionCount(1);
+            if (pluginInfo.getPluginVersionList() == null || pluginInfo.getPluginVersionList().isEmpty()) {
+                pluginInfo.setPluginVersionList(java.util.Collections.singletonList(pluginVersion));
+            }
 
             log.info("插件分析完成: {}", pluginInfo.getName());
             return pluginInfo;
 
         } finally {
-            jarFile.close();
-            classLoader.close();
+            // 所有资源已通过try-with-resources关闭
         }
     }
 
@@ -78,13 +98,41 @@ public class PluginServiceImpl implements PluginService {
         String methodPackage = "test";  // 用户指定的方法包名
 
         PluginInfo pluginInfo = new PluginInfo();
-        pluginInfo.setVersion("1.0.0");
         pluginInfo.setDescription("测试插件信息");
         pluginInfo.setAuthorId("system");
-        pluginInfo.setPath(jarPath);
-        pluginInfo.setEntityPackage(entityPackage);
-        pluginInfo.setMethodPackage(methodPackage);
+        
+        // 创建并设置插件版本信息
+        PluginVersion pluginVersion = new PluginVersion();
+        pluginVersion.setPath(jarPath);
+        pluginVersion.setEntityPackage(entityPackage);
+        pluginVersion.setMethodPackage(methodPackage);
+        
+        pluginInfo.setPluginVersionList(java.util.Collections.singletonList(pluginVersion));
 
         return analyzePlugin(pluginInfo);
+    }
+    
+    /**
+     * 计算文件MD5值
+     * @param file 文件
+     * @return MD5值
+     */
+    @SneakyThrows
+    private String calculateMD5(File file) {
+        java.security.MessageDigest md = java.security.MessageDigest.getInstance("MD5");
+        try (java.io.FileInputStream fis = new java.io.FileInputStream(file)) {
+            byte[] buffer = new byte[8192];
+            int bytesRead;
+            while ((bytesRead = fis.read(buffer)) != -1) {
+                md.update(buffer, 0, bytesRead);
+            }
+        }
+
+        byte[] digest = md.digest();
+        StringBuilder sb = new StringBuilder();
+        for (byte b : digest) {
+            sb.append(String.format("%02x", b));
+        }
+        return sb.toString();
     }
 }
