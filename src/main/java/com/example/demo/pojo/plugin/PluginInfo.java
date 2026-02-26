@@ -1,5 +1,6 @@
 package com.example.demo.pojo.plugin;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -28,68 +29,40 @@ public class PluginInfo {
     private String description;
 
     /**
-     * 插件版本
-     */
-    private String version;
-
-    /**
-     * 插件兼容的版本
-     */
-    private String compatibleVersion;
-
-    /**
      * 插件作者（即userId）
      */
     private String authorId;
 
     /**
-     * 插件存储路径
+     * 当前版本号（方便查询）
      */
-    private String path;
+    private String currentVersion;
 
     /**
-     * 插件实体类包名
+     * 最新版本号
      */
-    private String entityPackage;
+    private String latestVersion;
 
     /**
-     * 插件方法类包名
+     * 版本总数
      */
-    private String methodPackage;
+    private Integer versionCount;
 
     /**
      * 创建时间
      */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime createTime;
 
     /**
      * 更新时间
      */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime updateTime;
 
     /**
-     * 是否公开
+     * 插件版本信息列表
      */
-    private Boolean isPublic;
-
-    /**
-     * 文件大小(字节)
-     */
-    private Long fileSize;
-
-    /**
-     * 文件MD5校验码
-     */
-    private String fileMd5;
-
-    /**
-     * 插件实体类信息
-     */
-    private List<EntityInfo> entityInfoList;
-
-    /**
-     * 插件方法类信息列表
-     */
-    private List<MethodClassInfo> methodClassInfoList;
+    private List<PluginVersion> pluginVersionList;
 
 }

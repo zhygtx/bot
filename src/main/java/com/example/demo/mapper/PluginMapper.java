@@ -15,43 +15,43 @@ public interface PluginMapper {
      * 插入插件信息
      * @param pluginInfo 插件信息
      */
-    int insertPlugin(PluginInfo pluginInfo);
+    int insert(PluginInfo pluginInfo);
 
     /**
      * 根据ID查询插件信息
      * @param id 插件ID
      * @return 插件信息
      */
-    PluginInfo selectPluginById(String id);
+    PluginInfo selectById(String id);
 
     /**
      * 查询所有插件信息
      * @return 插件信息列表
      */
-    List<PluginInfo> selectAllPlugins();
+    List<PluginInfo> selectAll();
 
     /**
      * 更新插件信息
      * @param pluginInfo 插件信息
      */
-    int updatePlugin(PluginInfo pluginInfo);
+    int update(PluginInfo pluginInfo);
 
     /**
      * 删除插件信息
      * @param id 插件ID
      */
-    int deletePlugin(String id);
+    int delete(String id);
 
     /**
      * 根据用户ID查询插件信息
      * @param authorId 作者ID
      * @return 插件信息列表
      */
-    List<PluginInfo> selectPluginsByAuthorId(String authorId);
+    List<PluginInfo> selectByAuthorId(String authorId);
 
     /**
      * 查询公开插件
      * @return 插件信息列表
      */
-    List<PluginInfo> selectPublicPlugins();
+    List<PluginInfo> selectPublic();
 }

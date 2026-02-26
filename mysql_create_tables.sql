@@ -3,39 +3,50 @@ CREATE TABLE `plugin_info` (
   `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '插件id',
   `name` VARCHAR(255) NOT NULL COMMENT '插件名称',
   `description` TEXT COMMENT '插件描述',
-  `version` VARCHAR(50) NOT NULL COMMENT '插件版本',
-  `compatible_version` VARCHAR(50) COMMENT '插件兼容的版本',
   `author_id` VARCHAR(36) NOT NULL COMMENT '插件作者（即userId）',
-  `path` VARCHAR(500) NOT NULL COMMENT '插件存储路径',
+  `current_version` VARCHAR(50) COMMENT '当前版本号',
+  `latest_version` VARCHAR(50) COMMENT '最新版本号',
+  `version_count` INT DEFAULT 0 COMMENT '版本总数',
+  `create_time` DATETIME NOT NULL COMMENT '创建时间',
+  `update_time` DATETIME NOT NULL COMMENT '更新时间'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='插件信息表';
+
+-- 插件版本表
+CREATE TABLE `plugin_version` (
+  `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '版本ID',
+  `plugin_id` VARCHAR(36) NOT NULL COMMENT '插件ID',
+  `version` VARCHAR(50) NOT NULL COMMENT '版本号',
+  `path` VARCHAR(500) NOT NULL COMMENT '插件文件路径',
+  `file_size` BIGINT COMMENT '文件大小',
+  `file_md5` VARCHAR(32) COMMENT '文件MD5',
+  `create_time` DATETIME NOT NULL COMMENT '创建时间',
+  `changelog` TEXT COMMENT '版本变更说明',
   `entity_package` VARCHAR(255) COMMENT '插件实体类包名',
   `method_package` VARCHAR(255) COMMENT '插件方法类包名',
-  `create_time` DATETIME NOT NULL COMMENT '创建时间',
-  `update_time` DATETIME NOT NULL COMMENT '更新时间',
-  `is_public` BOOLEAN NOT NULL DEFAULT FALSE COMMENT '是否公开',
-  `file_size` BIGINT COMMENT '文件大小(字节)',
-  `file_md5` VARCHAR(32) COMMENT '文件MD5校验码'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='插件信息表';
+  `compatible_version` TEXT COMMENT '此版本所兼容的版本（JSON）',
+  FOREIGN KEY (`plugin_id`) REFERENCES `plugin_info` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='插件版本表';
 
 -- 实体类信息表
 CREATE TABLE `entity_info` (
   `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '实体类id',
   `description` TEXT COMMENT '实体类描述',
   `name` VARCHAR(255) NOT NULL COMMENT '实体类简写名称',
-  `plugin_id` VARCHAR(36) NOT NULL COMMENT '实体类所属插件id',
+  `plugin_version_id` VARCHAR(36) NOT NULL COMMENT '实体类所属插件版本id',
   `entity_name` VARCHAR(255) NOT NULL COMMENT '实体全限定名',
   `attributes` TEXT COMMENT '实体类属性信息(JSON格式)',
-  FOREIGN KEY (`plugin_id`) REFERENCES `plugin_info` (`id`) ON DELETE CASCADE
+  FOREIGN KEY (`plugin_version_id`) REFERENCES `plugin_version` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='实体类信息表';
 
 -- 方法类信息表
 CREATE TABLE `method_class_info` (
   `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '方法类id',
   `description` TEXT COMMENT '类描述',
-  `plugin_id` VARCHAR(36) NOT NULL COMMENT '所属插件id',
+  `plugin_version_id` VARCHAR(36) NOT NULL COMMENT '所属插件版本id',
   `class_name` VARCHAR(255) NOT NULL COMMENT '类全限定名',
   `simple_class_name` VARCHAR(255) NOT NULL COMMENT '简单类名',
   `package_name` VARCHAR(255) NOT NULL COMMENT '包名',
-  FOREIGN KEY (`plugin_id`) REFERENCES `plugin_info` (`id`) ON DELETE CASCADE
+  FOREIGN KEY (`plugin_version_id`) REFERENCES `plugin_version` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='方法类信息表';
 
 -- 方法信息表
@@ -72,10 +83,12 @@ CREATE TABLE `workflow_info` (
 CREATE TABLE `node` (
   `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '节点ID',
   `plugin_id` VARCHAR(36) NOT NULL COMMENT '插件ID',
+  `plugin_version_id` VARCHAR(36) NOT NULL COMMENT '插件版本ID',
   `method_class_id` VARCHAR(36) NOT NULL COMMENT '方法类ID',
   `method_id` VARCHAR(36) NOT NULL COMMENT '方法ID',
   `in_degree` INT NOT NULL DEFAULT 0 COMMENT '入度',
   FOREIGN KEY (`plugin_id`) REFERENCES `plugin_info` (`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`plugin_version_id`) REFERENCES `plugin_version` (`id`) ON DELETE CASCADE,
   FOREIGN KEY (`method_class_id`) REFERENCES `method_class_info` (`id`) ON DELETE CASCADE,
   FOREIGN KEY (`method_id`) REFERENCES `method_info` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='工作流节点表';

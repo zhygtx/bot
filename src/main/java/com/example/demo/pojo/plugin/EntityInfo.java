@@ -27,9 +27,9 @@ public class EntityInfo {
     private String name;
 
     /**
-     * 实体类所属插件id
+     * 实体类所属插件版本id
      */
-    private String pluginId;
+    private String versionId;
 
     /**
     * 实体全限定名

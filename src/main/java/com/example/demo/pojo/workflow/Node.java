@@ -3,6 +3,7 @@ package com.example.demo.pojo.workflow;
 import com.example.demo.pojo.plugin.MethodClassInfo;
 import com.example.demo.pojo.plugin.MethodInfo;
 import com.example.demo.pojo.plugin.PluginInfo;
+import com.example.demo.pojo.plugin.PluginVersion;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -26,6 +27,11 @@ public class Node implements Comparable<Node>{
      * 插件ID
      */
     private String pluginId;
+
+    /**
+     * 插件版本ID
+     */
+    private String pluginVersionId;
 
     /**
      * 方法类ID
@@ -66,6 +72,11 @@ public class Node implements Comparable<Node>{
      * 插件信息
      */
     private PluginInfo pluginInfo;
+
+    /**
+     * 插件版本信息
+     */
+    private PluginVersion pluginVersion;
 
     /**
      * 方法类信息

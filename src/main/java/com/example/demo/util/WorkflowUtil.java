@@ -4,6 +4,7 @@ import com.example.demo.pojo.plugin.MethodClassInfo;
 import com.example.demo.pojo.plugin.MethodInfo;
 import com.example.demo.pojo.plugin.ParameterInfo;
 import com.example.demo.pojo.plugin.PluginInfo;
+import com.example.demo.pojo.plugin.PluginVersion;
 import com.example.demo.pojo.workflow.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -30,9 +31,6 @@ public class WorkflowUtil {
 
     // 缓存已加载的类加载器，避免重复加载
     private final Map<String, URLClassLoader> classLoaderCache = new ConcurrentHashMap<>();
-
-    // 插件版本管理，用于处理插件更新
-    private final Map<String, String> pluginVersionCache = new ConcurrentHashMap<>();
 
     /**
      * 验证工作流配置的有效性
@@ -254,14 +252,14 @@ public class WorkflowUtil {
             return new ExecutionResult(null, true);
         }
 
-        // 2. 获取插件信息
-        PluginInfo pluginInfo = node.getPluginInfo();
-        if (pluginInfo == null) {
-            throw new IllegalStateException("节点" + node.getId() + "缺少插件信息");
+        // 2. 获取插件版本信息
+        PluginVersion pluginVersion = node.getPluginVersion();
+        if (pluginVersion == null) {
+            throw new IllegalStateException("节点" + node.getId() + "缺少插件版本信息");
         }
 
         // 3. 加载类加载器
-        URLClassLoader classLoader = getClassLoader(pluginInfo);
+        URLClassLoader classLoader = getClassLoader(pluginVersion);
 
         // 4. 获取方法信息
         MethodInfo methodInfo = node.getMethodInfo();
@@ -285,7 +283,7 @@ public class WorkflowUtil {
 
         method.setAccessible(true);
         // 使用线程本地缓存获取或创建实例
-        Object instance = getOrCreateInstance(pluginInfo, methodClassInfo, clazz);
+        Object instance = getOrCreateInstance(pluginVersion, methodClassInfo, clazz);
 
         log.debug("调用方法: {}.{} 参数数量: {}",
                 methodClassInfo.getClassName(), method.getName(), parameters.length);
@@ -458,16 +456,16 @@ public class WorkflowUtil {
 
     /**
      * 从线程本地缓存获取或创建实例
-     * @param pluginInfo 插件信息
+     * @param pluginVersion 插件版本信息
      * @param methodClassInfo 方法类信息
      * @param clazz 类对象
      * @return 实例对象
      * @throws Exception 实例创建异常
      */
-    public Object getOrCreateInstance(PluginInfo pluginInfo, MethodClassInfo methodClassInfo, Class<?> clazz) throws Exception {
-        // 包含插件版本的缓存键，用于处理插件更新
-        String version = pluginInfo.getVersion() != null ? pluginInfo.getVersion() : "unknown";
-        String cacheKey = pluginInfo.getId() + ":" + version + ":" + methodClassInfo.getClassName();
+    public Object getOrCreateInstance(PluginVersion pluginVersion, MethodClassInfo methodClassInfo, Class<?> clazz) throws Exception {
+        // 包含插件版本的缓存键
+        String version = pluginVersion.getVersion() != null ? pluginVersion.getVersion() : "unknown";
+        String cacheKey = pluginVersion.getPluginId() + ":" + version + ":" + methodClassInfo.getClassName();
         Map<String, Object> instanceMap = ThreadLocalManager.getMethodInstanceCache();
 
         Object instance = instanceMap.get(cacheKey);
@@ -481,30 +479,18 @@ public class WorkflowUtil {
 
     /**
      * 获取或创建类加载器
-     * @param pluginInfo 插件信息
+     * @param pluginVersion 插件版本信息
      * @return 类加载器
      */
-    public URLClassLoader getClassLoader(PluginInfo pluginInfo) {
-        String pluginId = pluginInfo.getId();
-        String currentVersion = pluginInfo.getVersion() != null ? pluginInfo.getVersion() : "unknown";
+    public URLClassLoader getClassLoader(PluginVersion pluginVersion) {
+        String pluginId = pluginVersion.getPluginId();
+        String version = pluginVersion.getVersion() != null ? pluginVersion.getVersion() : "unknown";
+        String cacheKey = pluginId + ":" + version;
 
-        // 检查插件版本是否更新
-        String cachedVersion = pluginVersionCache.get(pluginId);
-        if (cachedVersion == null || !cachedVersion.equals(currentVersion)) {
-            // 插件版本更新，重新创建类加载器
-            log.info("插件版本更新: {} 从 {} 到 {}", pluginId, cachedVersion, currentVersion);
-
-            // 清理旧的类加载器
-            classLoaderCache.remove(pluginId);
-
-            // 更新版本缓存
-            pluginVersionCache.put(pluginId, currentVersion);
-        }
-
-        return classLoaderCache.computeIfAbsent(pluginId, key -> {
+        return classLoaderCache.computeIfAbsent(cacheKey, key -> {
             try {
                 // 修复：使用URI构造URL以避免弃用警告
-                URL jarUrl = new File(pluginInfo.getPath()).toURI().toURL();
+                URL jarUrl = new File(pluginVersion.getPath()).toURI().toURL();
                 return new URLClassLoader(new URL[]{jarUrl},
                         Thread.currentThread().getContextClassLoader());
             } catch (Exception e) {

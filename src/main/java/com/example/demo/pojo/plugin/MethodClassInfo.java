@@ -24,9 +24,9 @@ public class MethodClassInfo {
     private String description;
 
     /**
-     * 所属插件id
+     * 方法类版本id
      */
-    private String pluginId;
+    private String versionId;
 
     /**
      * 类全限定名
