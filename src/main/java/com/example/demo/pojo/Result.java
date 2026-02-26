@@ -12,9 +12,18 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Data
 public class Result<T> {
-    private Integer code;     // 业务状态码  0-成功  1-失败
+    private Integer code;     // 业务状态码
     private String message;   // 提示信息
     private T data;           // 响应数据
+
+    // 状态码常量定义
+    public static final Integer CODE_SUCCESS = 200;           // 成功
+    public static final Integer CODE_BAD_REQUEST = 400;     // 请求参数错误
+    public static final Integer CODE_UNAUTHORIZED = 401;    // 未授权
+    public static final Integer CODE_FORBIDDEN = 403;       // 禁止访问
+    public static final Integer CODE_NOT_FOUND = 404;       // 资源未找到
+    public static final Integer CODE_SERVER_ERROR = 500;    // 服务器内部错误
+    public static final Integer CODE_SERVICE_UNAVAILABLE = 503; // 服务不可用
 
     /**
      * 快速返回操作成功响应结果(带响应数据)
@@ -23,7 +32,7 @@ public class Result<T> {
      * @param <E> 数据类型
      */
     public static <E> Result<E> success(E data) {
-        return new Result<>(0, "操作成功", data);
+        return new Result<>(CODE_SUCCESS, "操作成功", data);
     }
 
     /**
@@ -34,7 +43,7 @@ public class Result<T> {
      * @param <E> 数据类型
      */
     public static <E> Result<E> success(String message, E data) {
-        return new Result<>(0, message, data);
+        return new Result<>(CODE_SUCCESS, message, data);
     }
 
     /**
@@ -43,7 +52,7 @@ public class Result<T> {
      * @param <E> 数据类型
      */
     public static <E> Result<E> success() {
-        return new Result<>(0, "操作成功", null);
+        return new Result<>(CODE_SUCCESS, "操作成功", null);
     }
 
     /**
@@ -52,7 +61,16 @@ public class Result<T> {
      * @return 封装后的失败响应结果
      * @param <E> 数据类型
      */
-    public static <E> Result<E> error(String message) {
-        return new Result<>(1, message, null);
+    public static <E> Result<E> error(Integer code, String message) {
+        return new Result<>(code, message, null);
+    }
+
+    /**
+     * 快速返回操作失败响应结果
+     * @return 封装后的失败响应结果
+     * @param <E> 数据类型
+     */
+    public static <E> Result<E> error(Integer code) {
+        return new Result<>(code, null, null);
     }
 }

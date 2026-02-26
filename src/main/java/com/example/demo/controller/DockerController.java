@@ -36,7 +36,7 @@ public class DockerController {
         String userId = authUtil.getCurrentUserId(request);
         User user = userService.selectById(userId);
         if (user.getBotQQ() == null){
-            return Result.error("请先绑定BotQQ");
+            return Result.error(400,"请先绑定BotQQ");
         }
         Result<?> result = dockerService.createContainer(user,napcatToken);
         if (!result.getCode().equals(0)){

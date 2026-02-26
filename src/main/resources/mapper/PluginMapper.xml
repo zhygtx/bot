@@ -138,14 +138,14 @@
     </resultMap>
 
     <!-- 插入插件信息 -->
-    <insert id="insertPlugin" parameterType="com.example.demo.pojo.plugin.PluginInfo">
+    <insert id="insert" parameterType="com.example.demo.pojo.plugin.PluginInfo">
         <!-- 插入插件基本信息 -->
         INSERT INTO plugin_info (
-            id, name, description, author_id, 
+            id, name, description, author_id, author_name
             latest_version, version_count, 
             create_time, update_time, is_public
         ) VALUES (
-            #{id}, #{name}, #{description}, #{authorId}, 
+            #{id}, #{name}, #{description}, #{authorId}, #{authorName}
             #{latestVersion}, #{versionCount}, 
             #{createTime}, #{updateTime}, #{isPublic}
         );
@@ -155,18 +155,18 @@
     </insert>
 
     <!-- 根据ID查询插件信息 -->
-    <select id="selectPluginById" resultMap="pluginInfoMap">
+    <select id="selectById" resultMap="pluginInfoMap">
         <include refid="pluginSelectStatement"/>
         WHERE p.id = #{id}
     </select>
 
     <!-- 查询所有插件信息 -->
-    <select id="selectAllPlugins" resultMap="pluginInfoMap">
+    <select id="selectAll" resultMap="pluginInfoMap">
         <include refid="pluginSelectStatement"/>
     </select>
 
     <!-- 更新插件信息 -->
-    <update id="updatePlugin" parameterType="com.example.demo.pojo.plugin.PluginInfo">
+    <update id="update" parameterType="com.example.demo.pojo.plugin.PluginInfo">
         <![CDATA[
     START TRANSACTION;
 
@@ -192,11 +192,6 @@
         COMMIT;
     </update>
 
-    <!-- 删除插件信息 -->
-    <delete id="delete">
-        DELETE FROM plugin_info WHERE id = #{id}
-    </delete>
-
     <!-- 根据用户ID查询插件信息 -->
     <select id="selectByAuthorId" resultMap="pluginInfoMap">
         <include refid="pluginSelectStatement"/>
@@ -204,7 +199,7 @@
     </select>
 
     <!-- 查询公开插件 -->
-    <select id="selectPublic" resultMap="pluginInfoMap">
+    <select id="selectByPublic" resultMap="pluginInfoMap">
         <include refid="pluginSelectStatement"/>
         WHERE p.is_public = true
     </select>

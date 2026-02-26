@@ -33,13 +33,14 @@ public class JWTUtil {
     }
 
     // 生成JWT令牌
-    public String generateToken(String userId, String account) {
+    public String generateToken(String userId, String account, String userName) {
         Algorithm algorithm = Algorithm.HMAC256(secret);
 
         String token = JWT.create()
                 .withIssuer(ISSUER)
                 .withClaim("userId", userId)
                 .withClaim("account", account)
+                .withClaim("userName", userName)
                 .withIssuedAt(new Date())
                 .withExpiresAt(new Date(System.currentTimeMillis() + expiration))
                 .sign(algorithm);
@@ -109,6 +110,13 @@ public class JWTUtil {
         token = token.replace("Bearer ", "");
         DecodedJWT decodedJWT = JWT.decode(token);
         return decodedJWT.getClaim("account").asString();
+    }
+
+    // 从令牌中获取用户名
+    public String getUserNameFromToken(String token) {
+        token = token.replace("Bearer ", "");
+        DecodedJWT decodedJWT = JWT.decode(token);
+        return decodedJWT.getClaim("userName").asString();
     }
 
     // 检查令牌是否过期

@@ -25,6 +25,8 @@ public class EmailServiceImpl implements EmailService {
         this.javaMailSender = javaMailSender;
         this.templateEngine = templateEngine;
         this.redisTemplate = redisTemplate;
+        // 解决 Windows 系统下 mailcap 文件找不到的问题
+        System.setProperty("mail.mime.contenthandler.autoinit", "false");
     }
 
     /**
@@ -36,7 +38,7 @@ public class EmailServiceImpl implements EmailService {
         try {
             String redisKey = "verification:code:" + email;
             if (redisTemplate.hasKey(redisKey)){
-                return Result.error("验证码已发送请检查邮箱");
+                return Result.error(400,"验证码已发送请检查邮箱");
             }
 
             // 生成6位随机数
@@ -51,7 +53,7 @@ public class EmailServiceImpl implements EmailService {
 
             if (!sendEmail(email, "验证码", htmlContent, true)) {
                 log.warn("发送验证码邮件失败，邮箱：{}",email);
-                return Result.error("发送验证码邮件失败");
+                return Result.error(500,"发送验证码邮件失败");
             }
 
             // 保存验证码到Redis，设置5分钟过期
@@ -60,7 +62,7 @@ public class EmailServiceImpl implements EmailService {
             return Result.success("发送验证码成功");
         } catch (Exception e) {
             log.warn("发送验证码邮件失败，邮箱：{}",email,e);
-            return Result.error("发送验证码邮件失败");
+            return Result.error(500,"发送验证码邮件失败");
         }
     }
 

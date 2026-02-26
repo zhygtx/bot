@@ -52,4 +52,22 @@ public class AuthUtil {
         }
         return null;
     }
+
+    /**
+     * 从请求头中获取用户名称
+     * @param request HTTP请求
+     * @return 用户名称，如果获取失败返回null
+     */
+    public String getCurrentUserName(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            try {
+                return jwtUtil.getUserNameFromToken(token);
+            } catch (Exception e) {
+                return null;
+            }
+        }
+        return null;
+    }
 }

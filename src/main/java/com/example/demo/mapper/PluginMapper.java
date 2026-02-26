@@ -1,6 +1,7 @@
 package com.example.demo.mapper;
 
 import com.example.demo.pojo.plugin.PluginInfo;
+import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -18,6 +19,19 @@ public interface PluginMapper {
     int insert(PluginInfo pluginInfo);
 
     /**
+     * 删除插件信息
+     * @param id 插件ID
+     */
+    @Delete("delete from plugin_info where id = #{id}")
+    int delete(String id);
+
+    /**
+     * 更新插件信息
+     * @param pluginInfo 插件信息
+     */
+    int update(PluginInfo pluginInfo);
+
+    /**
      * 根据ID查询插件信息
      * @param id 插件ID
      * @return 插件信息
@@ -31,18 +45,6 @@ public interface PluginMapper {
     List<PluginInfo> selectAll();
 
     /**
-     * 更新插件信息
-     * @param pluginInfo 插件信息
-     */
-    int update(PluginInfo pluginInfo);
-
-    /**
-     * 删除插件信息
-     * @param id 插件ID
-     */
-    int delete(String id);
-
-    /**
      * 根据用户ID查询插件信息
      * @param authorId 作者ID
      * @return 插件信息列表
@@ -53,5 +55,5 @@ public interface PluginMapper {
      * 查询公开插件
      * @return 插件信息列表
      */
-    List<PluginInfo> selectPublic();
+    List<PluginInfo> selectByPublic();
 }

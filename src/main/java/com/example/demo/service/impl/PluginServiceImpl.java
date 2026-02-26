@@ -1,16 +1,25 @@
 package com.example.demo.service.impl;
 
+import com.example.demo.mapper.PluginMapper;
+import com.example.demo.pojo.Result;
 import com.example.demo.pojo.plugin.EntityInfo;
 import com.example.demo.pojo.plugin.MethodClassInfo;
 import com.example.demo.pojo.plugin.PluginInfo;
 import com.example.demo.pojo.plugin.PluginVersion;
 import com.example.demo.service.PluginService;
+import com.example.demo.util.MD5Util;
 import com.example.demo.util.PluginUtil;
-import lombok.SneakyThrows;
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
+import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -19,120 +28,90 @@ import java.util.UUID;
 @Service
 public class PluginServiceImpl implements PluginService {
 
+    @Value("${upload.plugin-path}")
+    private String pluginPath;
+
     private final PluginUtil pluginUtil;
+    private final PluginMapper pluginMapper;
 
-    public PluginServiceImpl(PluginUtil pluginUtil) {
+    public PluginServiceImpl(PluginUtil pluginUtil, PluginMapper pluginMapper) {
         this.pluginUtil = pluginUtil;
+        this.pluginMapper = pluginMapper;
     }
 
-    @SneakyThrows
     @Override
-    public PluginInfo analyzePlugin(PluginInfo pluginInfo) {
-        // 从插件版本列表中获取第一个版本
-        PluginVersion pluginVersion = pluginInfo.getPluginVersionList() != null && !pluginInfo.getPluginVersionList().isEmpty() 
-                ? pluginInfo.getPluginVersionList().get(0) 
-                : new PluginVersion();
-        
-        // 获取插件路径
-        String jarPath = pluginVersion.getPath();
-        File file = new File(jarPath);
+    @Transactional
+    public Result<?> add(PluginInfo pluginInfo, MultipartFile file) {
+        //初始化插件版本信息
+        PluginVersion pluginVersion = pluginInfo.getPluginVersionList().get(0);
+        //初始化插件信息
+        pluginInfo.setId(UUID.randomUUID().toString());
+        pluginInfo.setLatestVersion(pluginVersion.getVersion());
+        pluginInfo.setVersionCount(pluginInfo.getVersionCount()+1);
+        pluginInfo.setCreateTime(LocalDateTime.now());
+        pluginInfo.setUpdateTime(LocalDateTime.now());
 
+        //创建存储路径
+        String authorPath = pluginPath + "/" + pluginInfo.getAuthorId();
+        String jarPath = authorPath + "/" + pluginInfo.getName();
+
+        // 创建目录
+        File authorDir = new File(authorPath);
+        File jarDir = new File(jarPath);
+        if (!authorDir.exists()){
+            if (!authorDir.mkdirs()){
+                log.error("创建插件作者目录失败");
+                return Result.error(500);
+            }
+        }
+        if (!jarDir.exists()) {
+            if (!jarDir.mkdirs()) {
+                log.error("创建插件目录失败");
+                return Result.error(500);
+            }
+        }
+
+        //保存文件
+        String jarName = UUID.randomUUID()+ ".jar";
+        String filePath = pluginPath + "/" + jarName;
+        File jarFile = new File(filePath);
         try {
-            // 初始化PluginInfo对象
-            if (pluginInfo.getId() == null) {
-                pluginInfo.setId(UUID.randomUUID().toString());
-            }
-            if (pluginInfo.getName() == null) {
-                // 从文件名提取插件名称
-                String fileName = file.getName();
-                pluginInfo.setName(fileName.replace(".jar", ""));
-            }
-            if (pluginInfo.getCreateTime() == null) {
-                pluginInfo.setCreateTime(LocalDateTime.now());
-            }
-            pluginInfo.setUpdateTime(LocalDateTime.now());
-            
-            // 初始化插件版本信息
-            if (pluginVersion.getId() == null) {
-                pluginVersion.setId(UUID.randomUUID().toString());
-                pluginVersion.setPluginId(pluginInfo.getId());
-                pluginVersion.setVersion("1.0.0"); // 默认版本
-                pluginVersion.setPath(jarPath);
-                pluginVersion.setFileSize(file.length());
-                // 计算文件MD5
-                pluginVersion.setFileMd5(calculateMD5(file));
-                pluginVersion.setCreateTime(LocalDateTime.now());
-                pluginVersion.setChangelog("初始版本");
-                pluginVersion.setCompatibleVersion("{}");
-            }
-
-            // 扫描实体类信息
-            List<EntityInfo> entityInfos = pluginUtil.scanEntities(pluginVersion);
-            pluginVersion.setEntityInfoList(entityInfos);
-
-            // 扫描方法类信息
-            List<MethodClassInfo> methodClassInfos = pluginUtil.scanMethodClasses(pluginVersion);
-            pluginVersion.setMethodClassInfoList(methodClassInfos);
-
-            // 设置插件版本信息
-            pluginInfo.setLatestVersion(pluginVersion.getVersion());
-            pluginInfo.setVersionCount(1);
-            if (pluginInfo.getPluginVersionList() == null || pluginInfo.getPluginVersionList().isEmpty()) {
-                pluginInfo.setPluginVersionList(java.util.Collections.singletonList(pluginVersion));
-            }
-
-            log.info("插件分析完成: {}", pluginInfo.getName());
-            return pluginInfo;
-
-        } finally {
-            // 所有资源已通过try-with-resources关闭
+            file.transferTo(jarFile);
+        }catch (Exception e){
+            log.error("文件保存失败", e);
+            return Result.error(500);
         }
-    }
 
-    // 保留原有的test方法用于测试
-    @SneakyThrows
-    @Override
-    public PluginInfo test() {
-        String jarPath = "D:/GeneralBot/SDK/plugin-sdk/target/plugin-sdk-0.1.0-SNAPSHOT.jar";
-        String entityPackage = "pojo";  // 用户指定的实体类包名
-        String methodPackage = "test";  // 用户指定的方法包名
-
-        PluginInfo pluginInfo = new PluginInfo();
-        pluginInfo.setDescription("测试插件信息");
-        pluginInfo.setAuthorId("system");
-        
-        // 创建并设置插件版本信息
-        PluginVersion pluginVersion = new PluginVersion();
+        //初始化插件版本信息并保存
+        pluginVersion.setId(UUID.randomUUID().toString());
+        pluginVersion.setPluginId(pluginInfo.getId());
         pluginVersion.setPath(jarPath);
-        pluginVersion.setEntityPackage(entityPackage);
-        pluginVersion.setMethodPackage(methodPackage);
-        
-        pluginInfo.setPluginVersionList(java.util.Collections.singletonList(pluginVersion));
+        pluginVersion.setFileSize(file.getSize());
+        try {
+            pluginVersion.setFileMd5(MD5Util.calculateFileMD5(file));
+        } catch (IOException | NoSuchAlgorithmException e) {
+            log.error("计算文件MD5失败", e);
+        }
+        pluginVersion.setCreateTime(LocalDateTime.now());
+        //扫描实体类与方法信息
+        List<EntityInfo> entityInfoList = pluginUtil.scanEntities(pluginVersion);
+        List<MethodClassInfo> methodClassInfoList = pluginUtil.scanMethodClasses(pluginVersion);
+        pluginVersion.setEntityInfoList(entityInfoList);
+        pluginVersion.setMethodClassInfoList(methodClassInfoList);
 
-        return analyzePlugin(pluginInfo);
+        //保存插件版本信息
+        List<PluginVersion> pluginVersionList = pluginInfo.getPluginVersionList();
+        pluginVersionList.set(0, pluginVersion);
+        if (pluginMapper.insert(pluginInfo) != 1){
+            return Result.error(500);
+        }
+        return Result.success();
     }
-    
-    /**
-     * 计算文件MD5值
-     * @param file 文件
-     * @return MD5值
-     */
-    @SneakyThrows
-    private String calculateMD5(File file) {
-        java.security.MessageDigest md = java.security.MessageDigest.getInstance("MD5");
-        try (java.io.FileInputStream fis = new java.io.FileInputStream(file)) {
-            byte[] buffer = new byte[8192];
-            int bytesRead;
-            while ((bytesRead = fis.read(buffer)) != -1) {
-                md.update(buffer, 0, bytesRead);
-            }
-        }
 
-        byte[] digest = md.digest();
-        StringBuilder sb = new StringBuilder();
-        for (byte b : digest) {
-            sb.append(String.format("%02x", b));
-        }
-        return sb.toString();
+    @Override
+    public PageInfo<PluginInfo> findByAuthorId(String authorId, int pageNum, int pageSize) {
+        PageHelper.startPage(pageNum, pageSize);
+        List<PluginInfo> pluginInfoList = pluginMapper.selectByAuthorId(authorId);
+        return new PageInfo<>(pluginInfoList);
     }
 }

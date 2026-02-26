@@ -43,11 +43,11 @@ public class DockerServiceImpl implements DockerService {
     public Result<?> createContainer(User user, String token){
 
         if (dockerMapper.isOverLimit()){
-            return Result.error("总容器数量超限");
+            return Result.error(400,"总容器数量超限");
         }
 
         if (dockerMapper.selectByBotQQ(user.getBotQQ()) != null){
-            return Result.error("存在您创建的正在运行的容器");
+            return Result.error(400,"存在您创建的正在运行的容器");
         }
 
         String containerName = "napcat_" + user.getBotQQ();

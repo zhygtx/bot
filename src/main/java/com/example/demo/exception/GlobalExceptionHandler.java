@@ -32,12 +32,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public Result<Void> handleException(Exception e){
         log.error("操作异常",e);
-        return Result.error(StringUtils.hasLength(e.getMessage())? e.getMessage() : "操作失败");
+        return Result.error(500,StringUtils.hasLength(e.getMessage())? e.getMessage() : "操作失败");
     }
 
     /**
      * 处理参数验证异常
-     *
      * @param ex 方法参数验证异常对象
      * @return 包含验证错误信息的响应结果
      */
@@ -46,7 +45,7 @@ public class GlobalExceptionHandler {
             MethodArgumentNotValidException ex) {
         // 获取验证失败的第一个字段错误信息
         FieldError fieldError = ex.getBindingResult().getFieldErrors().get(0);
-        return Result.error(fieldError.getDefaultMessage());
+        return Result.error(400,fieldError.getDefaultMessage());
     }
 
     /**
@@ -58,7 +57,7 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public Result<Void> handleNotFoundException(NoHandlerFoundException ex) {
         log.warn("请求的资源不存在: {}", ex.getRequestURL());
-        return Result.error("请求的资源不存在");
+        return Result.error(404,"请求的资源不存在");
     }
 
     /**
@@ -82,7 +81,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public Result<Void> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException e) {
         log.warn("文件上传大小超过限制: {}", e.getMessage());
-        return Result.error("文件大小超过限制，请上传小于10MB的文件");
+        return Result.error(400,"文件大小超过限制，请上传小于10MB的文件");
     }
 
 }

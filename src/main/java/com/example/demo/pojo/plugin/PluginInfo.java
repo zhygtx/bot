@@ -43,6 +43,12 @@ public class PluginInfo {
     private String authorId;
 
     /**
+     * 插件作者名称
+     * 系统生成系统与用户均不可修改
+     */
+    private String authorName;
+
+    /**
      * 最新版本号
      * 系统生成系统与用户均不可修改
      */
@@ -52,7 +58,7 @@ public class PluginInfo {
      * 版本总数
      * 系统生成用户可以修改，用户不可修稿
      */
-    private Integer versionCount;
+    private Integer versionCount = 0; // 默认版本总数为0
 
     /**
      * 是否公开

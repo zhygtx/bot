@@ -54,7 +54,7 @@ public class BotServiceImpl implements BotService {
     @Transactional
     public Result<?> insert(String userId, String name, Long botQQ) {
         if (botMapper.existsByBotQQ(botQQ)) {
-            return Result.error("该bot已被注册");
+            return Result.error(400,"该bot已被注册");
         }
         BotInfo bot = new BotInfo();
         bot.setId(UUID.randomUUID().toString());

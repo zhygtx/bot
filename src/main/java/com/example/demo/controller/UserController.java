@@ -39,7 +39,7 @@ public class UserController {
     @RequestMapping("/insertUser")
     public Result<String> insertUser(@RequestBody User user) {
         if (userService.isExistByAccount(user.getAccount())){
-            return Result.error("该账号已存在");
+            return Result.error( 400, "该账号已存在");
         }
         userService.insertUser(user);
         return Result.success();
@@ -53,16 +53,16 @@ public class UserController {
     @RequestMapping("/login")
     public Result<Map<String, Object>> login(String account, String pwd) {
         if (!userService.isExistByAccount(account)){
-            return Result.error("该账号不存在");
+            return Result.error(400,"该账号不存在");
         }
         if (!userService.login(account, pwd)){
-            return Result.error("密码错误");
+            return Result.error(400,"密码错误");
         }
 
         // 获取用户信息
         User user = userService.selectByAccount(account);
         // 生成JWT令牌
-        String token = jwtUtil.generateToken(user.getId(), user.getAccount());
+        String token = jwtUtil.generateToken(user.getId(), user.getAccount(), user.getName());
 
         // 构建返回结果
         Map<String, Object> result = new HashMap<>();
@@ -82,7 +82,7 @@ public class UserController {
     public Result<User> getCurrentUserInfo(HttpServletRequest request) {
         User user = userService.selectById(authUtil.getCurrentUserId(request));
         if (user == null) {
-            return Result.error("用户不存在");
+            return Result.error(400,"用户不存在");
         }
         return Result.success(user);
     }
@@ -106,7 +106,7 @@ public class UserController {
     public Result<String> updatePwd(HttpServletRequest request, String oldPwd, String newPwd) {
         String account = authUtil.getCurrentUserAccount(request);
         if (!userService.login(account, oldPwd)){
-            return Result.error("旧密码错误");
+            return Result.error(400,"旧密码错误");
         }
         User user = new User();
         user.setId(authUtil.getCurrentUserId(request));
@@ -136,10 +136,10 @@ public class UserController {
      */
     @RequestMapping("/retrievePwd")
     public Result<String> retrievePwd(String account, String email, String newPwd, String code) {
-        if (!userService.isExistByAccount(account)) return Result.error("该账号不存在");
-        if (!userService.selectByAccount(account).getEmail().equals(email)) return Result.error("该邮箱并未与此账号绑定");
-        if (!emailService.verifyCode(email, code)) return Result.error("验证码错误");
-        if (userService.login(account, newPwd)) return Result.error("新密码不能与旧密码相同");
+        if (!userService.isExistByAccount(account)) return Result.error(400,"该账号不存在");
+        if (!userService.selectByAccount(account).getEmail().equals(email)) return Result.error(400,"该邮箱并未与此账号绑定");
+        if (!emailService.verifyCode(email, code)) return Result.error(400,"验证码错误");
+        if (userService.login(account, newPwd)) return Result.error(400,"新密码不能与旧密码相同");
         User user = userService.selectByAccount(account);
         user.setId(user.getId());
         user.setPwd(newPwd);

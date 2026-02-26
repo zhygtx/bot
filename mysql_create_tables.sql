@@ -4,6 +4,7 @@ CREATE TABLE `plugin_info` (
   `name` VARCHAR(255) NOT NULL COMMENT '插件名称',
   `description` TEXT COMMENT '插件描述',
   `author_id` VARCHAR(36) NOT NULL COMMENT '插件作者（即userId）',
+  'author_name' VARCHAR(255) not null COMMENT '作者昵称',
   `latest_version` VARCHAR(50) COMMENT '最新版本号',
   `version_count` INT DEFAULT 0 COMMENT '版本总数',
   `create_time` DATETIME NOT NULL COMMENT '创建时间',
