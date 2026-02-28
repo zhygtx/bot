@@ -29,7 +29,7 @@ public class MethodClassInfo {
      * 方法类版本id
      * 系统生成系统与用户均不可修改
      */
-    private String versionId;
+    private String pluginVersionId;
 
     /**
      * 类全限定名

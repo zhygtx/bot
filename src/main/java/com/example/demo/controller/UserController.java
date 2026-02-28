@@ -71,7 +71,7 @@ public class UserController {
         result.put("username", user.getName());
         result.put("account", user.getAccount());
 
-        return Result.success(result);
+        return Result.success(null,result);
     }
 
     /**

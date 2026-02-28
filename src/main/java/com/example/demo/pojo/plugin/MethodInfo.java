@@ -39,7 +39,7 @@ public class MethodInfo {
     private String name;
 
     /**
-     * 方法参数列表（JSON格式）
+     * 方法参数列表
      */
     private List<ParameterInfo> parameters;
 

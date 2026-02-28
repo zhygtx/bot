@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.example.demo.mapper.PluginMapper">
+<mapper namespace="com.example.demo.mapper.plugin.PluginMapper">
 
     <!-- SQL片段定义 -->
     <!-- 插件信息查询语句 -->
     <sql id="pluginSelectStatement">
         SELECT 
-            p.id, p.name, p.description, p.author_id, 
+            p.id, p.name, p.description, p.author_id, p.author_name,
             p.latest_version, p.version_count, 
             p.create_time, p.update_time,p.is_public,
             pv.id as plugin_version_id, pv.plugin_id as plugin_version_plugin_id, pv.version as plugin_version_version, 
@@ -31,56 +31,13 @@
         LEFT JOIN parameter_info param ON m.id = param.method_id
     </sql>
 
-    <!-- 批量插入插件版本及相关数据 -->
-    <sql id="batchInsertPluginVersions">
-        <if test="pluginVersionList != null and pluginVersionList.size() > 0">
-            <foreach collection="pluginVersionList" item="version" separator=";">
-                INSERT INTO plugin_version (id, plugin_id, version, path, file_size, file_md5, create_time, changelog, entity_package, method_package, compatible_version) VALUES
-                (#{version.id}, #{id}, #{version.version}, #{version.path}, #{version.fileSize}, #{version.fileMd5}, #{version.createTime}, #{version.changelog}, #{version.entityPackage}, #{version.methodPackage}, #{version.compatibleVersion});
-
-                <if test="version.entityInfoList != null and version.entityInfoList.size() > 0">
-                    INSERT INTO entity_info (id, plugin_version_id, name, entity_name, attributes) VALUES
-                    <foreach collection="version.entityInfoList" item="entity" separator=",">
-                        (#{entity.id}, #{version.id}, #{entity.name}, #{entity.entityName}, #{entity.attributes})
-                    </foreach>;
-                </if>
-
-                <if test="version.methodClassInfoList != null and version.methodClassInfoList.size() > 0">
-                    INSERT INTO method_class_info (id, plugin_version_id, class_name, simple_class_name, package_name) VALUES
-                    <foreach collection="version.methodClassInfoList" item="methodClass" separator=",">
-                        (#{methodClass.id}, #{version.id}, #{methodClass.className}, #{methodClass.simpleClassName}, #{methodClass.packageName})
-                    </foreach>;
-
-                    <!-- 预处理方法数据，减少循环嵌套 -->
-                    <foreach collection="version.methodClassInfoList" item="methodClass" separator=";">
-                        <if test="methodClass.methods != null and methodClass.methods.size() > 0">
-                            INSERT INTO method_info (id, method_class_id, name, return_type) VALUES
-                            <foreach collection="methodClass.methods" item="method" separator=",">
-                                (#{method.id}, #{methodClass.id}, #{method.name}, #{method.returnType})
-                            </foreach>;
-
-                            <!-- 批量处理参数 -->
-                            <foreach collection="methodClass.methods" item="method">
-                                <if test="method.parameters != null and method.parameters.size() > 0">
-                                    INSERT INTO parameter_info (id, method_id, name, type) VALUES
-                                    <foreach collection="method.parameters" item="param" separator=",">
-                                        (#{param.id}, #{method.id}, #{param.name}, #{param.type})
-                                    </foreach>;
-                                </if>
-                            </foreach>
-                        </if>
-                    </foreach>
-                </if>
-            </foreach>
-        </if>
-    </sql>
-
     <!-- 插件信息表字段映射 -->
     <resultMap id="pluginInfoMap" type="com.example.demo.pojo.plugin.PluginInfo">
         <id column="id" property="id"/>
         <result column="name" property="name"/>
         <result column="description" property="description"/>
         <result column="author_id" property="authorId"/>
+        <result column="author_name" property="authorName"/>
 
         <result column="latest_version" property="latestVersion"/>
         <result column="version_count" property="versionCount"/>
@@ -105,7 +62,7 @@
                 <id column="entity_id" property="id"/>
                 <result column="entity_description" property="description"/>
                 <result column="entity_name" property="name"/>
-                <result column="entity_plugin_version_id" property="versionId"/>
+                <result column="entity_plugin_version_id" property="pluginVersionId"/>
                 <result column="entity_entity_name" property="entityName"/>
                 <result column="entity_attributes" property="attributes"/>
             </collection>
@@ -113,7 +70,7 @@
             <collection property="methodClassInfoList" ofType="com.example.demo.pojo.plugin.MethodClassInfo">
                 <id column="method_class_id" property="id"/>
                 <result column="method_class_description" property="description"/>
-                <result column="method_class_plugin_version_id" property="versionId"/>
+                <result column="method_class_plugin_version_id" property="pluginVersionId"/>
                 <result column="method_class_class_name" property="className"/>
                 <result column="method_class_simple_class_name" property="simpleClassName"/>
                 <result column="method_class_package_name" property="packageName"/>
@@ -138,20 +95,17 @@
     </resultMap>
 
     <!-- 插入插件信息 -->
+    <!-- 插入插件信息 -->
     <insert id="insert" parameterType="com.example.demo.pojo.plugin.PluginInfo">
-        <!-- 插入插件基本信息 -->
         INSERT INTO plugin_info (
-            id, name, description, author_id, author_name
-            latest_version, version_count, 
+            id, name, description, author_id, author_name,
+            latest_version, version_count,
             create_time, update_time, is_public
         ) VALUES (
-            #{id}, #{name}, #{description}, #{authorId}, #{authorName}
-            #{latestVersion}, #{versionCount}, 
+            #{id}, #{name}, #{description}, #{authorId}, #{authorName},
+            #{latestVersion}, #{versionCount},
             #{createTime}, #{updateTime}, #{isPublic}
         );
-
-        <!-- 批量插入插件版本及相关数据 -->
-        <include refid="batchInsertPluginVersions"/>
     </insert>
 
     <!-- 根据ID查询插件信息 -->
@@ -167,29 +121,15 @@
 
     <!-- 更新插件信息 -->
     <update id="update" parameterType="com.example.demo.pojo.plugin.PluginInfo">
-        <![CDATA[
-    START TRANSACTION;
-
-    -- 主表更新（最快）
-    UPDATE plugin_info SET
-        name = #{name},
-        description = #{description},
-        is_public = #{isPublic},
-        update_time = #{updateTime}
-    WHERE id = #{id};
-
-    -- 批量删除旧数据（减少逐条删除开销）
-    DELETE e, mc, m, p FROM entity_info e
-    LEFT JOIN method_class_info mc ON e.plugin_version_id = mc.plugin_version_id
-    LEFT JOIN method_info m ON mc.id = m.method_class_id
-    LEFT JOIN parameter_info p ON m.id = p.method_id
-    WHERE e.plugin_version_id IN (SELECT id FROM plugin_version WHERE plugin_id = #{id});
-    ]]>
-
-        <!-- 批量插入优化 -->
-        <include refid="batchInsertPluginVersions"/>
-
-        COMMIT;
+        UPDATE plugin_info SET
+            description = #{description},
+            <if test="name != null">name = #{name},</if>
+            <if test="authorName != null">author_name = #{authorName},</if>
+            <if test="latestVersion != null">latest_version = #{latestVersion},</if>
+            <if test="versionCount != null">version_count = #{versionCount},</if>
+            <if test="isPublic != null">is_public = #{isPublic},</if>
+            update_time = #{updateTime}
+        WHERE id = #{id}
     </update>
 
     <!-- 根据用户ID查询插件信息 -->

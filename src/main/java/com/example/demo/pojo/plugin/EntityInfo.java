@@ -33,7 +33,7 @@ public class EntityInfo {
      * 实体类所属插件版本id
      * 系统生成系统与用户均不可修改
      */
-    private String versionId;
+    private String pluginVersionId;
 
     /**
     * 实体全限定名

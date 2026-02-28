@@ -1,8 +1,9 @@
-package com.example.demo.mapper;
+package com.example.demo.mapper.plugin;
 
 import com.example.demo.pojo.plugin.PluginInfo;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
 
@@ -30,6 +31,9 @@ public interface PluginMapper {
      * @param pluginInfo 插件信息
      */
     int update(PluginInfo pluginInfo);
+
+    @Select("select exists(select * from plugin_info where author_id = #{authorId} and name = #{name})")
+    Boolean existsByAuthorIdAndName(String authorId, String name);
 
     /**
      * 根据ID查询插件信息

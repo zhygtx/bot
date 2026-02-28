@@ -44,7 +44,7 @@ public class PluginUtil {
             while (entries.hasMoreElements()) {
                 JarEntry entry = entries.nextElement();
 
-                if (entry.getName().contains(pluginVersion.getMethodPackage().replace(".", "/")) &&
+                if (entry.getName().contains(pluginVersion.getEntityPackage().replace(".", "/")) &&
                         entry.getName().endsWith(".class")) {
 
                     String className = entry.getName()
@@ -57,7 +57,7 @@ public class PluginUtil {
                         // 创建实体信息对象
                         EntityInfo entityInfo = new EntityInfo();
                         entityInfo.setId(UUID.randomUUID().toString());
-                        entityInfo.setVersionId(pluginVersion.getId());
+                        entityInfo.setPluginVersionId(pluginVersion.getId());
                         entityInfo.setEntityName(className);
                         entityInfo.setName(clazz.getSimpleName());  // 设置简写名称
 
@@ -118,7 +118,7 @@ public class PluginUtil {
                         MethodClassInfo classInfo = new MethodClassInfo();
                         String classId = UUID.randomUUID().toString();
                         classInfo.setId(classId);
-                        classInfo.setVersionId(pluginVersion.getId());
+                        classInfo.setPluginVersionId(pluginVersion.getId());
                         classInfo.setClassName(className);
                         classInfo.setSimpleClassName(clazz.getSimpleName());
                         classInfo.setPackageName(clazz.getPackage().getName());

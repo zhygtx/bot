@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.mapper.plugin.ParameterInfoMapper">
+    <insert id="insert" parameterType="java.util.List">
+        INSERT INTO parameter_info (id, description, method_id, name, type)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.id}, #{item.description}, #{item.methodId}, #{item.name}, #{item.type})
+        </foreach>
+    </insert>
+    <update id="update" parameterType="java.util.List">
+        UPDATE parameter_info
+        SET description = case id
+            <foreach collection="list" item="item">
+                when #{item.id} then #{item.description}
+            </foreach>
+        end
+        WHERE id in
+        <foreach collection="list" item="item" open="(" separator="," close=")">
+            #{item.id}
+        </foreach>
+    </update>
+</mapper>

@@ -1,10 +1,10 @@
 package com.example.demo.util;
 
 import com.example.demo.interceptor.ExcludeFromMD5;
-import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -23,19 +23,17 @@ public class MD5Util {
      * @throws IOException IO异常
      * @throws NoSuchAlgorithmException 没有MD5算法异常
      */
-    public static String calculateFileMD5(MultipartFile file) throws IOException, NoSuchAlgorithmException {
-        InputStream fis = file.getInputStream();
-        MessageDigest md = MessageDigest.getInstance("MD5");
-
-        byte[] buffer = new byte[8192];
-        int bytesRead;
-        while ((bytesRead = fis.read(buffer)) != -1) {
-            md.update(buffer, 0, bytesRead);
+    public static String calculateFileMD5(File file) throws IOException, NoSuchAlgorithmException {
+        try (FileInputStream fis = new FileInputStream(file)) {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            byte[] buffer = new byte[8192];
+            int bytesRead;
+            while ((bytesRead = fis.read(buffer)) != -1) {
+                md.update(buffer, 0, bytesRead);
+            }
+            byte[] digest = md.digest();
+            return bytesToHex(digest);
         }
-        fis.close();
-
-        byte[] digest = md.digest();
-        return bytesToHex(digest);
     }
 
     /**
