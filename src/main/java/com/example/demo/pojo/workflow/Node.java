@@ -24,22 +24,37 @@ public class Node implements Comparable<Node>{
     private String id;
 
     /**
-     * 插件ID
+     * 节点位置（垂直位置）
+     */
+    private Integer y;
+
+    /**
+     * 节点位置（水平位置）
+     */
+    private Integer x;
+
+    /**
+     * 所属工作流ID
+     */
+    private String workflowId;
+
+    /**
+     * 使用的插件的ID
      */
     private String pluginId;
 
     /**
-     * 插件版本ID
+     * 使用的插件版本ID
      */
     private String pluginVersionId;
 
     /**
-     * 方法类ID
+     * 使用的方法类ID
      */
     private String methodClassId;
 
     /**
-     * 方法ID
+     * 使用的方法的ID
      */
     private String methodId;
 

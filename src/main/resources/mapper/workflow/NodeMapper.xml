@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.mapper.workflow.NodeMapper">
+
+    <insert id="insert" parameterType="java.util.List">
+        insert into node (id, x, y, workflow_id, plugin_id, plugin_version_id, method_class_id, method_id, in_degree)
+        values
+        <foreach collection="nodes" item="node" separator=",">
+            (#{node.id}, #{node.x}, #{node.y}, #{node.workflowId}, #{node.pluginId}, #{node.pluginVersionId}, #{node.methodClassId}, #{node.methodId}, #{node.inDegree})
+        </foreach>
+    </insert>
+    <delete id="deleteByWorkflowId" parameterType="string">
+        delete from node where workflow_id = #{workflowId}
+    </delete>
+</mapper>

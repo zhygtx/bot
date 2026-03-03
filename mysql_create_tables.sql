@@ -70,6 +70,8 @@ CREATE TABLE `parameter_info` (
   FOREIGN KEY (`method_id`) REFERENCES `method_info` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='参数信息表';
 
+# -------------------------------------------------------------------------------------------------------------
+
 -- 工作流信息表
 CREATE TABLE `workflow_info` (
   `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '工作流ID',
@@ -83,12 +85,16 @@ CREATE TABLE `workflow_info` (
 -- 工作流节点表
 CREATE TABLE `node` (
   `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '节点ID',
+  `x` INT COMMENT '节点位置（水平位置）',
+  `y` INT COMMENT '节点位置（垂直位置）',
+  `workflow_id` VARCHAR(36) NOT NULL COMMENT '所属工作流ID',
   `plugin_id` VARCHAR(36) NOT NULL COMMENT '插件ID',
   `plugin_version_id` VARCHAR(36) NOT NULL COMMENT '插件版本ID',
   `method_class_id` VARCHAR(36) NOT NULL COMMENT '方法类ID',
   `method_id` VARCHAR(36) NOT NULL COMMENT '方法ID',
   `in_degree` INT NOT NULL DEFAULT 0 COMMENT '入度',
   FOREIGN KEY (`plugin_id`) REFERENCES `plugin_info` (`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`workflow_id`) REFERENCES `workflow_info` (`id`) ON DELETE CASCADE,
   FOREIGN KEY (`plugin_version_id`) REFERENCES `plugin_version` (`id`) ON DELETE CASCADE,
   FOREIGN KEY (`method_class_id`) REFERENCES `method_class_info` (`id`) ON DELETE CASCADE,
   FOREIGN KEY (`method_id`) REFERENCES `method_info` (`id`) ON DELETE CASCADE
@@ -96,7 +102,7 @@ CREATE TABLE `node` (
 
 -- 节点前置关系表（处理多对多关系）
 CREATE TABLE `node_pre_relation` (
-  `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '关系ID',
+  `id` integer NOT NULL auto_increment PRIMARY KEY COMMENT '关系ID',
   `node_id` VARCHAR(36) NOT NULL COMMENT '节点ID',
   `pre_node_id` VARCHAR(36) NOT NULL COMMENT '前置节点ID',
   FOREIGN KEY (`node_id`) REFERENCES `node` (`id`) ON DELETE CASCADE,
@@ -105,7 +111,7 @@ CREATE TABLE `node_pre_relation` (
 
 -- 节点后置关系表（处理多对多关系）
 CREATE TABLE `node_next_relation` (
-  `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '关系ID',
+  `id` integer NOT NULL auto_increment PRIMARY KEY COMMENT '关系ID',
   `node_id` VARCHAR(36) NOT NULL COMMENT '节点ID',
   `next_node_id` VARCHAR(36) NOT NULL COMMENT '后置节点ID',
   FOREIGN KEY (`node_id`) REFERENCES `node` (`id`) ON DELETE CASCADE,

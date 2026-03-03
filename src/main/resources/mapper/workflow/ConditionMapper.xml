@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.mapper.workflow.ConditionMapper">
+
+    <insert id="insert" parameterType="java.util.List">
+        insert into `condition`(id, workflow_id, node_id, field_name, preset_content, content_type, action, else_action, operator)
+        values
+        <foreach item="item" index="index" collection="list" separator="," open="(" close=")">
+            (#{item.id}, #{item.workflowId}, #{item.nodeId}, #{item.fieldName}, #{item.presetContent}, #{item.contentType}, #{item.action}, #{item.elseAction}, #{item.operator})
+        </foreach>
+    </insert>
+</mapper>

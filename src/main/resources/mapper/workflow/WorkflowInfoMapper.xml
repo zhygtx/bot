@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.mapper.workflow.WorkflowInfoMapper">
+
+    <!-- 工作流信息结果映射 -->
+    <resultMap id="workflowInfoMap" type="com.example.demo.pojo.workflow.WorkflowInfo">
+        <id column="workflow_id" property="id"/>
+        <result column="workflow_user_id" property="userId"/>
+        <result column="workflow_name" property="name"/>
+        <result column="workflow_description" property="description"/>
+        <result column="workflow_create_time" property="createTime"/>
+        <result column="workflow_update_time" property="updateTime"/>
+        
+        <!-- 工作流节点列表 -->
+        <collection property="nodes" ofType="com.example.demo.pojo.workflow.Node">
+            <id column="node_id" property="id"/>
+            <result column="node_x" property="x"/>
+            <result column="node_y" property="y"/>
+            <result column="node_plugin_id" property="pluginId"/>
+            <result column="node_plugin_version_id" property="pluginVersionId"/>
+            <result column="node_method_class_id" property="methodClassId"/>
+            <result column="node_method_id" property="methodId"/>
+            <result column="node_in_degree" property="inDegree"/>
+            
+            <!-- 数据映射列表 -->
+            <collection property="dataMaps" ofType="com.example.demo.pojo.workflow.DataMap">
+                <id column="data_map_id" property="id"/>
+                <result column="data_map_node_id" property="nodeId"/>
+                <result column="data_map_source_node_id" property="sourceNodeId"/>
+                <result column="data_map_source" property="source"/>
+                <result column="data_map_target" property="target"/>
+                <result column="data_map_source_type" property="sourceType"/>
+                <result column="data_map_target_type" property="targetType"/>
+            </collection>
+            
+            <!-- 前置节点ID列表 -->
+            <collection property="preNodeId" ofType="java.lang.String">
+                <result column="pre_node_id"/>
+            </collection>
+            
+            <!-- 后置节点ID列表 -->
+            <collection property="nextNodeId" ofType="java.lang.String">
+                <result column="next_node_id"/>
+            </collection>
+            
+            <!-- 节点默认值列表 -->
+            <collection property="nodeDefaults" ofType="com.example.demo.pojo.workflow.NodeDefaults">
+                <id column="node_defaults_id" property="id"/>
+                <result column="node_defaults_node_id" property="nodeId"/>
+                <result column="node_defaults_param_index" property="paramIndex"/>
+                <result column="node_defaults_default_value" property="defaultValue"/>
+                <result column="node_defaults_default_value_type" property="defaultValueType"/>
+            </collection>
+            
+            <!-- 插件信息 -->
+            <association property="pluginInfo" javaType="com.example.demo.pojo.plugin.PluginInfo">
+                <id column="plugin_id" property="id"/>
+                <result column="plugin_name" property="name"/>
+                <result column="plugin_description" property="description"/>
+                <result column="plugin_author_id" property="authorId"/>
+                <result column="plugin_latest_version" property="latestVersion"/>
+                <result column="plugin_version_count" property="versionCount"/>
+                <result column="plugin_create_time" property="createTime"/>
+                <result column="plugin_update_time" property="updateTime"/>
+                <result column="plugin_is_public" property="isPublic"/>
+            </association>
+            
+            <!-- 插件版本信息 -->
+            <association property="pluginVersion" javaType="com.example.demo.pojo.plugin.PluginVersion">
+                <id column="plugin_version_id" property="id"/>
+                <result column="plugin_version_plugin_id" property="pluginId"/>
+                <result column="plugin_version_version" property="version"/>
+                <result column="plugin_version_path" property="path"/>
+                <result column="plugin_version_file_size" property="fileSize"/>
+                <result column="plugin_version_file_md5" property="fileMd5"/>
+                <result column="plugin_version_create_time" property="createTime"/>
+                <result column="plugin_version_changelog" property="changelog"/>
+                <result column="plugin_version_entity_package" property="entityPackage"/>
+                <result column="plugin_version_method_package" property="methodPackage"/>
+                <result column="plugin_version_compatible_version" property="compatibleVersion"/>
+            </association>
+            
+            <!-- 方法类信息 -->
+            <association property="methodClassInfo" javaType="com.example.demo.pojo.plugin.MethodClassInfo">
+                <id column="method_class_id" property="id"/>
+                <result column="method_class_description" property="description"/>
+                <result column="method_class_plugin_version_id" property="pluginVersionId"/>
+                <result column="method_class_class_name" property="className"/>
+                <result column="method_class_simple_class_name" property="simpleClassName"/>
+                <result column="method_class_package_name" property="packageName"/>
+            </association>
+            
+            <!-- 方法信息 -->
+            <association property="methodInfo" javaType="com.example.demo.pojo.plugin.MethodInfo">
+                <id column="method_id" property="id"/>
+                <result column="method_description" property="description"/>
+                <result column="method_method_class_id" property="methodClassId"/>
+                <result column="method_name" property="name"/>
+                <result column="method_return_type" property="returnType"/>
+            </association>
+        </collection>
+        
+        <!-- 工作流条件列表 -->
+        <collection property="conditions" ofType="com.example.demo.pojo.workflow.Condition">
+            <id column="condition_id" property="id"/>
+            <result column="condition_workflow_id" property="workflowId"/>
+            <result column="condition_node_id" property="nodeId"/>
+            <result column="condition_field_name" property="fieldName"/>
+            <result column="condition_preset_content" property="presetContent"/>
+            <result column="condition_content_type" property="contentType"/>
+            <result column="condition_action" property="action"/>
+            <result column="condition_else_action" property="elseAction"/>
+            <result column="condition_operator" property="operator"/>
+        </collection>
+    </resultMap>
+
+    <sql id="select">
+        SELECT
+            -- 工作流基本信息
+            w.id as workflow_id, w.user_id as workflow_user_id, w.name as workflow_name,
+            w.description as workflow_description, w.create_time as workflow_create_time,
+            w.update_time as workflow_update_time,
+
+            -- 节点基本信息
+            n.id as node_id, n.x as node_x, n.y as node_y,
+            n.plugin_id as node_plugin_id, n.plugin_version_id as node_plugin_version_id,
+            n.method_class_id as node_method_class_id, n.method_id as node_method_id,
+            n.in_degree as node_in_degree,
+
+            -- 数据映射信息
+            dm.id as data_map_id, dm.node_id as data_map_node_id,
+            dm.source_node_id as data_map_source_node_id, dm.source as data_map_source,
+            dm.target as data_map_target, dm.source_type as data_map_source_type,
+            dm.target_type as data_map_target_type,
+
+            -- 前置节点关系
+            npr.pre_node_id,
+
+            -- 后置节点关系
+            nnr.next_node_id,
+
+            -- 节点默认值
+            nd.id as node_defaults_id, nd.node_id as node_defaults_node_id,
+            nd.param_index as node_defaults_param_index,
+            nd.default_value as node_defaults_default_value,
+            nd.default_value_type as node_defaults_default_value_type,
+
+            -- 插件信息
+            p.id as plugin_id, p.name as plugin_name, p.description as plugin_description,
+            p.author_id as plugin_author_id, p.latest_version as plugin_latest_version,
+            p.version_count as plugin_version_count, p.create_time as plugin_create_time,
+            p.update_time as plugin_update_time, p.is_public as plugin_is_public,
+
+            -- 插件版本信息
+            pv.id as plugin_version_id, pv.plugin_id as plugin_version_plugin_id,
+            pv.version as plugin_version_version, pv.path as plugin_version_path,
+            pv.file_size as plugin_version_file_size, pv.file_md5 as plugin_version_file_md5,
+            pv.create_time as plugin_version_create_time, pv.changelog as plugin_version_changelog,
+            pv.entity_package as plugin_version_entity_package,
+            pv.method_package as plugin_version_method_package,
+            pv.compatible_version as plugin_version_compatible_version,
+
+            -- 方法类信息
+            mc.id as method_class_id, mc.description as method_class_description,
+            mc.plugin_version_id as method_class_plugin_version_id,
+            mc.class_name as method_class_class_name,
+            mc.simple_class_name as method_class_simple_class_name,
+            mc.package_name as method_class_package_name,
+
+            -- 方法信息
+            m.id as method_id, m.description as method_description,
+            m.method_class_id as method_method_class_id, m.name as method_name,
+            m.return_type as method_return_type,
+
+            -- 条件信息
+            c.id as condition_id, c.workflow_id as condition_workflow_id,
+            c.node_id as condition_node_id, c.field_name as condition_field_name,
+            c.preset_content as condition_preset_content, c.content_type as condition_content_type,
+            c.action as condition_action, c.else_action as condition_else_action,
+            c.operator as condition_operator
+        FROM workflow_info w
+
+                 -- 左连接节点表
+                 LEFT JOIN node n ON w.id = n.workflow_id
+
+            -- 左连接数据映射表
+                 LEFT JOIN data_map dm ON n.id = dm.node_id
+
+            -- 左连接前置节点关系表
+                 LEFT JOIN node_pre_relation npr ON n.id = npr.node_id
+
+            -- 左连接后置节点关系表
+                 LEFT JOIN node_next_relation nnr ON n.id = nnr.node_id
+
+            -- 左连接节点默认值表
+                 LEFT JOIN node_defaults nd ON n.id = nd.node_id
+
+            -- 左连接插件信息表
+                 LEFT JOIN plugin_info p ON n.plugin_id = p.id
+
+            -- 左连接插件版本表
+                 LEFT JOIN plugin_version pv ON n.plugin_version_id = pv.id
+
+            -- 左连接方法类信息表
+                 LEFT JOIN method_class_info mc ON n.method_class_id = mc.id
+
+            -- 左连接方法信息表
+                 LEFT JOIN method_info m ON n.method_id = m.id
+
+            -- 左连接条件表
+                 LEFT JOIN `condition` c ON w.id = c.workflow_id
+    </sql>
+
+    <insert id="insert" parameterType="com.example.demo.pojo.workflow.WorkflowInfo">
+        INSERT INTO workflow_info(id, user_id, name, description, create_time, update_time)
+        VALUES (#{id}, #{userId}, #{name}, #{description}, #{createTime}, #{updateTime})
+    </insert>
+
+    <delete id="deleteById" parameterType="string">
+        DELETE FROM workflow_info
+        WHERE id = #{id}
+    </delete>
+
+    <!-- 查询所有工作流信息（包含完整关联数据） -->
+    <select id="getAll" resultMap="workflowInfoMap">
+        <include refid="select"/>
+    </select>
+
+    <!-- 根据ID查询工作流信息（包含完整关联数据） -->
+    <select id="getById" resultMap="workflowInfoMap" parameterType="string">
+        <include refid="select"/>
+        WHERE w.id = #{id}
+    </select>
+</mapper>
