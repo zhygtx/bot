@@ -222,6 +222,18 @@ public class PluginServiceImpl implements PluginService {
     }
 
     /**
+     * 修改插件公开状态
+     * @param id 插件ID
+     * @param isPublic 公开状态
+     * @return 修改结果
+     */
+    @Override
+    @Transactional
+    public int editPublic(String id, boolean isPublic){
+        return pluginMapper.updatePublic(id, isPublic);
+    }
+
+    /**
      * 获取插件列表
      * @param authorId 插件作者ID
      * @param pageNum 页码

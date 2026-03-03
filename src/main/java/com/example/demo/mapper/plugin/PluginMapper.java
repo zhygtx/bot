@@ -1,9 +1,7 @@
 package com.example.demo.mapper.plugin;
 
 import com.example.demo.pojo.plugin.PluginInfo;
-import org.apache.ibatis.annotations.Delete;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.*;
 
 import java.util.List;
 
@@ -31,6 +29,9 @@ public interface PluginMapper {
      * @param pluginInfo 插件信息
      */
     int update(PluginInfo pluginInfo);
+
+    @Update("update plugin_info set is_public = #{isPublic} where id = #{id}")
+    int updatePublic(@Param("id") String id, @Param("isPublic") boolean isPublic);
 
     @Select("select exists(select * from plugin_info where author_id = #{authorId} and name = #{name})")
     Boolean existsByAuthorIdAndName(String authorId, String name);

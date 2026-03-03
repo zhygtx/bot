@@ -30,6 +30,14 @@ public interface PluginService {
     int edit(PluginInfo pluginInfo);
 
     /**
+     * 修改插件信息
+     * @param id 插件id
+     * @param isPublic 是否公开
+     * @return 修改结果
+     */
+    int editPublic(String id, boolean isPublic);
+
+    /**
      * 获取插件列表
      * @param authorId 插件作者ID
      * @param pageNum 页码

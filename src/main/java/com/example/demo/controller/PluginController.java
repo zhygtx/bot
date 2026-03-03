@@ -63,8 +63,9 @@ public class PluginController {
     }
 
     @PutMapping("/editPublic")
-    public Result<?> editPublic() {
-        return Result.success(null,null);
+    public Result<?> editPublic(String id, boolean isPublic) {
+        int sqlResult = pluginService.editPublic(id, isPublic);
+        return sqlResult == 0 ? Result.error(500, "修改插件失败") : Result.success(null,null);
     }
 
     /**
