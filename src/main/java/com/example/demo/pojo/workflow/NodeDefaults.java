@@ -25,6 +25,16 @@ public class NodeDefaults {
     private Integer paramIndex;
 
     /**
+     * 方法参数名称
+     */
+    private String paramName;
+
+    /**
+     * 字段名(支持嵌套如：user.id，无嵌套直接映射时为user即和参数名相同)
+     */
+    private String fieldPath;
+
+    /**
      * 默认值
      */
     private String defaultValue;

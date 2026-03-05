@@ -138,10 +138,12 @@ CREATE TABLE `data_map` (
   `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '映射关系ID',
   `node_id` VARCHAR(36) NOT NULL COMMENT '所属节点ID',
   `source_node_id` VARCHAR(36) NOT NULL COMMENT '源数据所属节点',
-  `source` VARCHAR(255) NOT NULL COMMENT '源数据字段名称',
-  `target` VARCHAR(255) NOT NULL COMMENT '目标方法参数名称',
+  `source_path` VARCHAR(500) NOT NULL COMMENT '源数据字段名称(支持嵌套如：value.id，无嵌套直接映射时为value)',
+  `target_param_name` VARCHAR(255) NOT NULL COMMENT '目标参数名称',
+  `param_index` INT COMMENT '方法的第几个参数',
+  `target_path` VARCHAR(500) COMMENT '目标参数字段名(支持嵌套如：user.id，无嵌套直接映射时为user即和参数名相同)',
   `source_type` VARCHAR(255) NOT NULL COMMENT '源数据字段类型',
-  `target_type` VARCHAR(255) NOT NULL COMMENT '目标方法参数类型',
+  `target_type` VARCHAR(255) NOT NULL COMMENT '目标属性方法参数字段类型',
   FOREIGN KEY (`node_id`) REFERENCES `node` (`id`) ON DELETE CASCADE,
   FOREIGN KEY (`source_node_id`) REFERENCES `node` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='数据映射表';
@@ -151,6 +153,8 @@ CREATE TABLE `node_defaults` (
   `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '默认值ID',
   `node_id` VARCHAR(36) NOT NULL COMMENT '节点ID',
   `param_index` INT NOT NULL COMMENT '方法的第几个参数',
+  `param_name` VARCHAR(255) COMMENT '方法参数名称',
+  `field_path` VARCHAR(500) COMMENT '字段名(支持嵌套如：user.id，无嵌套直接映射时为user即和参数名相同)',
   `default_value` TEXT COMMENT '默认值',
   `default_value_type` ENUM('String', 'Integer', 'Double', 'Boolean') NOT NULL COMMENT '默认值类型',
   FOREIGN KEY (`node_id`) REFERENCES `node` (`id`) ON DELETE CASCADE

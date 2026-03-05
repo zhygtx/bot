@@ -28,14 +28,24 @@ public class DataMap {
     private String sourceNodeId;
 
     /**
-     * 源数据字段名称
+     * 源数据字段名称(支持嵌套如：value.id，无嵌套直接映射时为value)
      */
-    private String source;
+    private String sourcePath;
 
     /**
-     * 目标方法参数名称
+     * 目标参数名称
      */
-    private String target;
+    private String targetParamName;
+
+    /**
+     * 方法的第几个参数
+     */
+    private Integer paramIndex;
+
+    /**
+     * 目标参数字段名(支持嵌套如：user.id，无嵌套直接映射时为user即和参数名相同)
+     */
+    private String targetPath;
 
     /**
      * 源数据字段类型
@@ -43,7 +53,7 @@ public class DataMap {
     private String sourceType;
 
     /**
-     * 目标方法参数类型
+     * 目标属性方法参数字段类型
      */
     private String targetType;
 }

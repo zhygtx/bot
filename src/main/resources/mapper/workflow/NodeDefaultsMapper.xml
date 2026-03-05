@@ -4,10 +4,10 @@
 <mapper namespace="com.example.demo.mapper.workflow.NodeDefaultsMapper">
 
     <insert id="insert" parameterType="java.util.List">
-        insert into node_defaults(id, node_id, param_index, default_value, default_value_type)
+        insert into node_defaults(id, node_id, param_index, param_name, field_path, default_value, default_value_type)
         values
         <foreach item="item" index="index" collection="list" separator="," open="(" close=")">
-            (#{item.id}, #{item.nodeId}, #{item.paramIndex}, #{item.defaultValue}, #{item.defaultValueType})
+            (#{item.id}, #{item.nodeId}, #{item.paramIndex}, #{item.paramName}, #{item.fieldPath}, #{item.defaultValue}, #{item.defaultValueType})
         </foreach>
     </insert>
 </mapper>

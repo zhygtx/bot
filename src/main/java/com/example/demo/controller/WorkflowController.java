@@ -46,4 +46,10 @@ public class WorkflowController {
         int result = workflowService.remove(id);
         return result > 0 ? Result.success(null, null) : Result.error(500, "删除工作流失败");
     }
+
+    @GetMapping("/findAll")
+    public Result<?> findByAuthorId(@RequestParam(required = false,defaultValue = "1") int pageNum,
+                                    @RequestParam(required = false,defaultValue = "12") int pageSize) {
+        return Result.success(null,workflowService.findAll(pageNum, pageSize));
+    }
 }

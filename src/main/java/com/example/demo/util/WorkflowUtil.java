@@ -3,7 +3,6 @@ package com.example.demo.util;
 import com.example.demo.pojo.plugin.MethodClassInfo;
 import com.example.demo.pojo.plugin.MethodInfo;
 import com.example.demo.pojo.plugin.ParameterInfo;
-import com.example.demo.pojo.plugin.PluginInfo;
 import com.example.demo.pojo.plugin.PluginVersion;
 import com.example.demo.pojo.workflow.*;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -517,9 +516,24 @@ public class WorkflowUtil {
             if (node.getDataMaps() != null) {
                 for (DataMap dataMap : node.getDataMaps()) {
                     Object sourceValue = getSourceValue(dataMap);
-                    int targetIndex = findParameterIndex(methodInfo, dataMap.getTarget());
+                    
+                    // 优先使用 paramIndex
+                    Integer paramIndex = dataMap.getParamIndex();
+                    int targetIndex;
+                    
+                    if (paramIndex != null && paramIndex >= 0 && paramIndex < parameters.length) {
+                        targetIndex = paramIndex;
+                    } else {
+                        // 回退到通过参数名查找
+                        targetIndex = findParameterIndex(methodInfo, dataMap.getTargetParamName());
+                    }
+                    
                     if (targetIndex >= 0 && targetIndex < parameters.length) {
-                        parameters[targetIndex] = convertValueType(sourceValue, dataMap.getTargetType());
+                        // 获取参数值
+                        Object paramValue = convertValueType(sourceValue, dataMap.getTargetType());
+                        
+                        // 如果有 targetPath，需要设置参数对象的属性
+                        parameters[targetIndex] = paramValue;
                     }
                 }
             }
@@ -527,10 +541,13 @@ public class WorkflowUtil {
             // 处理默认值
             if (node.getNodeDefaults() != null) {
                 for (NodeDefaults nodeDefault : node.getNodeDefaults()) {
-                    if (nodeDefault.getParamIndex() < parameters.length &&
-                            parameters[nodeDefault.getParamIndex()] == null) {
-                        parameters[nodeDefault.getParamIndex()] =
-                                convertDefaultValue(nodeDefault.getDefaultValue(), nodeDefault.getDefaultValueType());
+                    Integer paramIndex = nodeDefault.getParamIndex();
+                    if (paramIndex != null && paramIndex < parameters.length &&
+                            parameters[paramIndex] == null) {
+                        Object defaultValue = convertDefaultValue(nodeDefault.getDefaultValue(), nodeDefault.getDefaultValueType());
+                        
+                        // 如果有 fieldPath，需要设置参数对象的属性
+                        parameters[paramIndex] = defaultValue;
                     }
                 }
             }
@@ -551,20 +568,113 @@ public class WorkflowUtil {
      */
     public Object getSourceValue(DataMap dataMap) {
         Map<String, Object> context = ThreadLocalManager.getExecutionContext();
+        Object sourceValue;
+        
         if ("input".equals(dataMap.getSourceNodeId())) {
             // 从初始输入获取
-            Object input = context.get("input");
-            if (input instanceof Map) {
-                return ((Map<?, ?>) input).get(dataMap.getSource());
-            }
-            return null;
+            sourceValue = context.get("input");
         } else {
             // 从前置节点结果获取
-            Object nodeResult = context.get(dataMap.getSourceNodeId());
-            if (nodeResult instanceof Map) {
-                return ((Map<?, ?>) nodeResult).get(dataMap.getSource());
+            sourceValue = context.get(dataMap.getSourceNodeId());
+        }
+        
+        // 处理 sourcePath，支持 value 前缀和嵌套属性
+        String sourcePath = dataMap.getSourcePath();
+        if (sourcePath != null && !sourcePath.isEmpty()) {
+            sourceValue = getPropertyValue(sourceValue, sourcePath);
+        }
+        
+        return sourceValue;
+    }
+    
+    /**
+     * 根据属性路径获取对象的属性值
+     * 支持 value 前缀表示返回值本身，如 value 或 value.id.name
+     */
+    public Object getPropertyValue(Object obj, String path) {
+        if (obj == null || path == null || path.isEmpty()) {
+            return null;
+        }
+        
+        // 处理 value 前缀
+        if (path.startsWith("value")) {
+            // 如果路径就是 "value"，直接返回对象本身
+            if ("value".equals(path)) {
+                return obj;
             }
-            return nodeResult;
+            // 否则，去掉 "value." 前缀，获取后续的属性路径
+            String subPath = path.substring("value.".length());
+            return getNestedPropertyValue(obj, subPath);
+        }
+        
+        // 没有 value 前缀的情况，直接处理路径
+        return getNestedPropertyValue(obj, path);
+    }
+    
+    /**
+     * 获取嵌套属性值
+     */
+    private Object getNestedPropertyValue(Object obj, String path) {
+        if (obj == null || path == null || path.isEmpty()) {
+            return obj;
+        }
+        
+        // 处理 Map 类型
+        if (obj instanceof Map<?, ?>) {
+            String[] parts = path.split("\\.");
+            Object current = obj;
+            
+            for (String part : parts) {
+                if (current instanceof Map) {
+                    current = ((Map<?, ?>) current).get(part);
+                } else {
+                    // 如果中间节点不是 Map，尝试使用反射
+                    current = getFieldValue(current, part);
+                }
+                if (current == null) {
+                    break;
+                }
+            }
+            
+            return current;
+        }
+        
+        // 处理普通对象，使用反射
+        String[] parts = path.split("\\.");
+        Object current = obj;
+        
+        for (String part : parts) {
+            current = getFieldValue(current, part);
+            if (current == null) {
+                break;
+            }
+        }
+        
+        return current;
+    }
+    
+    /**
+     * 使用反射获取字段值
+     */
+    private Object getFieldValue(Object obj, String fieldName) {
+        if (obj == null || fieldName == null) {
+            return null;
+        }
+        
+        // 尝试获取字段
+        try {
+            java.lang.reflect.Field field = obj.getClass().getDeclaredField(fieldName);
+            field.setAccessible(true);
+            return field.get(obj);
+        } catch (Exception e) {
+            // 尝试获取 getter 方法
+            try {
+                String methodName = "get" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
+                java.lang.reflect.Method method = obj.getClass().getMethod(methodName);
+                return method.invoke(obj);
+            } catch (Exception ex) {
+                return null;
+            }
         }
     }
 
@@ -576,6 +686,10 @@ public class WorkflowUtil {
      */
     public int findParameterIndex(MethodInfo methodInfo, String parameterName) {
         try {
+            if (parameterName == null) {
+                return -1;
+            }
+            
             List<ParameterInfo> parameters = methodInfo.getParameters();
             for (int i = 0; i < parameters.size(); i++) {
                 if (parameters.get(i).getName().equals(parameterName)) {

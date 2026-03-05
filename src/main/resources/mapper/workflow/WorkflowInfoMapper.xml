@@ -11,7 +11,7 @@
         <result column="workflow_description" property="description"/>
         <result column="workflow_create_time" property="createTime"/>
         <result column="workflow_update_time" property="updateTime"/>
-        
+
         <!-- 工作流节点列表 -->
         <collection property="nodes" ofType="com.example.demo.pojo.workflow.Node">
             <id column="node_id" property="id"/>
@@ -22,37 +22,7 @@
             <result column="node_method_class_id" property="methodClassId"/>
             <result column="node_method_id" property="methodId"/>
             <result column="node_in_degree" property="inDegree"/>
-            
-            <!-- 数据映射列表 -->
-            <collection property="dataMaps" ofType="com.example.demo.pojo.workflow.DataMap">
-                <id column="data_map_id" property="id"/>
-                <result column="data_map_node_id" property="nodeId"/>
-                <result column="data_map_source_node_id" property="sourceNodeId"/>
-                <result column="data_map_source" property="source"/>
-                <result column="data_map_target" property="target"/>
-                <result column="data_map_source_type" property="sourceType"/>
-                <result column="data_map_target_type" property="targetType"/>
-            </collection>
-            
-            <!-- 前置节点ID列表 -->
-            <collection property="preNodeId" ofType="java.lang.String">
-                <result column="pre_node_id"/>
-            </collection>
-            
-            <!-- 后置节点ID列表 -->
-            <collection property="nextNodeId" ofType="java.lang.String">
-                <result column="next_node_id"/>
-            </collection>
-            
-            <!-- 节点默认值列表 -->
-            <collection property="nodeDefaults" ofType="com.example.demo.pojo.workflow.NodeDefaults">
-                <id column="node_defaults_id" property="id"/>
-                <result column="node_defaults_node_id" property="nodeId"/>
-                <result column="node_defaults_param_index" property="paramIndex"/>
-                <result column="node_defaults_default_value" property="defaultValue"/>
-                <result column="node_defaults_default_value_type" property="defaultValueType"/>
-            </collection>
-            
+
             <!-- 插件信息 -->
             <association property="pluginInfo" javaType="com.example.demo.pojo.plugin.PluginInfo">
                 <id column="plugin_id" property="id"/>
@@ -65,7 +35,7 @@
                 <result column="plugin_update_time" property="updateTime"/>
                 <result column="plugin_is_public" property="isPublic"/>
             </association>
-            
+
             <!-- 插件版本信息 -->
             <association property="pluginVersion" javaType="com.example.demo.pojo.plugin.PluginVersion">
                 <id column="plugin_version_id" property="id"/>
@@ -80,7 +50,7 @@
                 <result column="plugin_version_method_package" property="methodPackage"/>
                 <result column="plugin_version_compatible_version" property="compatibleVersion"/>
             </association>
-            
+
             <!-- 方法类信息 -->
             <association property="methodClassInfo" javaType="com.example.demo.pojo.plugin.MethodClassInfo">
                 <id column="method_class_id" property="id"/>
@@ -90,7 +60,7 @@
                 <result column="method_class_simple_class_name" property="simpleClassName"/>
                 <result column="method_class_package_name" property="packageName"/>
             </association>
-            
+
             <!-- 方法信息 -->
             <association property="methodInfo" javaType="com.example.demo.pojo.plugin.MethodInfo">
                 <id column="method_id" property="id"/>
@@ -99,8 +69,42 @@
                 <result column="method_name" property="name"/>
                 <result column="method_return_type" property="returnType"/>
             </association>
+
+            <!-- 数据映射列表 -->
+            <collection property="dataMaps" ofType="com.example.demo.pojo.workflow.DataMap">
+                <id column="data_map_id" property="id"/>
+                <result column="data_map_node_id" property="nodeId"/>
+                <result column="data_map_source_node_id" property="sourceNodeId"/>
+                <result column="data_map_source_path" property="sourcePath"/>
+                <result column="data_map_target_param_name" property="targetParamName"/>
+                <result column="data_map_param_index" property="paramIndex"/>
+                <result column="data_map_target_path" property="targetPath"/>
+                <result column="data_map_source_type" property="sourceType"/>
+                <result column="data_map_target_type" property="targetType"/>
+            </collection>
+
+            <!-- 前置节点 ID 列表 -->
+            <collection property="preNodeId" ofType="java.lang.String">
+                <result column="pre_node_id"/>
+            </collection>
+
+            <!-- 后置节点 ID 列表 -->
+            <collection property="nextNodeId" ofType="java.lang.String">
+                <result column="next_node_id"/>
+            </collection>
+
+            <!-- 节点默认值列表 -->
+            <collection property="nodeDefaults" ofType="com.example.demo.pojo.workflow.NodeDefaults">
+                <id column="node_defaults_id" property="id"/>
+                <result column="node_defaults_node_id" property="nodeId"/>
+                <result column="node_defaults_param_index" property="paramIndex"/>
+                <result column="node_defaults_param_name" property="paramName"/>
+                <result column="node_defaults_field_path" property="fieldPath"/>
+                <result column="node_defaults_default_value" property="defaultValue"/>
+                <result column="node_defaults_default_value_type" property="defaultValueType"/>
+            </collection>
         </collection>
-        
+
         <!-- 工作流条件列表 -->
         <collection property="conditions" ofType="com.example.demo.pojo.workflow.Condition">
             <id column="condition_id" property="id"/>
@@ -130,8 +134,9 @@
 
             -- 数据映射信息
             dm.id as data_map_id, dm.node_id as data_map_node_id,
-            dm.source_node_id as data_map_source_node_id, dm.source as data_map_source,
-            dm.target as data_map_target, dm.source_type as data_map_source_type,
+            dm.source_node_id as data_map_source_node_id, dm.source_path as data_map_source_path,
+            dm.target_param_name as data_map_target_param_name, dm.param_index as data_map_param_index,
+            dm.target_path as data_map_target_path, dm.source_type as data_map_source_type,
             dm.target_type as data_map_target_type,
 
             -- 前置节点关系
@@ -142,8 +147,8 @@
 
             -- 节点默认值
             nd.id as node_defaults_id, nd.node_id as node_defaults_node_id,
-            nd.param_index as node_defaults_param_index,
-            nd.default_value as node_defaults_default_value,
+            nd.param_index as node_defaults_param_index, nd.param_name as node_defaults_param_name,
+            nd.field_path as node_defaults_field_path, nd.default_value as node_defaults_default_value,
             nd.default_value_type as node_defaults_default_value_type,
 
             -- 插件信息
