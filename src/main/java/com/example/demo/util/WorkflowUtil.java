@@ -742,6 +742,7 @@ public class WorkflowUtil {
                 case Integer -> Integer.valueOf(defaultValue);
                 case Double -> Double.valueOf(defaultValue);
                 case Boolean -> Boolean.valueOf(defaultValue);
+                case Long -> Long.valueOf(defaultValue);
             };
         } catch (NumberFormatException e) {
             log.warn("默认值转换失败: {} -> {}", defaultValue, valueType);

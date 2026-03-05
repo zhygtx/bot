@@ -51,6 +51,7 @@ public class NodeDefaults {
         String,
         Integer,
         Double,
-        Boolean
+        Boolean,
+        Long
     }
 }

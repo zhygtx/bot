@@ -156,6 +156,6 @@ CREATE TABLE `node_defaults` (
   `param_name` VARCHAR(255) COMMENT '方法参数名称',
   `field_path` VARCHAR(500) COMMENT '字段名(支持嵌套如：user.id，无嵌套直接映射时为user即和参数名相同)',
   `default_value` TEXT COMMENT '默认值',
-  `default_value_type` ENUM('String', 'Integer', 'Double', 'Boolean') NOT NULL COMMENT '默认值类型',
+  `default_value_type` ENUM('String', 'Integer', 'Double', 'Boolean', 'Long') NOT NULL COMMENT '默认值类型',
   FOREIGN KEY (`node_id`) REFERENCES `node` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='节点默认值表';
