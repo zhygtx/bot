@@ -4,10 +4,10 @@
 <mapper namespace="com.example.demo.mapper.workflow.ConditionMapper">
 
     <insert id="insert" parameterType="java.util.List">
-        insert into `condition`(id, workflow_id, node_id, field_name, preset_content, content_type, action, else_action, operator)
+        insert into `condition`(id, node_id, true_action, false_action)
         values
-        <foreach item="item" index="index" collection="list" separator="," open="(" close=")">
-            (#{item.id}, #{item.workflowId}, #{item.nodeId}, #{item.fieldName}, #{item.presetContent}, #{item.contentType}, #{item.action}, #{item.elseAction}, #{item.operator})
+        <foreach item="item" index="index" collection="list" separator=",">
+            (#{item.id}, #{item.nodeId}, #{item.trueAction}, #{item.falseAction})
         </foreach>
     </insert>
 </mapper>

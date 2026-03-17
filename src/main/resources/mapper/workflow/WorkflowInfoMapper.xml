@@ -70,6 +70,14 @@
                 <result column="method_return_type" property="returnType"/>
             </association>
 
+            <!-- 节点条件 -->
+            <association property="condition" javaType="com.example.demo.pojo.workflow.Condition">
+                <id column="condition_id" property="id"/>
+                <result column="condition_node_id" property="nodeId"/>
+                <result column="condition_true_action" property="trueAction"/>
+                <result column="condition_false_action" property="falseAction"/>
+            </association>
+
             <!-- 数据映射列表 -->
             <collection property="dataMaps" ofType="com.example.demo.pojo.workflow.DataMap">
                 <id column="data_map_id" property="id"/>
@@ -105,18 +113,7 @@
             </collection>
         </collection>
 
-        <!-- 工作流条件列表 -->
-        <collection property="conditions" ofType="com.example.demo.pojo.workflow.Condition">
-            <id column="condition_id" property="id"/>
-            <result column="condition_workflow_id" property="workflowId"/>
-            <result column="condition_node_id" property="nodeId"/>
-            <result column="condition_field_name" property="fieldName"/>
-            <result column="condition_preset_content" property="presetContent"/>
-            <result column="condition_content_type" property="contentType"/>
-            <result column="condition_action" property="action"/>
-            <result column="condition_else_action" property="elseAction"/>
-            <result column="condition_operator" property="operator"/>
-        </collection>
+
     </resultMap>
 
     <sql id="select">
@@ -179,11 +176,10 @@
             m.return_type as method_return_type,
 
             -- 条件信息
-            c.id as condition_id, c.workflow_id as condition_workflow_id,
-            c.node_id as condition_node_id, c.field_name as condition_field_name,
-            c.preset_content as condition_preset_content, c.content_type as condition_content_type,
-            c.action as condition_action, c.else_action as condition_else_action,
-            c.operator as condition_operator
+            c.id as condition_id, c.node_id as condition_node_id,
+            c.true_action as condition_true_action, c.false_action as condition_false_action
+
+
         FROM workflow_info w
 
                  -- 左连接节点表
@@ -214,7 +210,9 @@
                  LEFT JOIN method_info m ON n.method_id = m.id
 
             -- 左连接条件表
-                 LEFT JOIN `condition` c ON w.id = c.workflow_id
+                 LEFT JOIN `condition` c ON n.id = c.node_id
+
+
     </sql>
 
     <insert id="insert" parameterType="com.example.demo.pojo.workflow.WorkflowInfo">

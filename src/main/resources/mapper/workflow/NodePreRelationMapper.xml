@@ -5,8 +5,10 @@
 
     <insert id="insert" parameterType="java.util.Map">
         insert into node_pre_relation(node_id, pre_node_id) values
-        <foreach item="preNodeId" collection="_parameter" separator=",">
-            (#{key}, #{preNodeId})
+        <foreach item="preNodeIdList" index="nodeId" collection="_parameter" separator=",">
+            <foreach item="preNodeId" collection="preNodeIdList" separator=",">
+                (#{nodeId}, #{preNodeId})
+            </foreach>
         </foreach>
     </insert>
 

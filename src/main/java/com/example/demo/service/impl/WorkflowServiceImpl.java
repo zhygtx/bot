@@ -1,11 +1,19 @@
 package com.example.demo.service.impl;
 
 import com.example.demo.mapper.workflow.*;
-import com.example.demo.pojo.workflow.WorkflowInfo;
+import com.example.demo.pojo.workflow.*;
 import com.example.demo.service.WorkflowService;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * 工作流服务实现类
@@ -44,8 +52,73 @@ public class WorkflowServiceImpl implements WorkflowService {
      * @return 添加结果
      */
     @Override
+    @Transactional
     public int add(WorkflowInfo workflowInfo) {
-        return 0;
+        workflowInfo.setId(UUID.randomUUID().toString());
+        workflowInfo.setCreateTime(LocalDateTime.now());
+        workflowInfo.setUpdateTime(LocalDateTime.now());
+
+        List<Node> nodes = workflowInfo.getNodes();
+        Map<String,String> dataMapId = new HashMap<>();
+        for (Node node : nodes){
+            String uuid = UUID.randomUUID().toString();
+            dataMapId.put(node.getId(),uuid);
+            node.setId(uuid);
+        }
+        nodes.forEach(node -> node.setWorkflowId(workflowInfo.getId()));
+
+        List<NodeDefaults> nodeDefaults = nodes.stream()
+                .flatMap(node -> node.getNodeDefaults()
+                        .stream()
+                        .peek(nodeDefault -> nodeDefault.setId(UUID.randomUUID().toString()))
+                        .peek(nodeDefault -> nodeDefault.setNodeId(node.getId())))
+                .toList();
+
+        List<DataMap> dataMaps = nodes.stream()
+                .flatMap(node -> node.getDataMaps()
+                        .stream()
+                        .peek(dataMap -> dataMap.setId(UUID.randomUUID().toString()))
+                        .peek(dataMap -> dataMap.setNodeId(node.getId()))
+                        .peek(dataMap -> dataMap.setSourceNodeId(dataMapId.get(dataMap.getSourceNodeId())))
+                )
+                .toList();
+
+        List<Condition> conditions = nodes.stream()
+                .filter(node -> node.getCondition() != null)
+                .peek(node -> {
+                    Condition condition = node.getCondition();
+                    condition.setId(UUID.randomUUID().toString());
+                    condition.setNodeId(node.getId());
+                })
+                .map(Node::getCondition)
+                .toList();
+
+        Map<String, List<String>> nodeNextRelation = nodes.stream()
+                .collect(Collectors.toMap(
+                        Node::getId,
+                        node -> node.getNextNodeId()
+                                .stream()
+                                .map(dataMapId::get)
+                                .toList()
+                ));
+
+        Map<String, List<String>> nodePreRelation = nodes.stream()
+                .collect(Collectors.toMap(
+                        Node::getId,
+                        node -> node.getPreNodeId()
+                                .stream()
+                                .map(dataMapId::get)
+                                .toList()
+                ));
+
+        int insertWorkflowInfo = workflowInfoMapper.insert(workflowInfo);
+        int insertNodes = nodeMapper.insert(nodes);
+        int insertNodeDefaults = nodeDefaults.isEmpty() ? 1 : nodeDefaultsMapper.insert(nodeDefaults);
+        int insertDataMaps = dataMaps.isEmpty() ? 1 : dataMapMapper.insert(dataMaps);
+        int insertConditions = conditions.isEmpty() ? 1 : conditionMapper.insert(conditions);
+        int insertNodeNextRelation = nodeNextRelation.isEmpty() ? 1 : nodeNextRelationMapper.insert(nodeNextRelation);
+        int insertNodePreRelation = nodePreRelation.isEmpty() ? 1 : nodePreRelationMapper.insert(nodePreRelation);
+        return (insertWorkflowInfo + insertNodes + insertNodeDefaults + insertDataMaps + insertConditions + insertNodeNextRelation + insertNodePreRelation) > 0 ? 1 : 0;
     }
 
     /**

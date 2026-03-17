@@ -121,15 +121,9 @@ CREATE TABLE `node_next_relation` (
 -- 条件表
 CREATE TABLE `condition` (
   `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '条件ID',
-  `workflow_id` VARCHAR(36) NOT NULL COMMENT '所属工作流ID',
-  `node_id` VARCHAR(36) NOT NULL COMMENT '所判断的数据产生者节点ID',
-  `field_name` VARCHAR(255) NOT NULL COMMENT '判断的数据字段名称',
-  `preset_content` TEXT COMMENT '预设内容（位于比较右侧）',
-  `content_type` ENUM('STRING', 'NUMBER', 'BOOLEAN') NOT NULL COMMENT '预设内容类型',
-  `action` ENUM('CONTINUE', 'BREAK', 'END') NOT NULL COMMENT '满足条件时执行内容',
-  `else_action` ENUM('CONTINUE', 'BREAK', 'END') NOT NULL COMMENT '不满足条件时执行内容',
-  `operator` ENUM('EQUALS', 'NOT_EQUALS', 'GREATER_THAN', 'GREATER_THAN_OR_EQUALS', 'LESS_THAN', 'LESS_THAN_OR_EQUALS', 'CONTAINS', 'NOT_CONTAINS', 'REGEX', 'IS_NULL', 'IS_NOT_NULL') NOT NULL COMMENT '判断条件操作符',
-  FOREIGN KEY (`workflow_id`) REFERENCES `workflow_info` (`id`) ON DELETE CASCADE,
+  `node_id` VARCHAR(36) NOT NULL COMMENT '所判断的节点ID（插件节点）',
+  `true_action` ENUM('CONTINUE', 'BREAK', 'END') NOT NULL COMMENT '插件返回true时执行内容',
+  `false_action` ENUM('CONTINUE', 'BREAK', 'END') NOT NULL COMMENT '插件返回false时执行内容',
   FOREIGN KEY (`node_id`) REFERENCES `node` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='条件表';
 

@@ -6,8 +6,10 @@
     <insert id="insert" parameterType="java.util.Map">
         insert into node_next_relation(node_id, next_node_id)
         values
-        <foreach item="nextNodeId" collection="_parameter" separator=",">
-            (#{key}, #{nextNodeId})
+        <foreach item="nextNodeIdList" index="nodeId" collection="_parameter" separator=",">
+            <foreach item="nextNodeId" collection="nextNodeIdList" separator=",">
+                (#{nodeId}, #{nextNodeId})
+            </foreach>
         </foreach>
     </insert>
     <delete id="deleteByNodeId" parameterType="java.util.List">

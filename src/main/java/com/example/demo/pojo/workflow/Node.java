@@ -84,6 +84,11 @@ public class Node implements Comparable<Node>{
     private List<NodeDefaults> nodeDefaults;
 
     /**
+     * 条件
+     */
+    private Condition condition;
+
+    /**
      * 插件信息
      */
     private PluginInfo pluginInfo;

@@ -39,11 +39,6 @@ public class WorkflowInfo {
     private List<Node> nodes;
 
     /**
-     * 工作流条件列表
-     */
-    private List<Condition> conditions;
-
-    /**
      * 工作流创建时间
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")

@@ -134,9 +134,6 @@ public class WorkflowUtil {
                 }
 
                 if (executionResult.result() != null) {
-                    // 将结果存入上下文
-                    ThreadLocalManager.getExecutionContext().put(currentNodeId, executionResult.result());
-
                     // 如果是最后一个节点，保存结果
                     if (currentNode.getNextNodeId() == null || currentNode.getNextNodeId().isEmpty()) {
                         finalResults.add(mapper.valueToTree(executionResult.result()));
@@ -241,16 +238,6 @@ public class WorkflowUtil {
      * @throws Exception 执行过程中的异常
      */
     public ExecutionResult executeSingleNode(Node node, WorkflowInfo workflowInfo) throws Exception {
-        // 1. 检查条件
-        Condition.Action action = checkConditions(node, workflowInfo);
-        if (action == Condition.Action.END) {
-            log.info("条件判断结果: 结束整个工作流");
-            return new ExecutionResult(null, false);
-        } else if (action == Condition.Action.BREAK) {
-            log.info("条件判断结果: 结束当前分支");
-            return new ExecutionResult(null, true);
-        }
-
         // 2. 获取插件版本信息
         PluginVersion pluginVersion = node.getPluginVersion();
         if (pluginVersion == null) {
@@ -288,6 +275,20 @@ public class WorkflowUtil {
                 methodClassInfo.getClassName(), method.getName(), parameters.length);
 
         Object result = method.invoke(instance, parameters);
+        
+        // 先将结果存入上下文，以便条件判断使用
+        ThreadLocalManager.getExecutionContext().put(node.getId(), result);
+        
+        // 7. 检查条件（基于插件返回值）
+        Condition.Action action = checkConditions(node, workflowInfo);
+        if (action == Condition.Action.END) {
+            log.info("条件判断结果: 结束整个工作流");
+            return new ExecutionResult(null, false);
+        } else if (action == Condition.Action.BREAK) {
+            log.info("条件判断结果: 结束当前分支");
+            return new ExecutionResult(null, true);
+        }
+        
         return new ExecutionResult(result, true);
     }
 
@@ -298,159 +299,23 @@ public class WorkflowUtil {
      * @return 执行动作
      */
     public Condition.Action checkConditions(Node node, WorkflowInfo workflowInfo) {
-        if (workflowInfo.getConditions() == null) {
+        // 从节点中获取条件
+        Condition condition = node.getCondition();
+        if (condition == null) {
             return Condition.Action.CONTINUE;
         }
 
-        for (Condition condition : workflowInfo.getConditions()) {
-            if (condition.getNodeId().equals(node.getId())) {
-                if (evaluateCondition(condition)) {
-                    return condition.getAction();
-                } else if (condition.getElseAction() != null) {
-                    return condition.getElseAction();
-                }
-            }
-        }
-        return Condition.Action.CONTINUE;
-    }
-
-    /**
-     * 评估条件
-     * @param condition 条件
-     * @return 是否满足条件
-     */
-    public boolean evaluateCondition(Condition condition) {
+        // 获取节点执行结果
         Map<String, Object> context = ThreadLocalManager.getExecutionContext();
-        Object fieldValue = null;
-
-        // 获取字段值
-        if ("input".equals(condition.getNodeId())) {
-            Object input = context.get("input");
-            if (input instanceof Map) {
-                fieldValue = ((Map<?, ?>) input).get(condition.getFieldName());
-            }
-        } else {
-            Object nodeResult = context.get(condition.getNodeId());
-            if (nodeResult instanceof Map) {
-                fieldValue = ((Map<?, ?>) nodeResult).get(condition.getFieldName());
-            } else {
-                fieldValue = nodeResult;
-            }
+        Object nodeResult = context.get(node.getId());
+        
+        // 检查返回值是否为布尔值
+        if (nodeResult instanceof Boolean) {
+            boolean result = (Boolean) nodeResult;
+            return result ? condition.getTrueAction() : condition.getFalseAction();
         }
-
-        // 评估条件
-        return evaluateExpression(fieldValue, condition.getPresetContent(), condition.getOperator(), condition.getContentType());
-    }
-
-    /**
-     * 评估表达式
-     * @param fieldValue 字段值
-     * @param presetContent 预设内容
-     * @param operator 操作符
-     * @param contentType 内容类型
-     * @return 是否满足条件
-     */
-    public boolean evaluateExpression(Object fieldValue, String presetContent, Condition.Operator operator, Condition.ContentType contentType) {
-        return switch (operator) {
-            case IS_NULL -> fieldValue == null;
-            case IS_NOT_NULL -> fieldValue != null;
-            case EQUALS -> equals(fieldValue, presetContent, contentType);
-            case NOT_EQUALS -> !equals(fieldValue, presetContent, contentType);
-            case GREATER_THAN -> compare(fieldValue, presetContent, contentType) > 0;
-            case GREATER_THAN_OR_EQUALS -> compare(fieldValue, presetContent, contentType) >= 0;
-            case LESS_THAN -> compare(fieldValue, presetContent, contentType) < 0;
-            case LESS_THAN_OR_EQUALS -> compare(fieldValue, presetContent, contentType) <= 0;
-            case CONTAINS -> contains(fieldValue, presetContent);
-            case NOT_CONTAINS -> !contains(fieldValue, presetContent);
-            case REGEX -> regex(fieldValue, presetContent);
-        };
-    }
-
-    /**
-     * 比较两个值是否相等
-     * @param fieldValue 字段值
-     * @param presetContent 预设内容
-     * @param contentType 内容类型
-     * @return 是否相等
-     */
-    public boolean equals(Object fieldValue, String presetContent, Condition.ContentType contentType) {
-        if (fieldValue == null && presetContent == null) {
-            return true;
-        }
-        if (fieldValue == null || presetContent == null) {
-            return false;
-        }
-
-        switch (contentType) {
-            case STRING:
-                return fieldValue.toString().equals(presetContent);
-            case NUMBER:
-                try {
-                    double fieldNum = Double.parseDouble(fieldValue.toString());
-                    double presetNum = Double.parseDouble(presetContent);
-                    return fieldNum == presetNum;
-                } catch (NumberFormatException e) {
-                    return false;
-                }
-            case BOOLEAN:
-                return Boolean.parseBoolean(fieldValue.toString()) == Boolean.parseBoolean(presetContent);
-            default:
-                return false;
-        }
-    }
-
-    /**
-     * 比较两个值
-     * @param fieldValue 字段值
-     * @param presetContent 预设内容
-     * @param contentType 内容类型
-     * @return 比较结果
-     */
-    public int compare(Object fieldValue, String presetContent, Condition.ContentType contentType) {
-        if (fieldValue == null || presetContent == null) {
-            return -1;
-        }
-
-        try {
-            switch (contentType) {
-                case NUMBER:
-                    double fieldNum = Double.parseDouble(fieldValue.toString());
-                    double presetNum = Double.parseDouble(presetContent);
-                    return Double.compare(fieldNum, presetNum);
-                case STRING:
-                    return fieldValue.toString().compareTo(presetContent);
-                default:
-                    return -1;
-            }
-        } catch (NumberFormatException e) {
-            return -1;
-        }
-    }
-
-    /**
-     * 检查字段值是否包含预设内容
-     * @param fieldValue 字段值
-     * @param presetContent 预设内容
-     * @return 是否包含
-     */
-    public boolean contains(Object fieldValue, String presetContent) {
-        if (fieldValue == null || presetContent == null) {
-            return false;
-        }
-        return fieldValue.toString().contains(presetContent);
-    }
-
-    /**
-     * 检查字段值是否匹配正则表达式
-     * @param fieldValue 字段值
-     * @param presetContent 预设内容
-     * @return 是否匹配
-     */
-    public boolean regex(Object fieldValue, String presetContent) {
-        if (fieldValue == null || presetContent == null) {
-            return false;
-        }
-        return fieldValue.toString().matches(presetContent);
+        
+        return Condition.Action.CONTINUE;
     }
 
     /**
