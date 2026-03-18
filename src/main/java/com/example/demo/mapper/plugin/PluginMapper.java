@@ -61,4 +61,11 @@ public interface PluginMapper {
      * @return 插件信息列表
      */
     List<PluginInfo> selectByPublic();
+
+    /**
+     * 根据作者ID计算插件总数
+     * @param authorId 作者ID
+     * @return 插件总数
+     */
+    int countByAuthorId(String authorId);
 }

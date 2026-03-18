@@ -31,7 +31,9 @@ public class WorkflowController {
     @PostMapping
     public Result<?> add(HttpServletRequest request, @RequestBody WorkflowInfo workflowInfo) {
         String userId = authUtil.getCurrentUserId(request);
+        String authorName = authUtil.getCurrentUserName(request);
         workflowInfo.setUserId(userId);
+        workflowInfo.setAuthorName(authorName);
         int result = workflowService.add(workflowInfo);
         return result > 0 ? Result.success(null, null) : Result.error(500, "添加工作流失败");
     }
@@ -51,5 +53,10 @@ public class WorkflowController {
     public Result<?> findByAuthorId(@RequestParam(required = false,defaultValue = "1") int pageNum,
                                     @RequestParam(required = false,defaultValue = "12") int pageSize) {
         return Result.success(null,workflowService.findAll(pageNum, pageSize));
+    }
+
+    @GetMapping("{id}")
+    public Result<?> findById(@PathVariable("id") String id) {
+        return Result.success(null,workflowService.findById(id));
     }
 }

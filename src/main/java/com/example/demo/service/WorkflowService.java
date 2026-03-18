@@ -30,4 +30,11 @@ public interface WorkflowService {
      */
     PageInfo<WorkflowInfo> findAll(int pageNum, int pageSize);
 
+    /**
+     * 根据ID查询工作流
+     * @param id 工作流ID
+     * @return 工作流信息
+     */
+    WorkflowInfo findById(String id);
+
 }

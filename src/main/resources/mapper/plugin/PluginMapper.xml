@@ -144,4 +144,10 @@
         WHERE p.is_public = true
     </select>
 
+    <!-- 根据作者ID计算插件总数 -->
+    <select id="countByAuthorId" resultType="int">
+        SELECT COUNT(DISTINCT p.id) FROM plugin_info p
+        WHERE p.author_id = #{authorId}
+    </select>
+
 </mapper>

@@ -76,6 +76,7 @@ CREATE TABLE `parameter_info` (
 CREATE TABLE `workflow_info` (
   `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '工作流ID',
   `user_id` VARCHAR(36) NOT NULL COMMENT '工作流创建者ID',
+  `author_name` VARCHAR(255) not null comment '作者昵称',
   `name` VARCHAR(255) NOT NULL COMMENT '工作流名称',
   `description` TEXT COMMENT '工作流描述',
   `create_time` DATETIME NOT NULL COMMENT '工作流创建时间',

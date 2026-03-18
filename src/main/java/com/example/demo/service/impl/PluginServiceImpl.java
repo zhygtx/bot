@@ -242,9 +242,15 @@ public class PluginServiceImpl implements PluginService {
      */
     @Override
     public PageInfo<PluginInfo> findByAuthorId(String authorId, int pageNum, int pageSize) {
+        // 先查询总数
+        int total = pluginMapper.countByAuthorId(authorId);
+        // 再进行分页查询
         PageHelper.startPage(pageNum, pageSize);
         List<PluginInfo> pluginInfoList = pluginMapper.selectByAuthorId(authorId);
-        return new PageInfo<>(pluginInfoList);
+        PageInfo<PluginInfo> pageInfo = new PageInfo<>(pluginInfoList);
+        // 设置准确的总数
+        pageInfo.setTotal(total);
+        return pageInfo;
     }
 
     /**

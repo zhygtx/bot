@@ -24,6 +24,11 @@ public class WorkflowInfo {
     private String userId;
 
     /**
+     * 工作流创建者名称
+     */
+    private String authorName;
+
+    /**
      * 工作流名称
      */
     private String name;

@@ -2,6 +2,7 @@ package com.example.demo.mapper.workflow;
 
 import com.example.demo.pojo.workflow.WorkflowInfo;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -26,10 +27,17 @@ public interface WorkflowInfoMapper {
     int deleteById(String id);
 
     /**
-     * 获取所有工作流信息
+     * 获取所有工作流ID
+     * @return 工作流ID列表
+     */
+    List<String> selectAllIds();
+
+    /**
+     * 根据ID列表获取工作流信息
+     * @param ids 工作流ID列表
      * @return 工作流信息列表
      */
-    List<WorkflowInfo> getAll();
+    List<WorkflowInfo> selectAll(@Param("ids") List<String> ids);
 
     /**
      * 根据ID获取工作流信息
@@ -37,5 +45,11 @@ public interface WorkflowInfoMapper {
      * @return 工作流信息
      */
     WorkflowInfo getById(String id);
+
+    /**
+     * 计算工作流总数
+     * @return 工作流总数
+     */
+    int countAll();
 
 }

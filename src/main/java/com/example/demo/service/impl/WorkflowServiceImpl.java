@@ -9,10 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -100,7 +97,10 @@ public class WorkflowServiceImpl implements WorkflowService {
                                 .stream()
                                 .map(dataMapId::get)
                                 .toList()
-                ));
+                ))
+                .entrySet().stream()
+                .filter(entry -> !entry.getValue().isEmpty())
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
         Map<String, List<String>> nodePreRelation = nodes.stream()
                 .collect(Collectors.toMap(
@@ -109,7 +109,10 @@ public class WorkflowServiceImpl implements WorkflowService {
                                 .stream()
                                 .map(dataMapId::get)
                                 .toList()
-                ));
+                ))
+                .entrySet().stream()
+                .filter(entry -> !entry.getValue().isEmpty())
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
         int insertWorkflowInfo = workflowInfoMapper.insert(workflowInfo);
         int insertNodes = nodeMapper.insert(nodes);
@@ -127,6 +130,7 @@ public class WorkflowServiceImpl implements WorkflowService {
      * @return 删除结果
      */
     @Override
+    @Transactional
     public int remove(String id) {
         return workflowInfoMapper.deleteById(id);
     }
@@ -140,6 +144,27 @@ public class WorkflowServiceImpl implements WorkflowService {
     @Override
     public PageInfo<WorkflowInfo> findAll(int pageNum, int pageSize) {
         PageHelper.startPage(pageNum, pageSize);
-        return new PageInfo<>(workflowInfoMapper.getAll());
+        List<String> ids = workflowInfoMapper.selectAllIds();
+
+        if (ids.isEmpty()) {
+            return new PageInfo<>(new ArrayList<>());
+        }
+
+        List<WorkflowInfo> workflowInfos = workflowInfoMapper.selectAll(ids);
+
+        PageInfo<WorkflowInfo> pageInfo = new PageInfo<>(workflowInfos);
+        pageInfo.setTotal(workflowInfoMapper.countAll());
+
+        return pageInfo;
+    }
+
+    /**
+     * 查询工作流
+     * @param id 工作流ID
+     * @return 工作流信息
+     */
+    @Override
+    public WorkflowInfo findById(String id) {
+        return workflowInfoMapper.getById(id);
     }
 }
