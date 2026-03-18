@@ -89,10 +89,9 @@ public class WorkflowUtil {
     /**
      * 按拓扑顺序执行节点
      * @param graph 工作流图
-     * @param workflowInfo 工作流信息
      * @return 执行结果
      */
-    public JsonNode executeNodesInTopologicalOrder(WorkflowGraph graph, WorkflowInfo workflowInfo) {
+    public JsonNode executeNodesInTopologicalOrder(WorkflowGraph graph)  throws  Exception{
         if (graph == null) {
             log.warn("工作流图为null，直接返回空结果");
             return mapper.createObjectNode();
@@ -123,32 +122,26 @@ public class WorkflowUtil {
             Node currentNode = nodeMap.get(currentNodeId);
             log.info("执行节点: {} (第{}个)", currentNodeId, ++processedCount);
 
-            try {
-                // 执行当前节点
-                ExecutionResult executionResult = executeSingleNode(currentNode, workflowInfo);
+            // 执行当前节点
+            ExecutionResult executionResult = executeSingleNode(currentNode);
 
-                if (!executionResult.continueExecution()) {
-                    // 结束整个工作流
-                    log.info("工作流执行被条件终止");
-                    return mapper.createObjectNode();
-                }
-
-                if (executionResult.result() != null) {
-                    // 如果是最后一个节点，保存结果
-                    if (currentNode.getNextNodeId() == null || currentNode.getNextNodeId().isEmpty()) {
-                        finalResults.add(mapper.valueToTree(executionResult.result()));
-                    }
-
-                    // 更新后续节点的入度
-                    updateSuccessorNodesInDegree(currentNode, nodeToInDegree, inDegreeBuckets);
-                } else {
-                    // 条件判断为BREAK，结束当前分支
-                    log.info("跳过节点{}的后续分支", currentNodeId);
-                }
-            } catch (Exception e) {
-                log.error("执行节点{}时发生错误: {}", currentNodeId, e.getMessage(), e);
-                // 发生错误时结束工作流执行
+            if (!executionResult.continueExecution()) {
+                // 结束整个工作流
+                log.info("工作流执行被条件终止");
                 return mapper.createObjectNode();
+            }
+
+            if (executionResult.result() != null) {
+                // 如果是最后一个节点，保存结果
+                if (currentNode.getNextNodeId() == null || currentNode.getNextNodeId().isEmpty()) {
+                    finalResults.add(mapper.valueToTree(executionResult.result()));
+                }
+
+                // 更新后续节点的入度
+                updateSuccessorNodesInDegree(currentNode, nodeToInDegree, inDegreeBuckets);
+            } else {
+                // 条件判断为BREAK，结束当前分支
+                log.info("跳过节点{}的后续分支", currentNodeId);
             }
         }
 
@@ -233,11 +226,10 @@ public class WorkflowUtil {
     /**
      * 执行单个节点
      * @param node 节点信息
-     * @param workflowInfo 工作流信息
      * @return 执行结果和是否继续执行
      * @throws Exception 执行过程中的异常
      */
-    public ExecutionResult executeSingleNode(Node node, WorkflowInfo workflowInfo) throws Exception {
+    public ExecutionResult executeSingleNode(Node node) throws Exception {
         // 2. 获取插件版本信息
         PluginVersion pluginVersion = node.getPluginVersion();
         if (pluginVersion == null) {
@@ -280,7 +272,7 @@ public class WorkflowUtil {
         ThreadLocalManager.getExecutionContext().put(node.getId(), result);
         
         // 7. 检查条件（基于插件返回值）
-        Condition.Action action = checkConditions(node, workflowInfo);
+        Condition.Action action = checkConditions(node);
         if (action == Condition.Action.END) {
             log.info("条件判断结果: 结束整个工作流");
             return new ExecutionResult(null, false);
@@ -295,10 +287,9 @@ public class WorkflowUtil {
     /**
      * 检查节点的条件
      * @param node 节点信息
-     * @param workflowInfo 工作流信息
      * @return 执行动作
      */
-    public Condition.Action checkConditions(Node node, WorkflowInfo workflowInfo) {
+    public Condition.Action checkConditions(Node node) {
         // 从节点中获取条件
         Condition condition = node.getCondition();
         if (condition == null) {

@@ -3,8 +3,12 @@ package com.example.demo.service.impl;
 import com.example.demo.mapper.workflow.*;
 import com.example.demo.pojo.workflow.*;
 import com.example.demo.service.WorkflowService;
+import com.example.demo.util.ThreadLocalManager;
+import com.example.demo.util.WorkflowUtil;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,24 +20,19 @@ import java.util.stream.Collectors;
  * 工作流服务实现类
  */
 @Service
+@Slf4j
 public class WorkflowServiceImpl implements WorkflowService {
 
-    final
-    WorkflowInfoMapper workflowInfoMapper;
-    final
-    NodeDefaultsMapper nodeDefaultsMapper;
-    final
-    NodeNextRelationMapper nodeNextRelationMapper;
-    final
-    NodePreRelationMapper nodePreRelationMapper;
-    final
-    NodeMapper nodeMapper;
-    final
-    ConditionMapper conditionMapper;
-    final
-    DataMapMapper dataMapMapper;
+    private final WorkflowUtil workflowUtil;
+    private final WorkflowInfoMapper workflowInfoMapper;
+    private final NodeDefaultsMapper nodeDefaultsMapper;
+    private final NodeNextRelationMapper nodeNextRelationMapper;
+    private final NodePreRelationMapper nodePreRelationMapper;
+    private final NodeMapper nodeMapper;
+    private final ConditionMapper conditionMapper;
+    private final DataMapMapper dataMapMapper;
 
-    public WorkflowServiceImpl(WorkflowInfoMapper workflowInfoMapper, NodeDefaultsMapper nodeDefaultsMapper, NodeNextRelationMapper nodeNextRelationMapper, NodePreRelationMapper nodePreRelationMapper, NodeMapper nodeMapper, ConditionMapper conditionMapper, DataMapMapper dataMapMapper) {
+    public WorkflowServiceImpl(WorkflowInfoMapper workflowInfoMapper, NodeDefaultsMapper nodeDefaultsMapper, NodeNextRelationMapper nodeNextRelationMapper, NodePreRelationMapper nodePreRelationMapper, NodeMapper nodeMapper, ConditionMapper conditionMapper, DataMapMapper dataMapMapper, WorkflowUtil workflowUtil) {
         this.workflowInfoMapper = workflowInfoMapper;
         this.nodeDefaultsMapper = nodeDefaultsMapper;
         this.nodeNextRelationMapper = nodeNextRelationMapper;
@@ -41,6 +40,7 @@ public class WorkflowServiceImpl implements WorkflowService {
         this.nodeMapper = nodeMapper;
         this.conditionMapper = conditionMapper;
         this.dataMapMapper = dataMapMapper;
+        this.workflowUtil = workflowUtil;
     }
 
     /**
@@ -51,7 +51,6 @@ public class WorkflowServiceImpl implements WorkflowService {
     @Override
     @Transactional
     public int add(WorkflowInfo workflowInfo) {
-        workflowInfo.setId(UUID.randomUUID().toString());
         workflowInfo.setCreateTime(LocalDateTime.now());
         workflowInfo.setUpdateTime(LocalDateTime.now());
 
@@ -110,6 +109,41 @@ public class WorkflowServiceImpl implements WorkflowService {
     @Override
     public WorkflowInfo findById(String id) {
         return workflowInfoMapper.getById(id);
+    }
+
+    /**
+     * 判断工作流是否存在
+     * @param id 工作流ID
+     * @return 是否存在
+     */
+    @Override
+    public Boolean existsById(String id) {
+        return workflowInfoMapper.existsById(id);
+    }
+
+    /**
+     * 测试工作流
+     * @param workflowInfo 工作流信息
+     * @return 执行结果
+     */
+    @Override
+    public JsonNode test(WorkflowInfo workflowInfo) throws Exception {
+
+        log.info("开始执行工作流: {} (ID: {})", workflowInfo.getName(), workflowInfo.getId());
+
+        // 1. 构建节点依赖关系图
+        WorkflowUtil.WorkflowGraph graph = workflowUtil.buildWorkflowGraph(workflowInfo);
+
+        try {
+            // 2. 执行拓扑排序并逐个执行节点
+            JsonNode result = workflowUtil.executeNodesInTopologicalOrder(graph);
+
+            log.info("工作流执行完成: {}", result);
+            return result;
+        } finally {
+            // 清理线程本地变量
+            ThreadLocalManager.clear();
+        }
     }
 
     private int work(WorkflowInfo workflowInfo) {

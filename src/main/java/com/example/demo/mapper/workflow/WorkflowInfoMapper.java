@@ -3,6 +3,7 @@ package com.example.demo.mapper.workflow;
 import com.example.demo.pojo.workflow.WorkflowInfo;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
 
@@ -25,6 +26,14 @@ public interface WorkflowInfoMapper {
      * @return 删除结果
      */
     int deleteById(String id);
+
+    /**
+     * 判断工作流是否存在
+     * @param id 工作流ID
+     * @return 是否存在
+     */
+    @Select("SELECT EXISTS(SELECT 1 FROM workflow_info WHERE id = #{id})")
+    Boolean existsById(String id);
 
     /**
      * 获取所有工作流ID

@@ -67,6 +67,17 @@ public class Result<T> {
 
     /**
      * 快速返回操作失败响应结果
+     * @param message 错误信息
+     * @param data 响应数据
+     * @return 封装后的失败响应结果
+     * @param <E> 数据类型
+     */
+    public static <E> Result<E> error(Integer code, String message, E data) {
+        return new Result<>(code, message, data);
+    }
+
+    /**
+     * 快速返回操作失败响应结果
      * @return 封装后的失败响应结果
      * @param <E> 数据类型
      */

@@ -7,10 +7,7 @@ import com.example.demo.service.UserService;
 import com.example.demo.util.AuthUtil;
 import com.example.demo.util.JWTUtil;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -24,7 +21,6 @@ public class UserController {
     private final JWTUtil jwtUtil;
     private final AuthUtil authUtil;
 
-    @Autowired
     public UserController(UserService userService, EmailService emailService, JWTUtil jwtUtil, AuthUtil authUtil) {
         this.userService = userService;
         this.emailService = emailService;
@@ -36,7 +32,7 @@ public class UserController {
      * 插入用户
       * @param user 用户对象
      */
-    @RequestMapping("/insertUser")
+    @PostMapping("/insertUser")
     public Result<String> insertUser(@RequestBody User user) {
         if (userService.isExistByAccount(user.getAccount())){
             return Result.error( 400, "该账号已存在");
@@ -50,7 +46,7 @@ public class UserController {
      * @param account 账号
      * @param pwd 密码
      */
-    @RequestMapping("/login")
+    @PostMapping("/login")
     public Result<Map<String, Object>> login(String account, String pwd) {
         if (!userService.isExistByAccount(account)){
             return Result.error(400,"该账号不存在");
@@ -78,7 +74,7 @@ public class UserController {
      * 获取当前用户信息
       * @param request HttpServletRequest对象
      */
-    @RequestMapping("/info")
+    @GetMapping("/info")
     public Result<User> getCurrentUserInfo(HttpServletRequest request) {
         User user = userService.selectById(authUtil.getCurrentUserId(request));
         if (user == null) {
@@ -91,7 +87,7 @@ public class UserController {
      * 修改用户信息
      * @param user 用户对象
      */
-    @RequestMapping("/update")
+    @PutMapping("/update")
     public Result<String> update(@RequestBody User user ,HttpServletRequest request) {
         userService.updateUser(user, authUtil.getCurrentUserId(request));
         return Result.success();
@@ -102,7 +98,7 @@ public class UserController {
      * @param oldPwd 旧密码
      * @param newPwd 新密码
      */
-    @RequestMapping("/updatePwd")
+    @PutMapping("/updatePwd")
     public Result<String> updatePwd(HttpServletRequest request, String oldPwd, String newPwd) {
         String account = authUtil.getCurrentUserAccount(request);
         if (!userService.login(account, oldPwd)){
@@ -119,7 +115,7 @@ public class UserController {
      * 修改邮箱
      * @param user 用户对象
      */
-    @RequestMapping("/updateEmail")
+    @PutMapping("/updateEmail")
     public Result<String> updateEmail(@RequestBody User user) {
         user.setAccount(user.getAccount());
         user.setEmail(user.getEmail());
@@ -134,7 +130,7 @@ public class UserController {
      * @param newPwd 新密码
      * @param code 验证码
      */
-    @RequestMapping("/retrievePwd")
+    @PutMapping("/retrievePwd")
     public Result<String> retrievePwd(String account, String email, String newPwd, String code) {
         if (!userService.isExistByAccount(account)) return Result.error(400,"该账号不存在");
         if (!userService.selectByAccount(account).getEmail().equals(email)) return Result.error(400,"该邮箱并未与此账号绑定");
@@ -151,7 +147,7 @@ public class UserController {
     * 退出登录
     * @param userId 用户ID
     */
-    @RequestMapping("/logout")
+    @PostMapping("/logout")
     public Result<String> logout(String userId) {
         // 从Redis中删除token
         jwtUtil.deleteToken(userId);

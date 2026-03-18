@@ -1,6 +1,7 @@
 package com.example.demo.service;
 
 import com.example.demo.pojo.workflow.WorkflowInfo;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.github.pagehelper.PageInfo;
 
 /**
@@ -44,4 +45,17 @@ public interface WorkflowService {
      */
     WorkflowInfo findById(String id);
 
+    /**
+     * 判断工作流是否存在
+     * @param id 工作流ID
+     * @return 是否存在
+     */
+    Boolean existsById(String id);
+
+    /**
+     * 测试工作流
+     * @param workflowInfo 工作流信息
+     * @return 测试结果
+     */
+    JsonNode test(WorkflowInfo workflowInfo) throws Exception;
 }
