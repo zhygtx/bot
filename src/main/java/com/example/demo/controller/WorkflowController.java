@@ -49,12 +49,34 @@ public class WorkflowController {
         return result > 0 ? Result.success(null, null) : Result.error(500, "删除工作流失败");
     }
 
+    /**
+     * 修改工作流
+     * @param workflowInfo 工作流信息
+     * @return 修改结果
+     */
+    @PutMapping
+    public Result<?> edit(@RequestBody WorkflowInfo workflowInfo) {
+        int result = workflowService.edit(workflowInfo);
+        return result > 0 ? Result.success(null, null) : Result.error(500, "修改工作流失败");
+    }
+
+    /**
+     * 查询所有工作流
+     * @param pageNum 页码
+     * @param pageSize 页大小
+     * @return 工作流列表
+     */
     @GetMapping("/findAll")
     public Result<?> findByAuthorId(@RequestParam(required = false,defaultValue = "1") int pageNum,
                                     @RequestParam(required = false,defaultValue = "12") int pageSize) {
         return Result.success(null,workflowService.findAll(pageNum, pageSize));
     }
 
+    /**
+     * 查询工作流
+     * @param id 工作流ID
+     * @return 工作流信息
+     */
     @GetMapping("{id}")
     public Result<?> findById(@PathVariable("id") String id) {
         return Result.success(null,workflowService.findById(id));

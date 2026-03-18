@@ -23,6 +23,13 @@ public interface WorkflowService {
     int remove(String id);
 
     /**
+     * 修改工作流
+     * @param workflowInfo 工作流信息
+     * @return 修改结果
+     */
+    int edit(WorkflowInfo workflowInfo);
+
+    /**
      * 查询所有工作流
      * @param pageNum 页码
      * @param pageSize 页大小

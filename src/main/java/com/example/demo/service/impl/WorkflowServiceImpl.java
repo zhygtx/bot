@@ -55,6 +55,64 @@ public class WorkflowServiceImpl implements WorkflowService {
         workflowInfo.setCreateTime(LocalDateTime.now());
         workflowInfo.setUpdateTime(LocalDateTime.now());
 
+        return work(workflowInfo);
+    }
+
+    /**
+     * 删除工作流
+     * @param id 工作流ID
+     * @return 删除结果
+     */
+    @Override
+    @Transactional
+    public int remove(String id) {
+        return workflowInfoMapper.deleteById(id);
+    }
+
+    @Override
+    @Transactional
+    public int edit(WorkflowInfo workflowInfo) {
+        workflowInfo.setUpdateTime(LocalDateTime.now());
+        workflowInfoMapper.deleteById(workflowInfo.getId());
+
+        return work(workflowInfo);
+    }
+
+
+    /**
+     * 查询所有工作流
+     * @param pageNum 页码
+     * @param pageSize 页大小
+     * @return 工作流列表
+     */
+    @Override
+    public PageInfo<WorkflowInfo> findAll(int pageNum, int pageSize) {
+        PageHelper.startPage(pageNum, pageSize);
+        List<String> ids = workflowInfoMapper.selectAllIds();
+
+        if (ids.isEmpty()) {
+            return new PageInfo<>(new ArrayList<>());
+        }
+
+        List<WorkflowInfo> workflowInfos = workflowInfoMapper.selectAll(ids);
+
+        PageInfo<WorkflowInfo> pageInfo = new PageInfo<>(workflowInfos);
+        pageInfo.setTotal(workflowInfoMapper.countAll());
+
+        return pageInfo;
+    }
+
+    /**
+     * 查询工作流
+     * @param id 工作流ID
+     * @return 工作流信息
+     */
+    @Override
+    public WorkflowInfo findById(String id) {
+        return workflowInfoMapper.getById(id);
+    }
+
+    private int work(WorkflowInfo workflowInfo) {
         List<Node> nodes = workflowInfo.getNodes();
         Map<String,String> dataMapId = new HashMap<>();
         for (Node node : nodes){
@@ -122,49 +180,5 @@ public class WorkflowServiceImpl implements WorkflowService {
         int insertNodeNextRelation = nodeNextRelation.isEmpty() ? 1 : nodeNextRelationMapper.insert(nodeNextRelation);
         int insertNodePreRelation = nodePreRelation.isEmpty() ? 1 : nodePreRelationMapper.insert(nodePreRelation);
         return (insertWorkflowInfo + insertNodes + insertNodeDefaults + insertDataMaps + insertConditions + insertNodeNextRelation + insertNodePreRelation) > 0 ? 1 : 0;
-    }
-
-    /**
-     * 删除工作流
-     * @param id 工作流ID
-     * @return 删除结果
-     */
-    @Override
-    @Transactional
-    public int remove(String id) {
-        return workflowInfoMapper.deleteById(id);
-    }
-
-    /**
-     * 查询所有工作流
-     * @param pageNum 页码
-     * @param pageSize 页大小
-     * @return 工作流列表
-     */
-    @Override
-    public PageInfo<WorkflowInfo> findAll(int pageNum, int pageSize) {
-        PageHelper.startPage(pageNum, pageSize);
-        List<String> ids = workflowInfoMapper.selectAllIds();
-
-        if (ids.isEmpty()) {
-            return new PageInfo<>(new ArrayList<>());
-        }
-
-        List<WorkflowInfo> workflowInfos = workflowInfoMapper.selectAll(ids);
-
-        PageInfo<WorkflowInfo> pageInfo = new PageInfo<>(workflowInfos);
-        pageInfo.setTotal(workflowInfoMapper.countAll());
-
-        return pageInfo;
-    }
-
-    /**
-     * 查询工作流
-     * @param id 工作流ID
-     * @return 工作流信息
-     */
-    @Override
-    public WorkflowInfo findById(String id) {
-        return workflowInfoMapper.getById(id);
     }
 }

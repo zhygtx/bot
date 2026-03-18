@@ -19,7 +19,7 @@ public class JWTUtil {
     @Value("my-super-secret-jwt-key-change-in-production")
     private String secret;
 
-    @Value("7200000") // 默认2小时
+    @Value("86400000") // 默认2小时
     private Long expiration;
 
     // 发行人
