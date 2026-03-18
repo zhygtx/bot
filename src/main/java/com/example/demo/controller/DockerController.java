@@ -1,13 +1,12 @@
 package com.example.demo.controller;
 
-import com.example.demo.service.DockerService;
 import com.example.demo.pojo.Docker;
 import com.example.demo.pojo.Result;
 import com.example.demo.pojo.User;
+import com.example.demo.service.DockerService;
 import com.example.demo.service.UserService;
 import com.example.demo.util.AuthUtil;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -19,7 +18,6 @@ public class DockerController {
     private final UserService userService;
     private final AuthUtil authUtil;
 
-    @Autowired
     public DockerController(DockerService dockerService, UserService userService, AuthUtil authUtil) {
         this.dockerService = dockerService;
         this.userService = userService;

@@ -31,6 +31,9 @@ public class WorkflowUtil {
     // 缓存已加载的类加载器，避免重复加载
     private final Map<String, URLClassLoader> classLoaderCache = new ConcurrentHashMap<>();
 
+    // 缓存已查找的方法，避免重复反射遍历
+    private final Map<String, Method> methodCache = new ConcurrentHashMap<>();
+
     /**
      * 验证工作流配置的有效性
      * @param workflowInfo 工作流信息
@@ -645,20 +648,29 @@ public class WorkflowUtil {
     }
 
     /**
-     * 查找方法
+     * 查找方法（带缓存优化）
      * @param clazz 类
      * @param methodName 方法名
      * @param parameterCount 参数数量
      * @return 方法对象
      */
     public Method findMethod(Class<?> clazz, String methodName, int parameterCount) {
-        for (Method method : clazz.getDeclaredMethods()) {
-            if (method.getName().equals(methodName) &&
-                    method.getParameterCount() == parameterCount) {
-                return method;
+        // 构建缓存键：类名 + 方法名 + 参数数量
+        String cacheKey = clazz.getName() + ":" + methodName + ":" + parameterCount;
+        
+        // 先从缓存中获取，避免重复反射操作
+        return methodCache.computeIfAbsent(cacheKey, key -> {
+            log.debug("方法缓存未命中，通过反射查找：{}.{} (参数数:{})",
+                    clazz.getSimpleName(), methodName, parameterCount);
+            
+            for (Method method : clazz.getDeclaredMethods()) {
+                if (method.getName().equals(methodName) &&
+                        method.getParameterCount() == parameterCount) {
+                    return method;
+                }
             }
-        }
-        return null;
+            return null;
+        });
     }
 
     /**

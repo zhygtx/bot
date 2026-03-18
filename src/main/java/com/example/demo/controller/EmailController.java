@@ -3,7 +3,6 @@ package com.example.demo.controller;
 import com.example.demo.pojo.Result;
 import com.example.demo.service.EmailService;
 import com.example.demo.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -14,7 +13,6 @@ public class EmailController {
     private final EmailService emailService;
     private final UserService userService;
 
-    @Autowired
     public EmailController(EmailService emailService, UserService userService) {
         this.emailService = emailService;
         this.userService = userService;

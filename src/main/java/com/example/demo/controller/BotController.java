@@ -4,7 +4,6 @@ import com.example.demo.pojo.Result;
 import com.example.demo.service.BotService;
 import com.example.demo.util.AuthUtil;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -15,7 +14,6 @@ public class BotController {
     private final BotService botService;
     private final AuthUtil authUtil;
 
-    @Autowired
     public BotController(BotService botService, AuthUtil authUtil) {
         this.botService = botService;
         this.authUtil = authUtil;

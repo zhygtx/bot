@@ -1,15 +1,14 @@
 package com.example.demo.service.impl;
 
-import com.example.demo.service.DockerService;
 import com.example.demo.mapper.DockerMapper;
 import com.example.demo.pojo.Docker;
 import com.example.demo.pojo.Result;
 import com.example.demo.pojo.User;
+import com.example.demo.service.DockerService;
 import com.example.demo.service.EmailService;
 import com.example.demo.service.UserService;
 import com.example.demo.util.DockerUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -26,7 +25,6 @@ public class DockerServiceImpl implements DockerService {
     private final DockerMapper dockerMapper;
     private final UserService userService;
 
-    @Autowired
     public DockerServiceImpl(DockerUtil dockerUtil, DockerMapper dockerMapper, EmailService emailService, UserService userService) {
         this.dockerUtil = dockerUtil;
         this.dockerMapper = dockerMapper;
