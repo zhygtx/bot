@@ -67,6 +67,7 @@ CREATE TABLE `parameter_info` (
   `method_id` VARCHAR(36) NOT NULL COMMENT '参数所属方法id',
   `name` VARCHAR(255) NOT NULL COMMENT '参数名',
   `type` VARCHAR(255) NOT NULL COMMENT '参数类型',
+  `order` INT NOT NULL COMMENT '参数顺序',
   FOREIGN KEY (`method_id`) REFERENCES `method_info` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='参数信息表';
 

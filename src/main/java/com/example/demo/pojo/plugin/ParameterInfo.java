@@ -19,6 +19,12 @@ public class ParameterInfo {
     private String id;
 
     /**
+     * 参数顺序
+     * 系统生成
+     */
+    private Integer order;
+
+    /**
      * 参数描述
      * 系统生成默认为空用户可修改
      */

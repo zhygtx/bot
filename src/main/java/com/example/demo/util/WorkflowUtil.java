@@ -270,7 +270,7 @@ public class WorkflowUtil {
                 methodClassInfo.getClassName(), method.getName(), parameters.length);
 
         Object result = method.invoke(instance, parameters);
-        
+        log.debug("方法调用结果: {}", result);
         // 先将结果存入上下文，以便条件判断使用
         ThreadLocalManager.getExecutionContext().put(node.getId(), result);
         
@@ -371,54 +371,81 @@ public class WorkflowUtil {
 
             Object[] parameters = new Object[parameterCount];
 
+            // 记录参数总数
+            log.debug("方法签名参数总数：{}", parameterCount);
+            for (int i = 0; i < parameterCount; i++) {
+                log.debug("参数[{}] 名称：{}, 类型：{}",
+                        i, parametersList.get(i).getName(), parametersList.get(i).getType());
+            }
+
             // 处理数据映射
             if (node.getDataMaps() != null) {
+                log.debug("数据映射配置数量：{}", node.getDataMaps().size());
                 for (DataMap dataMap : node.getDataMaps()) {
+                    log.debug("处理数据映射：sourceNodeId={}, sourcePath={}, targetParamName={}, paramIndex={}, targetType={}",
+                            dataMap.getSourceNodeId(),
+                            dataMap.getSourcePath(),
+                            dataMap.getTargetParamName(),
+                            dataMap.getParamIndex(),
+                            dataMap.getTargetType());
+
                     Object sourceValue = getSourceValue(dataMap);
-                    
+                    log.debug("获取源值：{}", sourceValue);
+
                     // 优先使用 paramIndex
                     Integer paramIndex = dataMap.getParamIndex();
                     int targetIndex;
-                    
+
                     if (paramIndex != null && paramIndex >= 0 && paramIndex < parameters.length) {
                         targetIndex = paramIndex;
                     } else {
                         // 回退到通过参数名查找
                         targetIndex = findParameterIndex(methodInfo, dataMap.getTargetParamName());
                     }
-                    
+
+                    log.debug("目标参数索引：{}", targetIndex);
+
                     if (targetIndex >= 0 && targetIndex < parameters.length) {
                         // 获取参数值
                         Object paramValue = convertValueType(sourceValue, dataMap.getTargetType());
-                        
-                        // 如果有 targetPath，需要设置参数对象的属性
                         parameters[targetIndex] = paramValue;
+                        log.debug("设置参数 [{}] = {}", targetIndex, paramValue);
+                    } else {
+                        log.warn("目标索引无效：targetIndex={}, parameters.length={}", targetIndex, parameters.length);
                     }
                 }
             }
 
             // 处理默认值
             if (node.getNodeDefaults() != null) {
+                log.debug("默认值配置数量：{}", node.getNodeDefaults().size());
                 for (NodeDefaults nodeDefault : node.getNodeDefaults()) {
                     Integer paramIndex = nodeDefault.getParamIndex();
                     if (paramIndex != null && paramIndex < parameters.length &&
                             parameters[paramIndex] == null) {
                         Object defaultValue = convertDefaultValue(nodeDefault.getDefaultValue(), nodeDefault.getDefaultValueType());
-                        
-                        // 如果有 fieldPath，需要设置参数对象的属性
                         parameters[paramIndex] = defaultValue;
+                        log.debug("使用默认值设置参数 [{}] = {}", paramIndex, defaultValue);
                     }
                 }
             }
 
-            // 填充null值为对应类型的默认值
+            // 填充 null 值为对应类型的默认值
             fillNullParametersWithDefaults(parameters, methodInfo);
+
+            // 详细打印最终参数数组
+            log.debug("最终参数数组 (长度:{})", parameters.length);
+            for (int i = 0; i < parameters.length; i++) {
+                log.debug("参数 [{}] = {} (类型：{})", i, parameters[i],
+                        parameters[i] != null ? parameters[i].getClass().getSimpleName() : "null");
+            }
 
             return parameters;
         } catch (Exception e) {
             throw new RuntimeException("准备方法参数失败", e);
         }
     }
+
 
     /**
      * 获取源数据值
@@ -594,17 +621,30 @@ public class WorkflowUtil {
      */
     public Object convertDefaultValue(String defaultValue, NodeDefaults.DefaultValueType valueType) {
         if (defaultValue == null) return null;
-
+    
         try {
-            return switch (valueType) {
-                case String -> defaultValue;
-                case Integer -> Integer.valueOf(defaultValue);
-                case Double -> Double.valueOf(defaultValue);
-                case Boolean -> Boolean.valueOf(defaultValue);
-                case Long -> Long.valueOf(defaultValue);
-            };
+            Object result;
+            //noinspection EnhancedSwitchMigration
+            switch (valueType) {
+                case Integer:
+                    result = Integer.valueOf(defaultValue);
+                    break;
+                case Double:
+                    result = Double.valueOf(defaultValue);
+                    break;
+                case Boolean:
+                    result = Boolean.valueOf(defaultValue);
+                    break;
+                case Long:
+                    result = Long.valueOf(defaultValue);
+                    break;
+                case String:
+                default:
+                    result = defaultValue;
+            }
+            return result;
         } catch (NumberFormatException e) {
-            log.warn("默认值转换失败: {} -> {}", defaultValue, valueType);
+            log.warn("默认值转换失败：{} -> {}", defaultValue, valueType);
             return defaultValue;
         }
     }
@@ -637,14 +677,31 @@ public class WorkflowUtil {
      * @return 默认值
      */
     public Object getDefaultValueForType(String type) {
-        return switch (type.toLowerCase()) {
-            case "string" -> "";
-            case "integer", "int" -> 0;
-            case "double" -> 0.0;
-            case "boolean" -> false;
-            case "long" -> 0L;
-            default -> null;
-        };
+        if (type == null) return null;
+        
+        Object result;
+        //noinspection EnhancedSwitchMigration
+        switch (type.toLowerCase()) {
+            case "string":
+                result = "";
+                break;
+            case "integer":
+            case "int":
+                result = 0;
+                break;
+            case "double":
+                result = 0.0;
+                break;
+            case "boolean":
+                result = false;
+                break;
+            case "long":
+                result = 0L;
+                break;
+            default:
+                result = null;
+        }
+        return result;
     }
 
     /**

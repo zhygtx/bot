@@ -3,10 +3,10 @@
 
 <mapper namespace="com.example.demo.mapper.plugin.ParameterInfoMapper">
     <insert id="insert" parameterType="java.util.List">
-        INSERT INTO parameter_info (id, description, method_id, name, type)
+        INSERT INTO parameter_info (id, description, method_id, name, type, `order`)
         VALUES
         <foreach collection="list" item="item" separator=",">
-            (#{item.id}, #{item.description}, #{item.methodId}, #{item.name}, #{item.type})
+            (#{item.id}, #{item.description}, #{item.methodId}, #{item.name}, #{item.type}, #{item.order})
         </foreach>
     </insert>
     <update id="update" parameterType="java.util.List">
@@ -14,6 +14,11 @@
         SET description = case id
             <foreach collection="list" item="item">
                 when #{item.id} then #{item.description}
+            </foreach>
+        end,
+        `order` = case id
+            <foreach collection="list" item="item">
+                when #{item.id} then #{item.order}
             </foreach>
         end
         WHERE id in

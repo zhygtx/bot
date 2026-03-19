@@ -119,12 +119,18 @@ public class PluginServiceImpl implements PluginService {
             //扫描实体类与方法信息
             List<EntityInfo> entityInfoList = pluginUtil.scanEntities(pluginVersion);
             List<MethodClassInfo> methodClassInfoList = pluginUtil.scanMethodClasses(pluginVersion);
+            List<MethodInfo> methodInfoList = methodClassInfoList.stream()
+                    .map(MethodClassInfo::getMethods)
+                    .flatMap(List::stream)
+                    .toList();
+            List<ParameterInfo> parameterInfoList = methodClassInfoList.stream()
+                    .map(MethodClassInfo::getMethods)
+                    .flatMap(List::stream)
+                    .map(MethodInfo::getParameters)
+                    .flatMap(List::stream)
+                    .toList();
             pluginVersion.setEntityInfoList(entityInfoList);
             pluginVersion.setMethodClassInfoList(methodClassInfoList);
-
-            //保存插件版本信息
-            List<PluginVersion> pluginVersionList = pluginInfo.getPluginVersionList();
-            pluginVersionList.set(0, pluginVersion);
 
             int sqlResult = 0;
             if (!pluginMapper.existsByAuthorIdAndName(pluginInfo.getAuthorId(), pluginInfo.getName())){
@@ -134,17 +140,10 @@ public class PluginServiceImpl implements PluginService {
             }
 
             sqlResult += pluginVersionMapper.insert(pluginVersion);
-            sqlResult += entityInfoMapper.insert(entityInfoList);
-            sqlResult += methodClassInfoMapper.insert(methodClassInfoList);
-            sqlResult += methodInfoMapper.insert(methodClassInfoList.stream()
-                    .map(MethodClassInfo::getMethods)
-                    .flatMap(List::stream)
-                    .toList());
-            sqlResult += parameterInfoMapper.insert(methodClassInfoList.stream()
-                    .map(MethodClassInfo::getMethods)
-                    .flatMap(List::stream)
-                    .map(MethodInfo::getParameters)
-                    .flatMap(List::stream).toList());
+            sqlResult += entityInfoList.isEmpty() ? 0 : entityInfoMapper.insert(entityInfoList);
+            sqlResult += methodClassInfoList.isEmpty() ? 0 : methodClassInfoMapper.insert(methodClassInfoList);
+            sqlResult += methodInfoList.isEmpty() ? 0 : methodInfoMapper.insert(methodInfoList);
+            sqlResult += parameterInfoList.isEmpty() ? 0 : parameterInfoMapper.insert(parameterInfoList);
 
             if (sqlResult == 0) {
                 // 如果数据库插入失败，删除已保存的文件
@@ -166,7 +165,7 @@ public class PluginServiceImpl implements PluginService {
                     log.error("删除已存在文件失败: {}", jarFile.getAbsolutePath());
                 }
             }
-            return Result.error(500, "插件上传失败: " + e.getMessage());
+            throw new RuntimeException("插件上传失败：" + e.getMessage(), e);
         }
     }
 
@@ -214,10 +213,10 @@ public class PluginServiceImpl implements PluginService {
                 .flatMap(List::stream)
                 .toList();
         sqlResult +=  pluginVersionMapper.update(pluginVersionList);
-        sqlResult += entityInfoMapper.update(entityInfoList);
-        sqlResult += methodClassInfoMapper.update(methodClassInfoList);
-        sqlResult += methodInfoMapper.update(methods);
-        sqlResult += parameterInfoMapper.update(parameters);
+        sqlResult += entityInfoList.isEmpty() ? 0 : entityInfoMapper.update(entityInfoList);
+        sqlResult += methodClassInfoList.isEmpty() ? 0 : methodClassInfoMapper.update(methodClassInfoList);
+        sqlResult += methods.isEmpty() ? 0 : methodInfoMapper.update(methods);
+        sqlResult += parameters.isEmpty() ? 0 : parameterInfoMapper.update(parameters);
         return sqlResult;
     }
 

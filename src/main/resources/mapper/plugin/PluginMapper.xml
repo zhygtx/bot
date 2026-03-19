@@ -22,7 +22,7 @@
             m.id as method_id, m.description as method_description, m.method_class_id as method_method_class_id, 
             m.name as method_name, m.return_type as method_return_type,
             param.id as parameter_id, param.description as parameter_description, 
-            param.method_id as parameter_method_id, param.name as parameter_name, param.type as parameter_type
+            param.method_id as parameter_method_id, param.name as parameter_name, param.type as parameter_type, param.order as parameter_order
         FROM plugin_info p
         LEFT JOIN plugin_version pv ON p.id = pv.plugin_id
         LEFT JOIN entity_info e ON pv.id = e.plugin_version_id
@@ -88,6 +88,7 @@
                         <result column="parameter_method_id" property="methodId"/>
                         <result column="parameter_name" property="name"/>
                         <result column="parameter_type" property="type"/>
+                        <result column="parameter_order" property="order"/>
                     </collection>
                 </collection>
             </collection>
