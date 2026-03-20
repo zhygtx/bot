@@ -9,7 +9,7 @@
 
 # --------------------------- 配置变量 ---------------------------
 # JVM 参数配置 - 添加网络配置以解决IPv4/IPv6问题
-JAVA_OPTS="-Xms512m -Xmx1024m -Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8 -Dserver.address=0.0.0.0 -Djava.net.preferIPv4Stack=true -Djava.net.preferIPv6Addresses=false -Djava.net.bindv6only=false"
+JAVA_OPTS="-Xms1024m -Xmx2048m -Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8 -Dserver.address=0.0.0.0 -Djava.net.preferIPv4Stack=true -Djava.net.preferIPv6Addresses=false -Djava.net.bindv6only=false"
 JAVA_OPTS="$JAVA_OPTS -Dspring.config.location=classpath:/,file:./,file:./config/"
 # 应用配置
 PID_FILE="bot.pid"          # 进程ID文件
