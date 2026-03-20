@@ -6,6 +6,7 @@ import com.example.demo.pojo.plugin.*;
 import com.example.demo.service.PluginService;
 import com.example.demo.util.MD5Util;
 import com.example.demo.util.PluginUtil;
+import com.example.demo.util.WorkflowUtil;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import lombok.extern.slf4j.Slf4j;
@@ -33,8 +34,9 @@ public class PluginServiceImpl implements PluginService {
     private final MethodClassInfoMapper methodClassInfoMapper;
     private final ParameterInfoMapper parameterInfoMapper;
     private final PluginVersionMapper pluginVersionMapper;
+    private final WorkflowUtil workflowUtil;
 
-    public PluginServiceImpl(PluginUtil pluginUtil, PluginMapper pluginMapper, EntityInfoMapper entityInfoMapper, MethodInfoMapper methodInfoMapper, MethodClassInfoMapper methodClassInfoMapper, ParameterInfoMapper parameterInfoMapper, PluginVersionMapper pluginVersionMapper) {
+    public PluginServiceImpl(PluginUtil pluginUtil, PluginMapper pluginMapper, EntityInfoMapper entityInfoMapper, MethodInfoMapper methodInfoMapper, MethodClassInfoMapper methodClassInfoMapper, ParameterInfoMapper parameterInfoMapper, PluginVersionMapper pluginVersionMapper, WorkflowUtil workflowUtil) {
         this.pluginUtil = pluginUtil;
         this.pluginMapper = pluginMapper;
         this.entityInfoMapper = entityInfoMapper;
@@ -42,6 +44,7 @@ public class PluginServiceImpl implements PluginService {
         this.methodClassInfoMapper = methodClassInfoMapper;
         this.parameterInfoMapper = parameterInfoMapper;
         this.pluginVersionMapper = pluginVersionMapper;
+        this.workflowUtil = workflowUtil;
     }
 
     /**
@@ -172,15 +175,25 @@ public class PluginServiceImpl implements PluginService {
     @Override
     @Transactional
     public int remove(String id){
+        // 1. 查询插件信息
         PluginInfo pluginInfo = pluginMapper.selectById(id);
-        List<String> pluginFileList = pluginInfo.getPluginVersionList().stream()
-                .map(PluginVersion::getPath)
-                .toList();
-        pluginFileList.forEach(filePath -> {
-            log.info("删除文件: {}", filePath);
-            if (!new File(filePath).delete())
-                log.info("删除失败: {}", filePath);
+            
+        // 2. 关闭并清理所有相关的类加载器缓存（解决文件被占用的问题）
+        workflowUtil.closeAllClassLoaderForPlugin(id);
+        log.info("已清理插件 {} 的所有类加载器缓存", id);
+            
+        // 3. 删除所有版本的文件
+        pluginInfo.getPluginVersionList().forEach(version -> {
+            String filePath = version.getPath();
+            File file = new File(filePath);
+            if (file.exists() && file.delete()) {
+                log.info("成功删除插件文件：{}", filePath);
+            } else {
+                log.warn("插件文件不存在或删除失败：{}", filePath);
+            }
         });
+            
+        // 4. 删除数据库记录
         return pluginMapper.delete(id);
     }
 

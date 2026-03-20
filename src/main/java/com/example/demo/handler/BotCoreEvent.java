@@ -10,7 +10,6 @@ import com.mikuac.shiro.core.BotContainer;
 import com.mikuac.shiro.core.CoreEvent;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -43,7 +42,6 @@ public class BotCoreEvent extends CoreEvent {
     private final DockerService dockerService;
     private final UserService userService;
 
-    @Autowired
     public BotCoreEvent(BotService botService, BotContext botContext, EmailService emailService, DockerService dockerService, UserService userService) {
         this.botService = botService;
         this.botContext = botContext;

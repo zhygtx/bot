@@ -17,6 +17,7 @@ import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -28,11 +29,36 @@ public class WorkflowUtil {
 
     private static final ObjectMapper mapper = new ObjectMapper();
 
+    // 节点执行超时时间（毫秒）
+    private static final long NODE_TIMEOUT_MS = 10000;
+
     // 缓存已加载的类加载器，避免重复加载
     private final Map<String, URLClassLoader> classLoaderCache = new ConcurrentHashMap<>();
 
     // 缓存已查找的方法，避免重复反射遍历
     private final Map<String, Method> methodCache = new ConcurrentHashMap<>();
+
+    /**
+     * 关闭并移除指定插件的所有类加载器（所有版本）
+     * @param pluginId 插件 ID
+     */
+    public void closeAllClassLoaderForPlugin(String pluginId) {
+        List<String> keysToRemove = classLoaderCache.keySet().stream()
+                .filter(key -> key.startsWith(pluginId + ":"))
+                .toList();
+        
+        for (String key : keysToRemove) {
+            URLClassLoader classLoader = classLoaderCache.remove(key);
+            if (classLoader != null) {
+                try {
+                    classLoader.close();
+                    log.info("已关闭插件类加载器：{}", key);
+                } catch (Exception e) {
+                    log.error("关闭插件类加载器失败：{}", key, e);
+                }
+            }
+        }
+    }
 
     /**
      * 验证工作流配置的有效性
@@ -94,65 +120,65 @@ public class WorkflowUtil {
      * @param graph 工作流图
      * @return 执行结果
      */
-    public JsonNode executeNodesInTopologicalOrder(WorkflowGraph graph)  throws  Exception{
+    public JsonNode executeNodesInTopologicalOrder(WorkflowGraph graph)  throws Exception{
         if (graph == null) {
-            log.warn("工作流图为null，直接返回空结果");
+            log.warn("工作流图为 null，直接返回空结果");
             return mapper.createObjectNode();
         }
-        
+            
         // 确保执行上下文已初始化
         ThreadLocalManager.getExecutionContext();
-        
+            
         Map<String, Node> nodeMap = graph.getNodeMap();
         List<Set<String>> inDegreeBuckets = initializeInDegreeBuckets(nodeMap.values());
         Map<String, Integer> nodeToInDegree = new HashMap<>();
-
+    
         // 初始化节点入度映射
         for (Node node : nodeMap.values()) {
             nodeToInDegree.put(node.getId(), node.getInDegree());
         }
-
+    
         List<JsonNode> finalResults = new ArrayList<>();
         int processedCount = 0;
-
+    
         while (true) {
-            // 获取入度为0的节点
+            // 获取入度为 0 的节点
             String currentNodeId = getNextZeroInDegreeNode(inDegreeBuckets);
             if (currentNodeId == null) {
                 break; // 没有更多可执行的节点
             }
-
+    
             Node currentNode = nodeMap.get(currentNodeId);
-            log.info("执行节点: {} (第{}个)", currentNodeId, ++processedCount);
-
-            // 执行当前节点
-            ExecutionResult executionResult = executeSingleNode(currentNode);
-
+            log.info("执行节点：{} (第{}个)", currentNodeId, ++processedCount);
+    
+            // 执行当前节点（带超时控制）
+            ExecutionResult executionResult = executeSingleNodeWithTimeout(currentNode);
+    
             if (!executionResult.continueExecution()) {
                 // 结束整个工作流
                 log.info("工作流执行被条件终止");
                 return mapper.createObjectNode();
             }
-
+    
             if (executionResult.result() != null) {
                 // 如果是最后一个节点，保存结果
                 if (currentNode.getNextNodeId() == null || currentNode.getNextNodeId().isEmpty()) {
                     finalResults.add(mapper.valueToTree(executionResult.result()));
                 }
-
+    
                 // 更新后续节点的入度
                 updateSuccessorNodesInDegree(currentNode, nodeToInDegree, inDegreeBuckets);
             } else {
-                // 条件判断为BREAK，结束当前分支
+                // 条件判断为 BREAK，结束当前分支
                 log.info("跳过节点{}的后续分支", currentNodeId);
             }
         }
-
+    
         if (processedCount != nodeMap.size()) {
             log.warn("工作流执行异常：预期执行{}个节点，实际执行{}个节点",
                     nodeMap.size(), processedCount);
         }
-
+    
         // 返回多结束节点的结果
         if (finalResults.isEmpty()) {
             return mapper.createObjectNode();
@@ -222,6 +248,60 @@ public class WorkflowUtil {
                     // 更新映射
                     nodeToInDegree.put(nextNodeId, currentInDegree - 1);
                 }
+            }
+        }
+    }
+
+    /**
+     * 执行单个节点（带超时控制）
+     * @param node 节点信息
+     * @return 执行结果和是否继续执行
+     * @throws Exception 执行过程中的异常
+     */
+    public ExecutionResult executeSingleNodeWithTimeout(Node node) throws Exception {
+        // 使用 CompletableFuture 实现超时控制
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        try {
+            CompletableFuture<ExecutionResult> future = CompletableFuture.supplyAsync(() -> {
+                try {
+                    return executeSingleNode(node);
+                } catch (Exception e) {
+                    throw new CompletionException(e);
+                }
+            }, executor);
+
+            try {
+                // 设置超时时间
+                return future.get(NODE_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+            } catch (TimeoutException e) {
+                log.error("节点执行超时：{} (超过{}ms)，终止工作流", node.getId(), NODE_TIMEOUT_MS);
+                future.cancel(true);
+                throw new RuntimeException("节点 " + node.getId() + " 执行超时（超过" + NODE_TIMEOUT_MS + "毫秒）");
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                log.error("节点执行被中断：{}", node.getId());
+                throw new RuntimeException("节点执行被中断", e);
+            } catch (CompletionException | ExecutionException e) {
+                log.error("节点执行异常：{}", node.getId(), e.getCause());
+                Throwable cause = e.getCause();
+                if (cause instanceof Exception) {
+                    throw (Exception) cause;
+                } else {
+                    throw new RuntimeException("节点执行异常", cause);
+                }
+            } catch (Exception e) {
+                log.error("节点执行异常：{}", node.getId(), e);
+                throw e;
+            }
+        } finally {
+            executor.shutdown();
+            try {
+                if (!executor.awaitTermination(1, TimeUnit.SECONDS)) {
+                    executor.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                executor.shutdownNow();
+                Thread.currentThread().interrupt();
             }
         }
     }
@@ -623,26 +703,13 @@ public class WorkflowUtil {
         if (defaultValue == null) return null;
     
         try {
-            Object result;
-            //noinspection EnhancedSwitchMigration
-            switch (valueType) {
-                case Integer:
-                    result = Integer.valueOf(defaultValue);
-                    break;
-                case Double:
-                    result = Double.valueOf(defaultValue);
-                    break;
-                case Boolean:
-                    result = Boolean.valueOf(defaultValue);
-                    break;
-                case Long:
-                    result = Long.valueOf(defaultValue);
-                    break;
-                case String:
-                default:
-                    result = defaultValue;
-            }
-            return result;
+            return switch (valueType) {
+                case Integer -> Integer.valueOf(defaultValue);
+                case Double -> Double.valueOf(defaultValue);
+                case Boolean -> Boolean.valueOf(defaultValue);
+                case Long -> Long.valueOf(defaultValue);
+                default -> defaultValue;
+            };
         } catch (NumberFormatException e) {
             log.warn("默认值转换失败：{} -> {}", defaultValue, valueType);
             return defaultValue;
@@ -678,30 +745,15 @@ public class WorkflowUtil {
      */
     public Object getDefaultValueForType(String type) {
         if (type == null) return null;
-        
-        Object result;
-        //noinspection EnhancedSwitchMigration
-        switch (type.toLowerCase()) {
-            case "string":
-                result = "";
-                break;
-            case "integer":
-            case "int":
-                result = 0;
-                break;
-            case "double":
-                result = 0.0;
-                break;
-            case "boolean":
-                result = false;
-                break;
-            case "long":
-                result = 0L;
-                break;
-            default:
-                result = null;
-        }
-        return result;
+
+        return switch (type.toLowerCase()) {
+            case "string" -> "";
+            case "integer", "int" -> 0;
+            case "double" -> 0.0;
+            case "boolean" -> false;
+            case "long" -> 0L;
+            default -> null;
+        };
     }
 
     /**

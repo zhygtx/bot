@@ -1,7 +1,6 @@
 package com.example.demo.util;
 
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
@@ -12,7 +11,6 @@ public class AuthUtil {
 
     private final JWTUtil jwtUtil;
 
-    @Autowired
     public AuthUtil(JWTUtil jwtUtil) {
         this.jwtUtil = jwtUtil;
     }

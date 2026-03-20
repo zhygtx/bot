@@ -48,7 +48,7 @@ public class PluginController {
     @DeleteMapping
     public Result<?> delete(@RequestParam String id) {
         int sqlResult = pluginService.remove(id);
-        return sqlResult == 0 ? Result.error(500, "删除插件失败") : Result.success();
+        return sqlResult == 0 ? Result.error(500, "删除插件失败") : Result.success(null, null);
     }
 
     /**

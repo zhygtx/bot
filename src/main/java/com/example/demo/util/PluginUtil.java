@@ -141,6 +141,12 @@ public class PluginUtil {
                         // 添加该类的方法信息
                         for (Method method : methods) {
                             method.setAccessible(true);
+                            
+                            // 过滤掉合成方法（包括 lambda 方法）
+                            if (method.isSynthetic()) {
+                                log.debug("跳过合成方法：{}.{}", className, method.getName());
+                                continue;
+                            }
 
                             MethodInfo methodInfo = new MethodInfo();
                             String methodId = UUID.randomUUID().toString();
