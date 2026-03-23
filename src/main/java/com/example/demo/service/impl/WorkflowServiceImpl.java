@@ -51,6 +51,7 @@ public class WorkflowServiceImpl implements WorkflowService {
     @Override
     @Transactional
     public int add(WorkflowInfo workflowInfo) {
+        workflowInfo.setId(UUID.randomUUID().toString());
         workflowInfo.setCreateTime(LocalDateTime.now());
         workflowInfo.setUpdateTime(LocalDateTime.now());
 

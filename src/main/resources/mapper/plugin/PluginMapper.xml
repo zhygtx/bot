@@ -115,11 +115,6 @@
         WHERE p.id = #{id}
     </select>
 
-    <!-- 查询所有插件信息 -->
-    <select id="selectAll" resultMap="pluginInfoMap">
-        <include refid="pluginSelectStatement"/>
-    </select>
-
     <!-- 更新插件信息 -->
     <update id="update" parameterType="com.example.demo.pojo.plugin.PluginInfo">
         UPDATE plugin_info SET
@@ -135,14 +130,13 @@
 
     <!-- 根据用户ID查询插件信息 -->
     <select id="selectByAuthorId" resultMap="pluginInfoMap">
-        <include refid="pluginSelectStatement"/>
-        WHERE p.author_id = #{authorId}
-    </select>
-
-    <!-- 查询公开插件 -->
-    <select id="selectByPublic" resultMap="pluginInfoMap">
-        <include refid="pluginSelectStatement"/>
-        WHERE p.is_public = true
+        SELECT
+            id, name, description, author_id, author_name,
+            latest_version, version_count,
+            create_time, update_time, is_public
+        FROM plugin_info
+        WHERE author_id = #{authorId}
+        ORDER BY create_time DESC
     </select>
 
     <!-- 根据作者ID计算插件总数 -->

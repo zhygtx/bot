@@ -119,6 +119,7 @@
                 <!-- 方法参数列表 -->
                 <collection property="parameters" ofType="com.example.demo.pojo.plugin.ParameterInfo">
                     <id column="parameter_id" property="id"/>
+                    <result column="parameter_order" property="order"/>
                     <result column="parameter_description" property="description"/>
                     <result column="parameter_method_id" property="methodId"/>
                     <result column="parameter_name" property="name"/>
@@ -234,7 +235,7 @@
             -- 参数信息
             pinfo.id as parameter_id, pinfo.description as parameter_description,
             pinfo.method_id as parameter_method_id, pinfo.name as parameter_name,
-            pinfo.type as parameter_type,
+            pinfo.type as parameter_type, pinfo.order as parameter_order,
             
             -- 实体类信息
             e.id as entity_id, e.description as entity_description,

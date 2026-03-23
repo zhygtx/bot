@@ -44,23 +44,11 @@ public interface PluginMapper {
     PluginInfo selectById(String id);
 
     /**
-     * 查询所有插件信息
-     * @return 插件信息列表
-     */
-    List<PluginInfo> selectAll();
-
-    /**
      * 根据用户ID查询插件信息
      * @param authorId 作者ID
      * @return 插件信息列表
      */
     List<PluginInfo> selectByAuthorId(String authorId);
-
-    /**
-     * 查询公开插件
-     * @return 插件信息列表
-     */
-    List<PluginInfo> selectByPublic();
 
     /**
      * 根据作者ID计算插件总数

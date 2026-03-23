@@ -30,7 +30,7 @@ public class WorkflowUtil {
     private static final ObjectMapper mapper = new ObjectMapper();
 
     // 节点执行超时时间（毫秒）
-    private static final long NODE_TIMEOUT_MS = 10000;
+    private static final long NODE_TIMEOUT_MS = 5000;
 
     // 缓存已加载的类加载器，避免重复加载
     private final Map<String, URLClassLoader> classLoaderCache = new ConcurrentHashMap<>();
@@ -126,67 +126,115 @@ public class WorkflowUtil {
             return mapper.createObjectNode();
         }
             
-        // 确保执行上下文已初始化
-        ThreadLocalManager.getExecutionContext();
-            
-        Map<String, Node> nodeMap = graph.getNodeMap();
-        List<Set<String>> inDegreeBuckets = initializeInDegreeBuckets(nodeMap.values());
-        Map<String, Integer> nodeToInDegree = new HashMap<>();
-    
-        // 初始化节点入度映射
-        for (Node node : nodeMap.values()) {
-            nodeToInDegree.put(node.getId(), node.getInDegree());
-        }
-    
-        List<JsonNode> finalResults = new ArrayList<>();
-        int processedCount = 0;
-    
-        while (true) {
-            // 获取入度为 0 的节点
-            String currentNodeId = getNextZeroInDegreeNode(inDegreeBuckets);
-            if (currentNodeId == null) {
-                break; // 没有更多可执行的节点
-            }
-    
-            Node currentNode = nodeMap.get(currentNodeId);
-            log.info("执行节点：{} (第{}个)", currentNodeId, ++processedCount);
-    
-            // 执行当前节点（带超时控制）
-            ExecutionResult executionResult = executeSingleNodeWithTimeout(currentNode);
-    
-            if (!executionResult.continueExecution()) {
-                // 结束整个工作流
-                log.info("工作流执行被条件终止");
-                return mapper.createObjectNode();
-            }
-    
-            if (executionResult.result() != null) {
-                // 如果是最后一个节点，保存结果
-                if (currentNode.getNextNodeId() == null || currentNode.getNextNodeId().isEmpty()) {
-                    finalResults.add(mapper.valueToTree(executionResult.result()));
+        // 使用线程池执行整个工作流，确保所有节点在同一个线程中运行
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        try {
+            CompletableFuture<JsonNode> future = CompletableFuture.supplyAsync(() -> {
+                try {
+                    // 确保执行上下文已初始化
+                    ThreadLocalManager.getExecutionContext();
+                        
+                    Map<String, Node> nodeMap = graph.getNodeMap();
+                    List<Set<String>> inDegreeBuckets = initializeInDegreeBuckets(nodeMap.values());
+                    Map<String, Integer> nodeToInDegree = new HashMap<>();
+                
+                    // 初始化节点入度映射
+                    for (Node node : nodeMap.values()) {
+                        nodeToInDegree.put(node.getId(), node.getInDegree());
+                    }
+                
+                    List<JsonNode> finalResults = new ArrayList<>();
+                    int processedCount = 0;
+                
+                    while (true) {
+                        // 获取入度为 0 的节点
+                        String currentNodeId = getNextZeroInDegreeNode(inDegreeBuckets);
+                        if (currentNodeId == null) {
+                            break; // 没有更多可执行的节点
+                        }
+                
+                        Node currentNode = nodeMap.get(currentNodeId);
+                        log.info("执行节点：{} (第{}个)", currentNodeId, ++processedCount);
+                
+                        // 直接在当前线程中执行节点，不使用线程池
+                        ExecutionResult executionResult = executeSingleNode(currentNode);
+                
+                        if (!executionResult.continueExecution()) {
+                            // 结束整个工作流
+                            log.info("工作流执行被条件终止");
+                            return mapper.createObjectNode();
+                        }
+                
+                        if (executionResult.result() != null) {
+                            // 如果是最后一个节点，保存结果
+                            if (currentNode.getNextNodeId() == null || currentNode.getNextNodeId().isEmpty()) {
+                                finalResults.add(mapper.valueToTree(executionResult.result()));
+                            }
+                
+                            // 更新后续节点的入度
+                            updateSuccessorNodesInDegree(currentNode, nodeToInDegree, inDegreeBuckets);
+                        } else {
+                            // 条件判断为 BREAK，结束当前分支
+                            log.info("跳过节点{}的后续分支", currentNodeId);
+                        }
+                    }
+                
+                    if (processedCount != nodeMap.size()) {
+                        log.warn("工作流执行异常：预期执行{}个节点，实际执行{}个节点",
+                                nodeMap.size(), processedCount);
+                    }
+                
+                    // 返回多结束节点的结果
+                    if (finalResults.isEmpty()) {
+                        return mapper.createObjectNode();
+                    } else if (finalResults.size() == 1) {
+                        return finalResults.get(0);
+                    } else {
+                        // 多个结束节点，返回结果数组
+                        return mapper.valueToTree(finalResults);
+                    }
+                } catch (Exception e) {
+                    throw new CompletionException(e);
+                } finally {
+                    // 清理ThreadLocal变量
+                    ThreadLocalManager.clear();
                 }
-    
-                // 更新后续节点的入度
-                updateSuccessorNodesInDegree(currentNode, nodeToInDegree, inDegreeBuckets);
-            } else {
-                // 条件判断为 BREAK，结束当前分支
-                log.info("跳过节点{}的后续分支", currentNodeId);
+            }, executor);
+
+            try {
+                // 设置整个工作流的超时时间，为单个节点超时时间的n倍（n为节点数量）
+                int nodeCount = graph.getNodeMap().size();
+                long workflowTimeoutMs = NODE_TIMEOUT_MS * nodeCount;
+                return future.get(workflowTimeoutMs, TimeUnit.MILLISECONDS);
+            } catch (TimeoutException e) {
+                int nodeCount = graph.getNodeMap().size();
+                long workflowTimeoutMs = NODE_TIMEOUT_MS * nodeCount;
+                log.error("工作流执行超时：超过{}ms", workflowTimeoutMs);
+                future.cancel(true);
+                throw new RuntimeException("工作流执行超时（超过" + workflowTimeoutMs + "毫秒）");
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                log.error("工作流执行被中断");
+                throw new RuntimeException("工作流执行被中断", e);
+            } catch (CompletionException | ExecutionException e) {
+                log.error("工作流执行异常", e.getCause());
+                Throwable cause = e.getCause();
+                if (cause instanceof Exception) {
+                    throw (Exception) cause;
+                } else {
+                    throw new RuntimeException("工作流执行异常", cause);
+                }
             }
-        }
-    
-        if (processedCount != nodeMap.size()) {
-            log.warn("工作流执行异常：预期执行{}个节点，实际执行{}个节点",
-                    nodeMap.size(), processedCount);
-        }
-    
-        // 返回多结束节点的结果
-        if (finalResults.isEmpty()) {
-            return mapper.createObjectNode();
-        } else if (finalResults.size() == 1) {
-            return finalResults.get(0);
-        } else {
-            // 多个结束节点，返回结果数组
-            return mapper.valueToTree(finalResults);
+        } finally {
+            executor.shutdown();
+            try {
+                if (!executor.awaitTermination(1, TimeUnit.SECONDS)) {
+                    executor.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                executor.shutdownNow();
+                Thread.currentThread().interrupt();
+            }
         }
     }
 
@@ -248,60 +296,6 @@ public class WorkflowUtil {
                     // 更新映射
                     nodeToInDegree.put(nextNodeId, currentInDegree - 1);
                 }
-            }
-        }
-    }
-
-    /**
-     * 执行单个节点（带超时控制）
-     * @param node 节点信息
-     * @return 执行结果和是否继续执行
-     * @throws Exception 执行过程中的异常
-     */
-    public ExecutionResult executeSingleNodeWithTimeout(Node node) throws Exception {
-        // 使用 CompletableFuture 实现超时控制
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        try {
-            CompletableFuture<ExecutionResult> future = CompletableFuture.supplyAsync(() -> {
-                try {
-                    return executeSingleNode(node);
-                } catch (Exception e) {
-                    throw new CompletionException(e);
-                }
-            }, executor);
-
-            try {
-                // 设置超时时间
-                return future.get(NODE_TIMEOUT_MS, TimeUnit.MILLISECONDS);
-            } catch (TimeoutException e) {
-                log.error("节点执行超时：{} (超过{}ms)，终止工作流", node.getId(), NODE_TIMEOUT_MS);
-                future.cancel(true);
-                throw new RuntimeException("节点 " + node.getId() + " 执行超时（超过" + NODE_TIMEOUT_MS + "毫秒）");
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                log.error("节点执行被中断：{}", node.getId());
-                throw new RuntimeException("节点执行被中断", e);
-            } catch (CompletionException | ExecutionException e) {
-                log.error("节点执行异常：{}", node.getId(), e.getCause());
-                Throwable cause = e.getCause();
-                if (cause instanceof Exception) {
-                    throw (Exception) cause;
-                } else {
-                    throw new RuntimeException("节点执行异常", cause);
-                }
-            } catch (Exception e) {
-                log.error("节点执行异常：{}", node.getId(), e);
-                throw e;
-            }
-        } finally {
-            executor.shutdown();
-            try {
-                if (!executor.awaitTermination(1, TimeUnit.SECONDS)) {
-                    executor.shutdownNow();
-                }
-            } catch (InterruptedException e) {
-                executor.shutdownNow();
-                Thread.currentThread().interrupt();
             }
         }
     }

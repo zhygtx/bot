@@ -125,7 +125,8 @@ public class PluginUtil {
                             continue;
                         }
                                         
-                        Method[] methods = clazz.getDeclaredMethods();
+                        // 只获取public方法，不包括私有方法
+                        Method[] methods = clazz.getMethods();
 
                         // 创建方法类信息
                         MethodClassInfo classInfo = new MethodClassInfo();
@@ -140,11 +141,15 @@ public class PluginUtil {
 
                         // 添加该类的方法信息
                         for (Method method : methods) {
-                            method.setAccessible(true);
-                            
                             // 过滤掉合成方法（包括 lambda 方法）
                             if (method.isSynthetic()) {
                                 log.debug("跳过合成方法：{}.{}", className, method.getName());
+                                continue;
+                            }
+
+                            // 过滤掉从Object类继承的方法
+                            if (method.getDeclaringClass() == Object.class) {
+                                log.debug("跳过Object类方法：{}.{}", className, method.getName());
                                 continue;
                             }
 

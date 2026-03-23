@@ -43,7 +43,7 @@ public class DataMap {
     private Integer paramIndex;
 
     /**
-     * 目标参数字段名(支持嵌套如：user.id，无嵌套直接映射时为user即和参数名相同)
+     * 目标参数字段名(目前不支持自定义实体类)
      */
     private String targetPath;
 

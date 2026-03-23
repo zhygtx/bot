@@ -62,6 +62,12 @@ public class PluginController {
         return sqlResult == 0 ? Result.error(500, "修改插件失败") : Result.success(null,null);
     }
 
+    /**
+     * 修改插件公开状态
+     * @param id 插件id
+     * @param isPublic 公开状态
+     * @return 修改结果
+     */
     @PutMapping("/editPublic")
     public Result<?> editPublic(String id, boolean isPublic) {
         int sqlResult = pluginService.editPublic(id, isPublic);
