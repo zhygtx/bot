@@ -98,18 +98,8 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     @Transactional
-    public void updateUser(User user,String userId){
-        User existingUser = userMapper.selectById(userId);
-        user.setAccount(existingUser.getAccount());
-        user.setId(existingUser.getId());
-        user.setCreateTime(existingUser.getCreateTime());
-        user.setPwd(existingUser.getPwd());
-        user.setEmail(existingUser.getEmail());
-        user.setName((user.getName() != null) ? user.getName() : existingUser.getName());
-        user.setQQ((user.getQQ() != null) ? user.getQQ() : existingUser.getQQ());
-        user.setBotQQ((user.getBotQQ() != null) ? user.getBotQQ() : existingUser.getBotQQ());
-        user.setUpdateTime(LocalDateTime.now());
-        userMapper.updateUser(user);
+    public Integer updateUser(User user){
+        return userMapper.updateUser(user);
     }
 
     /**

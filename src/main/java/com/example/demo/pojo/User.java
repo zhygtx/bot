@@ -1,6 +1,7 @@
 package com.example.demo.pojo;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -37,6 +38,7 @@ public class User {
     /**
      * QQ号
      */
+    @JsonProperty("QQ")
     private Long QQ;
 
     /**
@@ -47,6 +49,7 @@ public class User {
     /**
      * 用户所拥有的机器人的ID(用户不得从此处修改，此处仅为便捷查询,具体修改去BotInfo表)
      */
+    @JsonProperty("botQQ")
     private Long botQQ;
 
     /**

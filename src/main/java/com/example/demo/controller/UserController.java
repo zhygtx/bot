@@ -88,9 +88,8 @@ public class UserController {
      * @param user 用户对象
      */
     @PutMapping("/update")
-    public Result<String> update(@RequestBody User user ,HttpServletRequest request) {
-        userService.updateUser(user, authUtil.getCurrentUserId(request));
-        return Result.success();
+    public Result<String> update(@RequestBody User user) {
+        return userService.updateUser(user) ==1 ? Result.success():Result.error(400,"修改失败");
     }
 
     /**

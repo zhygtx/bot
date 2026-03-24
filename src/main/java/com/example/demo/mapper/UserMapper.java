@@ -55,8 +55,7 @@ public interface UserMapper {
      * 更新用户信息
      * @param user 用户信息
      */
-    @Update("update user set name=#{name}, qq=#{QQ}, bot_qq=#{botQQ}, update_time=#{updateTime} where account=#{account}")
-    void updateUser(User user);
+    Integer updateUser(User user);
 
     /**
      * 更新用户密码
