@@ -132,6 +132,21 @@ public class PluginServiceImpl implements PluginService {
                     .map(MethodInfo::getParameters)
                     .flatMap(List::stream)
                     .toList();
+            
+            // 校验所有参数类型是否合法
+            for (ParameterInfo parameter : parameterInfoList) {
+                if (!parameter.isValidType()) {
+                    log.error("插件参数类型不合法：{}", parameter.getInvalidTypeMessage());
+                    // 删除已保存的文件
+                    if (jarFile.exists()) {
+                        if (!jarFile.delete()){
+                            log.error("删除已存在文件失败：{}", jarFile.getAbsolutePath());
+                        }
+                    }
+                    return Result.error(400, parameter.getInvalidTypeMessage());
+                }
+            }
+
             pluginVersion.setEntityInfoList(entityInfoList);
             pluginVersion.setMethodClassInfoList(methodClassInfoList);
 
