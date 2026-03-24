@@ -128,21 +128,18 @@
         WHERE id = #{id}
     </update>
 
-    <!-- 根据用户ID查询插件信息 -->
-    <select id="selectByAuthorId" resultMap="pluginInfoMap">
-        SELECT
-            id, name, description, author_id, author_name,
-            latest_version, version_count,
-            create_time, update_time, is_public
-        FROM plugin_info
-        WHERE author_id = #{authorId}
-        ORDER BY create_time DESC
-    </select>
-
     <!-- 根据作者ID计算插件总数 -->
     <select id="countByAuthorId" resultType="int">
         SELECT COUNT(DISTINCT p.id) FROM plugin_info p
         WHERE p.author_id = #{authorId}
+    </select>
+    <select id="selectByIds" resultMap="pluginInfoMap">
+        <include refid="pluginSelectStatement"/>
+        WHERE p.id IN
+        <foreach item="id" collection="ids" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+        ORDER BY p.update_time DESC
     </select>
 
 </mapper>

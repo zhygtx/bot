@@ -17,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -269,14 +270,18 @@ public class PluginServiceImpl implements PluginService {
      */
     @Override
     public PageInfo<PluginInfo> findByAuthorId(String authorId, int pageNum, int pageSize) {
-        // 先查询总数
-        int total = pluginMapper.countByAuthorId(authorId);
-        // 再进行分页查询
         PageHelper.startPage(pageNum, pageSize);
-        List<PluginInfo> pluginInfoList = pluginMapper.selectByAuthorId(authorId);
-        PageInfo<PluginInfo> pageInfo = new PageInfo<>(pluginInfoList);
-        // 设置准确的总数
-        pageInfo.setTotal(total);
+        List<String> ids = pluginMapper.selectIdsByAuthorId(authorId);
+
+        if (ids.isEmpty()) {
+            return new PageInfo<>(new ArrayList<>());
+        }
+
+        List<PluginInfo> pluginInfos = pluginMapper.selectByIds(ids);
+
+        PageInfo<PluginInfo> pageInfo = new PageInfo<>(pluginInfos);
+        pageInfo.setTotal(pluginMapper.selectCountByAuthorId(authorId));
+
         return pageInfo;
     }
 

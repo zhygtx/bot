@@ -20,6 +20,13 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
+    <repositories>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://www.jitpack.io</url>
+        </repository>
+    </repositories>
+
     <dependencies>
         <!-- Spring Boot Actuator 提供生产就绪的功能，如健康检查、指标等 -->
         <dependency>
@@ -194,6 +201,12 @@
             <groupId>org.antlr</groupId>
             <artifactId>ST4</artifactId>
             <version>4.3</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.zhygtx</groupId>
+            <artifactId>generalbot-api</artifactId>
+            <version>0.0.1-test</version>
         </dependency>
     </dependencies>
 

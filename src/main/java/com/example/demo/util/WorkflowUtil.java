@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
@@ -18,7 +19,6 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 工作流工具类
@@ -37,6 +37,13 @@ public class WorkflowUtil {
 
     // 缓存已查找的方法，避免重复反射遍历
     private final Map<String, Method> methodCache = new ConcurrentHashMap<>();
+
+    // Spring 应用上下文
+    private final ApplicationContext applicationContext;
+
+    public WorkflowUtil(ApplicationContext applicationContext) {
+        this.applicationContext = applicationContext;
+    }
 
     /**
      * 关闭并移除指定插件的所有类加载器（所有版本）
@@ -403,10 +410,47 @@ public class WorkflowUtil {
         Object instance = instanceMap.get(cacheKey);
         if (instance == null) {
             instance = clazz.getDeclaredConstructor().newInstance();
+
+            // 自动注入服务（识别接口字段）
+            injectServices(instance);
+
             instanceMap.put(cacheKey, instance);
         }
 
         return instance;
+    }
+
+    private void injectServices(Object instance) {
+        try {
+            Class<?> clazz = instance.getClass();
+
+            // 遍历所有字段
+            for (java.lang.reflect.Field field : clazz.getDeclaredFields()) {
+                field.setAccessible(true);
+
+                // 检查字段是否是接口类型
+                Class<?> fieldType = field.getType();
+                if (fieldType.isInterface()) {
+                    // 尝试从 Spring 容器获取实现类
+                    Object bean;
+                    try {
+                        bean = applicationContext.getBean(fieldType);
+                    } catch (Exception e) {
+                        // 没有这个 Bean，跳过
+                        continue;
+                    }
+
+                    // 替换字段的值
+                    field.set(instance, bean);
+                    log.debug("已为插件 {} 自动注入接口：{} -> {}",
+                            instance.getClass().getSimpleName(),
+                            fieldType.getSimpleName(),
+                            bean.getClass().getSimpleName());
+                }
+            }
+        } catch (Exception e) {
+            log.debug("插件服务注入失败（可能是正常的）: {}", instance.getClass().getSimpleName());
+        }
     }
 
     /**
@@ -612,7 +656,7 @@ public class WorkflowUtil {
         
         return current;
     }
-    
+
     /**
      * 使用反射获取字段值
      */

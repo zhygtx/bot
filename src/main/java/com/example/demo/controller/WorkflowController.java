@@ -4,12 +4,11 @@ import com.example.demo.pojo.Result;
 import com.example.demo.pojo.workflow.WorkflowInfo;
 import com.example.demo.service.WorkflowService;
 import com.example.demo.util.AuthUtil;
+import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -38,10 +37,11 @@ public class WorkflowController {
     public Result<?> add(HttpServletRequest request, @RequestBody WorkflowInfo workflowInfo) {
         String userId = authUtil.getCurrentUserId(request);
         String authorName = authUtil.getCurrentUserName(request);
+        workflowInfo.setId(UUID.randomUUID().toString());
         workflowInfo.setUserId(userId);
         workflowInfo.setAuthorName(authorName);
         int result = workflowService.add(workflowInfo);
-        return result > 0 ? Result.success(null, null) : Result.error(500, "添加工作流失败");
+        return result > 0 ? Result.success(null, workflowService.findById(workflowInfo.getId())) : Result.error(500, "添加工作流失败");
     }
 
     /**
@@ -63,7 +63,7 @@ public class WorkflowController {
     @PutMapping
     public Result<?> edit(@RequestBody WorkflowInfo workflowInfo) {
         int result = workflowService.edit(workflowInfo);
-        return result > 0 ? Result.success(null, null) : Result.error(500, "修改工作流失败");
+        return result > 0 ? Result.success(null, workflowService.findById(workflowInfo.getId())) : Result.error(500, "修改工作流失败");
     }
 
     /**
@@ -90,40 +90,17 @@ public class WorkflowController {
 
     /**
      * 测试工作流
-     * @param request HTTP请求
-     * @param workflowInfo 工作流信息
+     * @param workflowId 工作流ID
      * @return 测试结果
      */
     @PostMapping("/test")
-    public Result<?> test(HttpServletRequest request, @RequestBody WorkflowInfo workflowInfo) {
-        String workflowId = null;
-        if (workflowInfo.getId() == null || !workflowService.existsById(workflowInfo.getId())){
-            String userId = authUtil.getCurrentUserId(request);
-            String authorName = authUtil.getCurrentUserName(request);
-            workflowInfo.setId(UUID.randomUUID().toString());
-            workflowInfo.setUserId(userId);
-            workflowInfo.setAuthorName(authorName);
-            workflowId = workflowInfo.getId();
-            int result = workflowService.add(workflowInfo);
-            if (result <= 0){
-                return Result.error(500, "添加工作流失败");
-            }
-        }else if (workflowService.existsById(workflowInfo.getId())){
-            workflowId = workflowInfo.getId();
-            int result = workflowService.edit(workflowInfo);
-            if (result <= 0){
-                return Result.error(500, "修改工作流失败");
-            }
-        }
-        Map<String, Object> resultMap = new HashMap<>();
-        resultMap.put("workflowId", workflowId);
+    public Result<?> test(String workflowId) {
         try {
-            resultMap.put("testResult", workflowService.test(workflowService.findById(workflowId)));
-            return Result.success(null, resultMap);
+            JsonNode test = workflowService.test(workflowService.findById(workflowId));
+            return Result.success(null, test);
         } catch (Exception e) {
             log.error("测试工作流失败：{}", e.getMessage());
-            resultMap.put("testResult", e.getMessage());
-            return Result.error(500, "测试工作流失败：" + e.getMessage(), resultMap);
+            return Result.error(500, "测试工作流失败：" + e.getMessage());
         }
     }
 }
