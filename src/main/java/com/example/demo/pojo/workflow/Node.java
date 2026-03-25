@@ -59,6 +59,21 @@ public class Node implements Comparable<Node>{
     private String methodId;
 
     /**
+     * 节点类型（用于区分 botEvent, pluginMethod, botAction）
+     */
+    private NodeType nodeType;
+
+    /**
+     * 事件类型（仅 botEvent 节点使用）
+     */
+    private String eventType;
+
+    /**
+     * Bot QQ 号（仅 botEvent 节点使用）
+     */
+    private Long botId;
+
+    /**
      * 入度
      */
     private Integer inDegree;
@@ -112,5 +127,9 @@ public class Node implements Comparable<Node>{
     public int compareTo(Node other) {
         int degreeCompare = Integer.compare(this.inDegree, other.inDegree);
         return degreeCompare != 0 ? degreeCompare : this.id.compareTo(other.id);
+    }
+
+    public enum NodeType {
+        botEvent,pluginMethod,botAction
     }
 }
