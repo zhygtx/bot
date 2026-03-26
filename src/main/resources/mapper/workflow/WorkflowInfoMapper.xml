@@ -23,6 +23,11 @@
             <result column="node_plugin_version_id" property="pluginVersionId"/>
             <result column="node_method_class_id" property="methodClassId"/>
             <result column="node_method_id" property="methodId"/>
+            <result column="node_node_type" property="nodeType"/>
+            <result column="node_event_type" property="eventType"/>
+            <result column="node_bot_qq" property="botQQ"/>
+            <result column="node_bot_action_name" property="botActionName"/>
+            <result column="node_bot_event_name" property="botEventName"/>
             <result column="node_in_degree" property="inDegree"/>
 
             <!-- 插件信息 -->
@@ -184,6 +189,8 @@
             n.id as node_id, n.x as node_x, n.y as node_y, n.workflow_id as node_workflow_id,
             n.plugin_id as node_plugin_id, n.plugin_version_id as node_plugin_version_id,
             n.method_class_id as node_method_class_id, n.method_id as node_method_id,
+            n.node_type as node_node_type, n.event_type as node_event_type, n.bot_qq as node_bot_qq,
+            n.bot_action_name as node_bot_action_name, n.bot_event_name as node_bot_event_name,
             n.in_degree as node_in_degree,
 
             -- 数据映射信息

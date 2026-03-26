@@ -13,14 +13,14 @@ public class BotActionServiceImpl implements BotActionService {
     private BotContainer botContainer;
 
     @Override
-    public void sendGroupMsg(Long botId, Long groupId, String msg) {
-        Bot bot = botContainer.robots.get(botId);
+    public void sendGroupMsg(Long botQQ, Long groupId, String msg) {
+        Bot bot = botContainer.robots.get(botQQ);
         bot.sendGroupMsg(groupId, msg, false);
     }
 
     @Override
-    public void sendPrivateMsg(Long botId, Long userId, String msg) {
-        Bot bot = botContainer.robots.get(botId);
+    public void sendPrivateMsg(Long botQQ, Long userId, String msg) {
+        Bot bot = botContainer.robots.get(botQQ);
         bot.sendPrivateMsg(userId, msg, false);
     }
 }

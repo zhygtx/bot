@@ -71,7 +71,17 @@ public class Node implements Comparable<Node>{
     /**
      * Bot QQ 号（仅 botEvent 节点使用）
      */
-    private Long botId;
+    private Long botQQ;
+
+    /**
+     * 动作名称（仅 botAction 节点使用）
+     */
+    private String botActionName;
+
+    /**
+     * 节点名称（仅 botEvent 节点使用）
+     */
+    private String botEventName;
 
     /**
      * 入度

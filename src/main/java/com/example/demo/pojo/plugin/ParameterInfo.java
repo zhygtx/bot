@@ -1,6 +1,7 @@
 package com.example.demo.pojo.plugin;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -12,6 +13,7 @@ import java.util.Set;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class ParameterInfo {
 
     // 允许的参数类型集合

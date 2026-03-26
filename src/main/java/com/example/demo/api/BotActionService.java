@@ -2,8 +2,8 @@ package com.example.demo.api;
 
 public interface BotActionService {
 
-    void sendGroupMsg(Long botId,Long groupId, String msg);
+    void sendGroupMsg(Long botQQ,Long groupId, String msg);
 
-    void sendPrivateMsg(Long botId,Long userId, String msg);
+    void sendPrivateMsg(Long botQQ,Long userId, String msg);
 
 }
