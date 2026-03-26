@@ -1,5 +1,6 @@
 package com.example.demo.util;
 
+import com.example.demo.api.BotActionService;
 import com.example.demo.pojo.plugin.MethodClassInfo;
 import com.example.demo.pojo.plugin.MethodInfo;
 import com.example.demo.pojo.plugin.ParameterInfo;
@@ -40,9 +41,12 @@ public class WorkflowUtil {
 
     // Spring 应用上下文
     private final ApplicationContext applicationContext;
+    // BOT动作扫描器
+    private final BotActionScanner botActionScanner;
 
-    public WorkflowUtil(ApplicationContext applicationContext) {
+    public WorkflowUtil(ApplicationContext applicationContext, BotActionScanner botActionScanner) {
         this.applicationContext = applicationContext;
+        this.botActionScanner = botActionScanner;
     }
 
     /**
@@ -128,6 +132,16 @@ public class WorkflowUtil {
      * @return 执行结果
      */
     public JsonNode executeNodesInTopologicalOrder(WorkflowGraph graph)  throws Exception{
+        return executeNodesInTopologicalOrder(graph, null);
+    }
+
+    /**
+     * 按拓扑顺序执行节点
+     * @param graph 工作流图
+     * @param botEventData BOT事件数据
+     * @return 执行结果
+     */
+    public JsonNode executeNodesInTopologicalOrder(WorkflowGraph graph, Object botEventData)  throws Exception{
         if (graph == null) {
             log.warn("工作流图为 null，直接返回空结果");
             return mapper.createObjectNode();
@@ -139,7 +153,12 @@ public class WorkflowUtil {
             CompletableFuture<JsonNode> future = CompletableFuture.supplyAsync(() -> {
                 try {
                     // 确保执行上下文已初始化
-                    ThreadLocalManager.getExecutionContext();
+                    Map<String, Object> context = ThreadLocalManager.getExecutionContext();
+                    // 存储BOT事件数据
+                    if (botEventData != null) {
+                        context.put("botEvent", botEventData);
+                        log.info("已存储BOT事件数据到上下文");
+                    }
                         
                     Map<String, Node> nodeMap = graph.getNodeMap();
                     List<Set<String>> inDegreeBuckets = initializeInDegreeBuckets(nodeMap.values());
@@ -314,16 +333,143 @@ public class WorkflowUtil {
      * @throws Exception 执行过程中的异常
      */
     public ExecutionResult executeSingleNode(Node node) throws Exception {
-        // 2. 获取插件版本信息
+        // 处理BOT事件节点
+        if (Node.NodeType.botEvent.equals(node.getNodeType())) {
+            log.info("执行BOT事件节点: {}", node.getId());
+            // 从上下文获取预存储的botEvent数据
+            Map<String, Object> context = ThreadLocalManager.getExecutionContext();
+            Object botEventData = context.get("botEvent");
+            if (botEventData == null) {
+                log.warn("BOT事件节点执行时，上下文中无botEvent数据");
+                botEventData = new Object();
+            }
+            // 将数据存入上下文，以便后续节点调用
+            context.put(node.getId(), botEventData);
+            // 检查条件
+            Condition.Action action = checkConditions(node);
+            if (action == Condition.Action.END) {
+                log.info("条件判断结果: 结束整个工作流");
+                return new ExecutionResult(null, false);
+            } else if (action == Condition.Action.BREAK) {
+                log.info("条件判断结果: 结束当前分支");
+                return new ExecutionResult(null, true);
+            }
+            return new ExecutionResult(botEventData, true);
+        }
+        
+        // 处理BOT动作节点
+        if (Node.NodeType.botAction.equals(node.getNodeType())) {
+            log.info("执行BOT动作节点: {}", node.getId());
+            // 获取BotActionService实例
+            BotActionService botActionService = applicationContext.getBean(BotActionService.class);
+            
+            // 获取方法信息
+            MethodInfo methodInfo = node.getMethodInfo();
+            String methodName;
+            
+            // 如果没有方法信息，尝试根据botActionName获取方法
+            if (methodInfo == null) {
+                if (node.getBotActionName() != null) {
+                    methodName = node.getBotActionName();
+                    log.info("根据botActionName获取方法: {}", methodName);
+                } else {
+                    throw new IllegalStateException("BOT动作节点" + node.getId() + "缺少方法信息和botActionName");
+                }
+            } else {
+                methodName = methodInfo.getName();
+            }
+            
+            // 准备方法参数
+            Object[] parameters;
+            if (methodInfo != null) {
+                parameters = prepareMethodParameters(node, methodInfo);
+            } else {
+                // 根据方法名确定参数数量
+                int paramCount = getBotActionMethodParamCount(methodName);
+                parameters = new Object[paramCount];
+                
+                // 处理数据映射
+                if (node.getDataMaps() != null) {
+                    log.debug("处理BOT动作节点数据映射：{}", node.getDataMaps().size());
+                    for (DataMap dataMap : node.getDataMaps()) {
+                        Object sourceValue = getSourceValue(dataMap);
+                        log.debug("获取源值：{}", sourceValue);
+                        
+                        // 优先使用 paramIndex
+                        Integer paramIndex = dataMap.getParamIndex();
+                        int targetIndex;
+                        
+                        if (paramIndex != null && paramIndex >= 0 && paramIndex < parameters.length) {
+                            targetIndex = paramIndex;
+                        } else {
+                            // 对于BOT动作，尝试根据参数名确定索引
+                            targetIndex = getBotActionParamIndex(methodName, dataMap.getTargetParamName());
+                        }
+                        
+                        log.debug("目标参数索引：{}", targetIndex);
+                        
+                        if (targetIndex >= 0 && targetIndex < parameters.length) {
+                            // 获取参数值
+                            Object paramValue = convertValueType(sourceValue, dataMap.getTargetType());
+                            parameters[targetIndex] = paramValue;
+                            log.debug("设置参数 [{}] = {}", targetIndex, paramValue);
+                        } else {
+                            log.warn("目标索引无效：targetIndex={}, parameters.length={}", targetIndex, parameters.length);
+                        }
+                    }
+                }
+                
+                // 处理默认值
+                if (node.getNodeDefaults() != null) {
+                    log.debug("处理BOT动作节点默认值：{}", node.getNodeDefaults().size());
+                    for (NodeDefaults nodeDefault : node.getNodeDefaults()) {
+                        Integer paramIndex = nodeDefault.getParamIndex();
+                        if (paramIndex != null && paramIndex < parameters.length &&
+                                parameters[paramIndex] == null) {
+                            Object defaultValue = convertDefaultValue(nodeDefault.getDefaultValue(), nodeDefault.getDefaultValueType());
+                            parameters[paramIndex] = defaultValue;
+                            log.debug("使用默认值设置参数 [{}] = {}", paramIndex, defaultValue);
+                        }
+                    }
+                }
+            }
+            
+            // 反射调用方法
+            Method method = findMethod(BotActionService.class, methodName, parameters.length);
+            if (method == null) {
+                throw new NoSuchMethodException("找不到BOT动作方法: " + methodName);
+            }
+            
+            method.setAccessible(true);
+            Object result = method.invoke(botActionService, parameters);
+            log.debug("BOT动作方法调用结果: {}", result);
+            
+            // 将结果存入上下文
+            ThreadLocalManager.getExecutionContext().put(node.getId(), result);
+            
+            // 检查条件
+            Condition.Action action = checkConditions(node);
+            if (action == Condition.Action.END) {
+                log.info("条件判断结果: 结束整个工作流");
+                return new ExecutionResult(null, false);
+            } else if (action == Condition.Action.BREAK) {
+                log.info("条件判断结果: 结束当前分支");
+                return new ExecutionResult(null, true);
+            }
+            
+            return new ExecutionResult(result, true);
+        }
+        
+        // 处理普通插件节点
         PluginVersion pluginVersion = node.getPluginVersion();
         if (pluginVersion == null) {
             throw new IllegalStateException("节点" + node.getId() + "缺少插件版本信息");
         }
 
-        // 3. 加载类加载器
+        // 加载类加载器
         URLClassLoader classLoader = getClassLoader(pluginVersion);
 
-        // 4. 获取方法信息
+        // 获取方法信息
         MethodInfo methodInfo = node.getMethodInfo();
         MethodClassInfo methodClassInfo = node.getMethodClassInfo();
 
@@ -331,10 +477,10 @@ public class WorkflowUtil {
             throw new IllegalStateException("节点" + node.getId() + "缺少方法信息");
         }
 
-        // 5. 准备方法参数
+        // 准备方法参数
         Object[] parameters = prepareMethodParameters(node, methodInfo);
 
-        // 6. 反射调用方法
+        // 反射调用方法
         Class<?> clazz = classLoader.loadClass(methodClassInfo.getClassName());
         Method method = findMethod(clazz, methodInfo.getName(), parameters.length);
 
@@ -355,7 +501,7 @@ public class WorkflowUtil {
         // 先将结果存入上下文，以便条件判断使用
         ThreadLocalManager.getExecutionContext().put(node.getId(), result);
         
-        // 7. 检查条件（基于插件返回值）
+        // 检查条件（基于插件返回值）
         Condition.Action action = checkConditions(node);
         if (action == Condition.Action.END) {
             log.info("条件判断结果: 结束整个工作流");
@@ -792,6 +938,25 @@ public class WorkflowUtil {
             case "long" -> 0L;
             default -> null;
         };
+    }
+
+    /**
+     * 获取BOT动作方法的参数数量
+     * @param methodName 方法名
+     * @return 参数数量
+     */
+    private int getBotActionMethodParamCount(String methodName) {
+        return botActionScanner.getMethodParamCount(methodName);
+    }
+
+    /**
+     * 获取BOT动作方法的参数索引
+     * @param methodName 方法名
+     * @param paramName 参数名
+     * @return 参数索引
+     */
+    private int getBotActionParamIndex(String methodName, String paramName) {
+        return botActionScanner.getMethodParamIndex(methodName, paramName);
     }
 
     /**

@@ -25,10 +25,12 @@ public class EventHandler implements BotMessageEventInterceptor {
 
     private final BotCoreEvent botCoreEvent;
     private final MessageProcessor messageProcessor;
+    private final BotWorkflowHandler botWorkflowHandler;
 
-    public EventHandler(BotCoreEvent botCoreEvent, MessageProcessor messageProcessor) {
+    public EventHandler(BotCoreEvent botCoreEvent, MessageProcessor messageProcessor, BotWorkflowHandler botWorkflowHandler) {
         this.botCoreEvent = botCoreEvent;
         this.messageProcessor = messageProcessor;
+        this.botWorkflowHandler = botWorkflowHandler;
     }
 
     /**
@@ -72,6 +74,7 @@ public class EventHandler implements BotMessageEventInterceptor {
         log.debug("[群消息][BOT:{}] 群号: {}, 发送者: {}, 消息内容: {}",
                 bot.getSelfId(), event.getGroupId(), event.getUserId(), event.getMessage());
         GroupMsg groupMsg = messageProcessor.groupProcess(bot, event);
+        botWorkflowHandler.handleBotEvent(bot.getSelfId(), groupMsg.getEventType().name(), groupMsg);
     }
 
     /**
@@ -85,6 +88,7 @@ public class EventHandler implements BotMessageEventInterceptor {
         log.debug("[私聊消息][BOT:{}] 发送者: {}, 消息内容: {}",
                 bot.getSelfId(), event.getUserId(), event.getMessage());
         PrivateMsg privateMsg = messageProcessor.privateProcess(bot, event);
+        botWorkflowHandler.handleBotEvent(bot.getSelfId(), privateMsg.getEventType().name(), privateMsg);
     }
 
     /**
@@ -105,6 +109,7 @@ public class EventHandler implements BotMessageEventInterceptor {
                 .userId(event.getUserId())
                 .data(event)
                 .build();
+        botWorkflowHandler.handleBotEvent(bot.getSelfId(), groupEvent.getEventType().name(), groupEvent);
     }
 
     /**
@@ -125,6 +130,7 @@ public class EventHandler implements BotMessageEventInterceptor {
                 .userId(event.getUserId())
                 .data(event)
                 .build();
+        botWorkflowHandler.handleBotEvent(bot.getSelfId(), groupEvent.getEventType().name(), groupEvent);
     }
 
     /**
@@ -143,5 +149,6 @@ public class EventHandler implements BotMessageEventInterceptor {
                 .userId(event.getUserId())
                 .data(event)
                 .build();
+        botWorkflowHandler.handleBotEvent(bot.getSelfId(), groupEvent.getEventType().name(), groupEvent);
     }
 }

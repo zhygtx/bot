@@ -31,8 +31,9 @@ public class WorkflowServiceImpl implements WorkflowService {
     private final NodeMapper nodeMapper;
     private final ConditionMapper conditionMapper;
     private final DataMapMapper dataMapMapper;
+    private final RedisWorkflowServiceImpl redisWorkflowServiceImpl;
 
-    public WorkflowServiceImpl(WorkflowInfoMapper workflowInfoMapper, NodeDefaultsMapper nodeDefaultsMapper, NodeNextRelationMapper nodeNextRelationMapper, NodePreRelationMapper nodePreRelationMapper, NodeMapper nodeMapper, ConditionMapper conditionMapper, DataMapMapper dataMapMapper, WorkflowUtil workflowUtil) {
+    public WorkflowServiceImpl(WorkflowInfoMapper workflowInfoMapper, NodeDefaultsMapper nodeDefaultsMapper, NodeNextRelationMapper nodeNextRelationMapper, NodePreRelationMapper nodePreRelationMapper, NodeMapper nodeMapper, ConditionMapper conditionMapper, DataMapMapper dataMapMapper, WorkflowUtil workflowUtil, RedisWorkflowServiceImpl redisWorkflowServiceImpl) {
         this.workflowInfoMapper = workflowInfoMapper;
         this.nodeDefaultsMapper = nodeDefaultsMapper;
         this.nodeNextRelationMapper = nodeNextRelationMapper;
@@ -41,6 +42,7 @@ public class WorkflowServiceImpl implements WorkflowService {
         this.conditionMapper = conditionMapper;
         this.dataMapMapper = dataMapMapper;
         this.workflowUtil = workflowUtil;
+        this.redisWorkflowServiceImpl = redisWorkflowServiceImpl;
     }
 
     /**
@@ -54,7 +56,16 @@ public class WorkflowServiceImpl implements WorkflowService {
         workflowInfo.setCreateTime(LocalDateTime.now());
         workflowInfo.setUpdateTime(LocalDateTime.now());
 
-        return work(workflowInfo);
+        int result = work(workflowInfo);
+        if (result > 0) {
+            // 从数据库重新获取完整的工作流信息
+            WorkflowInfo savedWorkflow = workflowInfoMapper.getById(workflowInfo.getId());
+            if (savedWorkflow != null) {
+                // 添加到Redis
+                redisWorkflowServiceImpl.addWorkflowToRedis(savedWorkflow);
+            }
+        }
+        return result;
     }
 
     /**
@@ -65,16 +76,34 @@ public class WorkflowServiceImpl implements WorkflowService {
     @Override
     @Transactional
     public int remove(String id) {
-        return workflowInfoMapper.deleteById(id);
+        int result = workflowInfoMapper.deleteById(id);
+        if (result > 0) {
+            // 从Redis中删除
+            redisWorkflowServiceImpl.removeWorkflowFromRedis(id);
+        }
+        return result;
     }
 
     @Override
     @Transactional
     public int edit(WorkflowInfo workflowInfo) {
         workflowInfo.setUpdateTime(LocalDateTime.now());
+        
+        // 先从Redis中删除旧数据
+        redisWorkflowServiceImpl.removeWorkflowFromRedis(workflowInfo.getId());
+        
         workflowInfoMapper.deleteById(workflowInfo.getId());
-
-        return work(workflowInfo);
+        int result = work(workflowInfo);
+        
+        if (result > 0) {
+            // 从数据库重新获取完整的工作流信息
+            WorkflowInfo updatedWorkflow = workflowInfoMapper.getById(workflowInfo.getId());
+            if (updatedWorkflow != null) {
+                // 添加到Redis
+                redisWorkflowServiceImpl.addWorkflowToRedis(updatedWorkflow);
+            }
+        }
+        return result;
     }
 
 

@@ -66,6 +66,6 @@ public class BotController {
     public Result<?> update(HttpServletRequest request, String name, Long botQQ) {
         String userId = authUtil.getCurrentUserId(request);
         botService.update(userId, name, botQQ);
-        return Result.success();
+        return Result.success(null,null);
     }
 }
