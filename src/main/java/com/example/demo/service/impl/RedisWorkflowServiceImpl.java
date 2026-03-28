@@ -117,4 +117,83 @@ public class RedisWorkflowServiceImpl implements RedisWorkflowService {
 
         return "bot:" + botEventNode.getBotQQ() + ":event:" + botEventNode.getEventType() + ":workflow:" + workflowId;
     }
+
+    /**
+     * 添加定时任务到Redis
+     * @param workflowInfo 工作流信息
+     */
+    @Override
+    public void addScheduledTask(WorkflowInfo workflowInfo) {
+        if (workflowInfo == null || workflowInfo.getNodes() == null) {
+            log.warn("工作流信息为空，跳过定时任务添加");
+            return;
+        }
+
+        // 查找定时节点
+        Node scheduledNode = findScheduledNode(workflowInfo.getNodes());
+        if (scheduledNode == null || scheduledNode.getScheduledTime() == null) {
+            log.info("工作流 {} 中无定时节点或定时时间未设置，跳过定时任务添加", workflowInfo.getId());
+            return;
+        }
+
+        // 计算下次执行时间戳
+        long nextExecutionTime = System.currentTimeMillis() + (scheduledNode.getScheduledTime() * 1000);
+        // 添加到Redis的Sorted Set
+        redisTemplate.opsForZSet().add("scheduled_tasks", workflowInfo, nextExecutionTime);
+        log.info("工作流 {} 已添加到定时任务，下次执行时间：{}", workflowInfo.getId(), nextExecutionTime);
+    }
+
+    /**
+     * 从Redis中移除定时任务
+     * @param workflowId 工作流ID
+     */
+    @Override
+    public void removeScheduledTask(String workflowId) {
+        // 从Redis的Sorted Set中移除定时任务
+        Set<Object> tasks = redisTemplate.opsForZSet().range("scheduled_tasks", 0, -1);
+        if (tasks != null) {
+            for (Object task : tasks) {
+                if (task instanceof WorkflowInfo workflow) {
+                    if (workflowId.equals(workflow.getId())) {
+                        redisTemplate.opsForZSet().remove("scheduled_tasks", task);
+                        log.info("工作流 {} 已从定时任务中移除", workflowId);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * 获取所有定时任务
+     * @return 工作流列表
+     */
+    @Override
+    public List<WorkflowInfo> getScheduledTasks() {
+        List<WorkflowInfo> tasks = new ArrayList<>();
+        Set<Object> taskObjects = redisTemplate.opsForZSet().range("scheduled_tasks", 0, -1);
+        if (taskObjects != null) {
+            for (Object task : taskObjects) {
+                if (task instanceof WorkflowInfo) {
+                    tasks.add((WorkflowInfo) task);
+                }
+            }
+        }
+        log.info("获取到 {} 个定时任务", tasks.size());
+        return tasks;
+    }
+
+    /**
+     * 查找工作流中的定时节点
+     * @param nodes 节点列表
+     * @return 定时节点
+     */
+    private Node findScheduledNode(List<Node> nodes) {
+        for (Node node : nodes) {
+            if (Node.NodeType.botEvent.equals(node.getNodeType()) && "scheduledEvent".equals(node.getEventType())) {
+                return node;
+            }
+        }
+        return null;
+    }
 }

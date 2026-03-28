@@ -63,6 +63,8 @@ public class WorkflowServiceImpl implements WorkflowService {
             if (savedWorkflow != null) {
                 // 添加到Redis
                 redisWorkflowServiceImpl.addWorkflowToRedis(savedWorkflow);
+                // 处理定时任务
+                redisWorkflowServiceImpl.addScheduledTask(savedWorkflow);
             }
         }
         return result;
@@ -80,6 +82,8 @@ public class WorkflowServiceImpl implements WorkflowService {
         if (result > 0) {
             // 从Redis中删除
             redisWorkflowServiceImpl.removeWorkflowFromRedis(id);
+            // 移除定时任务
+            redisWorkflowServiceImpl.removeScheduledTask(id);
         }
         return result;
     }
@@ -91,6 +95,7 @@ public class WorkflowServiceImpl implements WorkflowService {
         
         // 先从Redis中删除旧数据
         redisWorkflowServiceImpl.removeWorkflowFromRedis(workflowInfo.getId());
+        redisWorkflowServiceImpl.removeScheduledTask(workflowInfo.getId());
         
         workflowInfoMapper.deleteById(workflowInfo.getId());
         int result = work(workflowInfo);
@@ -101,6 +106,8 @@ public class WorkflowServiceImpl implements WorkflowService {
             if (updatedWorkflow != null) {
                 // 添加到Redis
                 redisWorkflowServiceImpl.addWorkflowToRedis(updatedWorkflow);
+                // 更新定时任务
+                redisWorkflowServiceImpl.addScheduledTask(updatedWorkflow);
             }
         }
         return result;

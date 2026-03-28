@@ -4,10 +4,10 @@
 <mapper namespace="com.example.demo.mapper.workflow.NodeMapper">
 
     <insert id="insert" parameterType="java.util.List">
-        insert into node (id, x, y, workflow_id, plugin_id, plugin_version_id, method_class_id, method_id, node_type, event_type, bot_qq, bot_action_name, bot_event_name, in_degree)
+        insert into node (id, x, y, workflow_id, plugin_id, plugin_version_id, method_class_id, method_id, node_type, event_type, bot_qq, bot_action_name, bot_event_name, scheduled_time, in_degree)
         values
         <foreach collection="nodes" item="node" separator=",">
-            (#{node.id}, #{node.x}, #{node.y}, #{node.workflowId}, #{node.pluginId}, #{node.pluginVersionId}, #{node.methodClassId}, #{node.methodId}, #{node.nodeType}, #{node.eventType}, #{node.botQQ}, #{node.botActionName}, #{node.botEventName}, #{node.inDegree})
+            (#{node.id}, #{node.x}, #{node.y}, #{node.workflowId}, #{node.pluginId}, #{node.pluginVersionId}, #{node.methodClassId}, #{node.methodId}, #{node.nodeType}, #{node.eventType}, #{node.botQQ}, #{node.botActionName}, #{node.botEventName}, #{node.scheduledTime}, #{node.inDegree})
         </foreach>
     </insert>
     <delete id="deleteByWorkflowId" parameterType="string">

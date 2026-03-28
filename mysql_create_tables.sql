@@ -99,6 +99,7 @@ CREATE TABLE `node` (
   `bot_qq` BIGINT COMMENT 'Bot QQ 号（仅 botEvent 节点使用）',
   `bot_action_name` VARCHAR(255) COMMENT '动作名称（仅 botAction 节点使用）',
   `bot_event_name` VARCHAR(255) COMMENT '事件名称（仅 botEvent 节点使用）',
+  `scheduled_time` INT COMMENT '定时时间（秒）（仅 scheduledEvent 节点使用）',
   `in_degree` INT NOT NULL DEFAULT 0 COMMENT '入度',
   FOREIGN KEY (`workflow_id`) REFERENCES `workflow_info` (`id`) ON DELETE CASCADE,
   FOREIGN KEY (`plugin_id`) REFERENCES `plugin_info` (`id`) ON DELETE CASCADE,

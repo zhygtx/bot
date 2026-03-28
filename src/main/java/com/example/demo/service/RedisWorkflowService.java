@@ -12,4 +12,10 @@ public interface RedisWorkflowService {
 
     List<WorkflowInfo> getWorkflowsByBotEvent(Long botQQ, String eventType);
 
+    void addScheduledTask(WorkflowInfo workflowInfo);
+
+    void removeScheduledTask(String workflowId);
+
+    List<WorkflowInfo> getScheduledTasks();
+
 }

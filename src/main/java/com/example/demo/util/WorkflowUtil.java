@@ -335,6 +335,25 @@ public class WorkflowUtil {
     public ExecutionResult executeSingleNode(Node node) throws Exception {
         // 处理BOT事件节点
         if (Node.NodeType.botEvent.equals(node.getNodeType())) {
+            // 处理定时节点
+            if ("scheduledEvent".equals(node.getBotEventName())) {
+                log.info("执行定时节点: {}", node.getId());
+                // 定时任务无上下文，直接跳过·
+                // 将空结果存入上下文，以便后续节点调用
+                ThreadLocalManager.getExecutionContext().put(node.getId(), new Object());
+                // 检查条件
+                Condition.Action action = checkConditions(node);
+                if (action == Condition.Action.END) {
+                    log.info("条件判断结果: 结束整个工作流");
+                    return new ExecutionResult(null, false);
+                } else if (action == Condition.Action.BREAK) {
+                    log.info("条件判断结果: 结束当前分支");
+                    return new ExecutionResult(null, true);
+                }
+                return new ExecutionResult(new Object(), true);
+            }
+            
+            // 处理普通BOT事件节点
             log.info("执行BOT事件节点: {}", node.getId());
             // 从上下文获取预存储的botEvent数据
             Map<String, Object> context = ThreadLocalManager.getExecutionContext();

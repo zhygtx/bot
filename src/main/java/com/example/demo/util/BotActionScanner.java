@@ -86,9 +86,17 @@ public class BotActionScanner {
     }
 
     /**
-         * BOT动作方法信息
-         */
-        private record BotActionMethodInfo(String methodName, int paramCount, String[] paramNames) {
+     * 获取所有BOT动作方法信息
+     * @return BOT动作方法信息映射
+     */
+    public Map<String, BotActionMethodInfo> getAllBotActionMethods() {
+        return botActionMethods;
+    }
+
+    /**
+     * BOT动作方法信息
+     */
+    public record BotActionMethodInfo(String methodName, int paramCount, String[] paramNames) {
 
     }
 }

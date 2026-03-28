@@ -84,6 +84,11 @@ public class Node implements Comparable<Node>{
     private String botEventName;
 
     /**
+     * 定时时间（秒）（仅 scheduledEvent 节点使用）
+     */
+    private Integer scheduledTime;
+
+    /**
      * 入度
      */
     private Integer inDegree;

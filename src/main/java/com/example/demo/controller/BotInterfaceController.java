@@ -3,6 +3,7 @@ package com.example.demo.controller;
 import com.example.demo.pojo.Result;
 import com.example.demo.pojo.event.Event;
 import com.example.demo.pojo.plugin.ParameterInfo;
+import com.example.demo.util.BotActionScanner;
 import lombok.Builder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * BOT 接口控制器
@@ -21,6 +23,12 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/bot")
 public class BotInterfaceController {
+
+    private final BotActionScanner botActionScanner;
+
+    public BotInterfaceController(BotActionScanner botActionScanner) {
+        this.botActionScanner = botActionScanner;
+    }
 
     /**
      * 获取 BOT 事件列表
@@ -44,6 +52,9 @@ public class BotInterfaceController {
         
         // 群加请求事件
         events.add(createEventInfo(Event.Type.GroupAddRequest.name(), "群加请求", "当收到群加请求时触发", createGroupEventEntityInfo()));
+        
+        // 定时事件
+        events.add(createEventInfo("scheduledEvent", "定时触发", "按设定时间自动触发工作流", createScheduledEventEntityInfo()));
         
         return Result.success(null, events);
     }
@@ -96,6 +107,15 @@ public class BotInterfaceController {
     }
     
     /**
+     * 获取定时事件实体类信息
+     * 定时任务作为触发器，没有返回值
+     */
+    private EntityInfo createScheduledEventEntityInfo() {
+        // 定时任务没有返回值，返回空字段列表
+        return createEntityInfo("ScheduledEvent", new ArrayList<>());
+    }
+    
+    /**
      * 添加 Event 基类字段
      */
     private void addEventBaseFields(List<FieldInfo> fields) {
@@ -143,11 +163,29 @@ public class BotInterfaceController {
     public Result<?> getBotActions() {
         List<ActionInfo> actions = new ArrayList<>();
         
-        // 发送群消息动作
-        actions.add(createActionInfo("sendGroupMsg", "发送群消息", "向指定群发送消息", createSendGroupMsgParameters()));
+        // 从 BotActionScanner 获取所有 BOT 动作方法
+        Map<String, BotActionScanner.BotActionMethodInfo> botActionMethods = botActionScanner.getAllBotActionMethods();
         
-        // 发送私聊消息动作
-        actions.add(createActionInfo("sendPrivateMsg", "发送私聊消息", "向指定用户发送私聊消息", createSendPrivateMsgParameters()));
+        for (Map.Entry<String, BotActionScanner.BotActionMethodInfo> entry : botActionMethods.entrySet()) {
+            String methodName = entry.getKey();
+            BotActionScanner.BotActionMethodInfo methodInfo = entry.getValue();
+            
+            // 创建参数信息列表
+            List<ParameterInfo> parameters = new ArrayList<>();
+            String[] paramNames = methodInfo.paramNames();
+            
+            for (int i = 0; i < paramNames.length; i++) {
+                String paramName = paramNames[i];
+                String paramType = getParamType(methodName, paramName);
+                String description = getParamDescription(methodName, paramName);
+                parameters.add(createParameterInfo(String.valueOf(i + 1), paramName, paramType, description, i + 1));
+            }
+            
+            // 创建动作信息
+            String actionDisplayName = getActionDisplayName(methodName);
+            String description = getActionDescription(methodName);
+            actions.add(createActionInfo(methodName, actionDisplayName, description, parameters));
+        }
         
         return Result.success(null, actions);
     }
@@ -164,27 +202,7 @@ public class BotInterfaceController {
                 .build();
     }
     
-    /**
-     * 获取发送群消息动作参数
-     */
-    private List<ParameterInfo> createSendGroupMsgParameters() {
-        List<ParameterInfo> parameters = new ArrayList<>();
-        parameters.add(createParameterInfo("1", "botQQ", "Long", "BOT 的 QQ 号", 1));
-        parameters.add(createParameterInfo("2", "groupId", "Long", "群号", 2));
-        parameters.add(createParameterInfo("3", "msg", "String", "消息内容", 3));
-        return parameters;
-    }
-    
-    /**
-     * 获取发送私聊消息动作参数
-     */
-    private List<ParameterInfo> createSendPrivateMsgParameters() {
-        List<ParameterInfo> parameters = new ArrayList<>();
-        parameters.add(createParameterInfo("1", "botQQ", "Long", "BOT 的 QQ 号", 1));
-        parameters.add(createParameterInfo("2", "userId", "Long", "用户的 QQ 号", 2));
-        parameters.add(createParameterInfo("3", "msg", "String", "消息内容", 3));
-        return parameters;
-    }
+
     
     /**
      * 创建参数信息
@@ -197,6 +215,84 @@ public class BotInterfaceController {
                 .description(description)
                 .order(order)
                 .build();
+    }
+    
+    /**
+     * 获取参数类型
+     */
+    private String getParamType(String methodName, String paramName) {
+        switch (methodName) {
+            case "sendGroupMsg":
+                switch (paramName) {
+                    case "botQQ":
+                    case "groupId":
+                        return "Long";
+                    case "msg":
+                        return "String";
+                }
+                break;
+            case "sendPrivateMsg":
+                switch (paramName) {
+                    case "botQQ":
+                    case "userId":
+                        return "Long";
+                    case "msg":
+                        return "String";
+                }
+                break;
+        }
+        return "Object";
+    }
+    
+    /**
+     * 获取参数描述
+     */
+    private String getParamDescription(String methodName, String paramName) {
+        switch (methodName) {
+            case "sendGroupMsg":
+                switch (paramName) {
+                    case "botQQ":
+                        return "BOT 的 QQ 号";
+                    case "groupId":
+                        return "群号";
+                    case "msg":
+                        return "消息内容";
+                }
+                break;
+            case "sendPrivateMsg":
+                switch (paramName) {
+                    case "botQQ":
+                        return "BOT 的 QQ 号";
+                    case "userId":
+                        return "用户的 QQ 号";
+                    case "msg":
+                        return "消息内容";
+                }
+                break;
+        }
+        return "参数";
+    }
+    
+    /**
+     * 获取动作显示名称
+     */
+    private String getActionDisplayName(String methodName) {
+        return switch (methodName) {
+            case "sendGroupMsg" -> "发送群消息";
+            case "sendPrivateMsg" -> "发送私聊消息";
+            default -> methodName;
+        };
+    }
+    
+    /**
+     * 获取动作描述
+     */
+    private String getActionDescription(String methodName) {
+        return switch (methodName) {
+            case "sendGroupMsg" -> "向指定群发送消息";
+            case "sendPrivateMsg" -> "向指定用户发送私聊消息";
+            default -> "BOT 动作";
+        };
     }
     
     /**
