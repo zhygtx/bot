@@ -49,5 +49,11 @@ public interface PluginMapper {
     @Select("select count(*) from plugin_info where author_id = #{authorId}")
     Integer selectCountByAuthorId(String authorId);
 
+    @Select("select id from plugin_info where is_public = true")
+    List<String> selectIdsByPublic();
+
+    @Select("select count(*) from plugin_info where is_public = true")
+    Integer selectCountByPublic();
+
     List<PluginInfo> selectByIds(List<String> ids);
 }

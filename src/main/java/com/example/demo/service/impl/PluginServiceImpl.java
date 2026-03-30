@@ -298,6 +298,29 @@ public class PluginServiceImpl implements PluginService {
     }
 
     /**
+     * 获取公开插件列表
+     * @param pageNum 页码
+     * @param pageSize 页大小
+     * @return 公开插件列表
+     */
+    @Override
+    public PageInfo<PluginInfo> findByPublic(int pageNum, int pageSize) {
+        PageHelper.startPage(pageNum, pageSize);
+        List<String> ids = pluginMapper.selectIdsByPublic();
+
+        if (ids.isEmpty()) {
+            return new PageInfo<>(new ArrayList<>());
+        }
+
+        List<PluginInfo> pluginInfos = pluginMapper.selectByIds(ids);
+
+        PageInfo<PluginInfo> pageInfo = new PageInfo<>(pluginInfos);
+        pageInfo.setTotal(pluginMapper.selectCountByPublic());
+
+        return pageInfo;
+    }
+
+    /**
      * 获取插件信息
      * @param id 插件ID
      * @return 插件信息

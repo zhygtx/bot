@@ -98,4 +98,16 @@ public class PluginController {
         String userId = authUtil.getCurrentUserId(request);
         return Result.success(null,pluginService.findByAuthorId(userId, pageNum, pageSize));
     }
+
+    /**
+     * 获取公开插件列表
+     * @param pageNum 页码
+     * @param pageSize 页大小
+     * @return 公开插件列表
+     */
+    @GetMapping("/findByPublic")
+    public Result<?> findByPublic(@RequestParam(required = false,defaultValue = "1") int pageNum,
+                                  @RequestParam(required = false,defaultValue = "12") int pageSize) {
+        return Result.success(null,pluginService.findByPublic(pageNum, pageSize));
+    }
 }

@@ -47,6 +47,14 @@ public interface PluginService {
     PageInfo<PluginInfo> findByAuthorId(String authorId, int pageNum, int pageSize);
 
     /**
+     * 获取公开插件列表
+     * @param pageNum 页码
+     * @param pageSize 页大小
+     * @return 公开插件列表
+     */
+    PageInfo<PluginInfo> findByPublic(int pageNum, int pageSize);
+
+    /**
      * 根据id查询插件信息
      * @param id 插件id
      * @return 插件信息
