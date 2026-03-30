@@ -63,7 +63,7 @@ public class WorkflowUtil {
             if (classLoader != null) {
                 try {
                     classLoader.close();
-                    log.info("已关闭插件类加载器：{}", key);
+                    log.debug("已关闭插件类加载器：{}", key);
                 } catch (Exception e) {
                     log.error("关闭插件类加载器失败：{}", key, e);
                 }
@@ -87,7 +87,7 @@ public class WorkflowUtil {
             return false;
         }
 
-        log.info("工作流配置验证通过");
+        log.debug("工作流配置验证通过");
         return true;
     }
 
@@ -133,14 +133,14 @@ public class WorkflowUtil {
      */
     public JsonNode executeWorkflow(WorkflowInfo workflowInfo, String key, Object object)  throws Exception{
         try {
-            log.info("开始执行工作流: {} (ID: {})", workflowInfo.getName(), workflowInfo.getId());
+            log.debug("开始执行工作流：{} (ID: {})", workflowInfo.getName(), workflowInfo.getId());
 
             ThreadLocalManager.setUserId(workflowInfo.getUserId());
 
             // 1. 构建节点依赖关系图
             WorkflowGraph graph = buildWorkflowGraph(workflowInfo);
             JsonNode result = executeNodesInTopologicalOrder(workflowInfo,graph, key, object);
-            log.info("工作流执行完成: {}", result);
+            log.debug("工作流执行完成：{}", result);
             return result;
         } finally {
             // 清理线程本地变量
@@ -171,7 +171,7 @@ public class WorkflowUtil {
                     // 存储BOT事件数据
                     if (object != null) {
                         context.put(key, object);
-                        log.info("已存储BOT事件数据到上下文");
+                        log.debug("已存储 BOT 事件数据到上下文");
                     }
                         
                     Map<String, Node> nodeMap = graph.getNodeMap();
@@ -194,14 +194,14 @@ public class WorkflowUtil {
                         }
                 
                         Node currentNode = nodeMap.get(currentNodeId);
-                        log.info("执行节点：{} (第{}个)", currentNodeId, ++processedCount);
+                        log.debug("执行节点：{} (第{}个)", currentNodeId, ++processedCount);
                 
                         // 直接在当前线程中执行节点，不使用线程池
                         ExecutionResult executionResult = executeSingleNode(currentNode);
                 
                         if (!executionResult.continueExecution()) {
                             // 结束整个工作流
-                            log.info("工作流执行被条件终止");
+                            log.debug("工作流执行被条件终止");
                             return mapper.createObjectNode();
                         }
                 
@@ -215,7 +215,7 @@ public class WorkflowUtil {
                             updateSuccessorNodesInDegree(currentNode, nodeToInDegree, inDegreeBuckets);
                         } else {
                             // 条件判断为 BREAK，结束当前分支
-                            log.info("跳过节点{}的后续分支", currentNodeId);
+                            log.debug("跳过节点{}的后续分支", currentNodeId);
                         }
                     }
                 
@@ -254,7 +254,7 @@ public class WorkflowUtil {
                 throw new RuntimeException("工作流执行超时（超过" + workflowTimeoutMs + "毫秒）");
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                log.error("工作流执行被中断");
+                log.debug("工作流执行被中断");
                 throw new RuntimeException("工作流执行被中断", e);
             } catch (CompletionException | ExecutionException e) {
                 log.error("工作流执行异常", e.getCause());
@@ -353,24 +353,24 @@ public class WorkflowUtil {
         if (Node.NodeType.botEvent.equals(node.getNodeType())) {
             // 处理定时节点
             if ("scheduledEvent".equals(node.getBotEventName())) {
-                log.info("执行定时节点：{}", node.getId());
+                log.debug("执行定时节点：{}", node.getId());
                 // 定时任务无上下文，直接跳过·
                 // 将空结果存入上下文，以便后续节点调用
                 ThreadLocalManager.getExecutionContext().put(node.getId(), new Object());
                 // 检查条件
                 Condition.Action action = checkConditions(node);
                 if (action == Condition.Action.END) {
-                    log.info("条件判断结果：结束整个工作流");
+                    log.debug("条件判断结果：结束整个工作流");
                     return new ExecutionResult(null, false);
                 } else if (action == Condition.Action.BREAK) {
-                    log.info("条件判断结果：结束当前分支");
+                    log.debug("条件判断结果：结束当前分支");
                     return new ExecutionResult(null, true);
                 }
                 return new ExecutionResult(new Object(), true);
             }
 
             // 处理普通 BOT 事件节点
-            log.info("执行 BOT 事件节点：{}", node.getId());
+            log.debug("执行 BOT 事件节点：{}", node.getId());
             // 从上下文获取预存储的 botEvent 数据
             Map<String, Object> context = ThreadLocalManager.getExecutionContext();
             Object botEventData = context.get("botEvent");
@@ -383,10 +383,10 @@ public class WorkflowUtil {
             // 检查条件
             Condition.Action action = checkConditions(node);
             if (action == Condition.Action.END) {
-                log.info("条件判断结果：结束整个工作流");
+                log.debug("条件判断结果：结束整个工作流");
                 return new ExecutionResult(null, false);
             } else if (action == Condition.Action.BREAK) {
-                log.info("条件判断结果：结束当前分支");
+                log.debug("条件判断结果：结束当前分支");
                 return new ExecutionResult(null, true);
             }
             return new ExecutionResult(botEventData, true);
@@ -394,7 +394,7 @@ public class WorkflowUtil {
 
         // 处理 BOT 动作节点
         if (Node.NodeType.botAction.equals(node.getNodeType())) {
-            log.info("执行 BOT 动作节点：{}", node.getId());
+            log.debug("执行 BOT 动作节点：{}", node.getId());
             // 获取 botActionService 实例
             BotActionService botActionService = applicationContext.getBean(BotActionService.class);
 
@@ -406,7 +406,7 @@ public class WorkflowUtil {
             if (methodInfo == null) {
                 if (node.getBotActionName() != null) {
                     methodName = node.getBotActionName();
-                    log.info("根据 botActionName 获取方法：{}", methodName);
+                    log.debug("根据 botActionName 获取方法：{}", methodName);
                 } else {
                     throw new IllegalStateException("BOT 动作节点" + node.getId() + "缺少方法信息和 botActionName");
                 }
@@ -449,7 +449,7 @@ public class WorkflowUtil {
                             parameters[targetIndex] = paramValue;
                             log.debug("设置参数 [{}] = {}", targetIndex, paramValue);
                         } else {
-                            log.warn("目标索引无效：targetIndex={}, parameters.length={}", targetIndex, parameters.length);
+                            log.debug("目标索引无效：targetIndex={}, parameters.length={}", targetIndex, parameters.length);
                         }
                     }
                 }
@@ -485,10 +485,10 @@ public class WorkflowUtil {
             // 检查条件
             Condition.Action action = checkConditions(node);
             if (action == Condition.Action.END) {
-                log.info("条件判断结果：结束整个工作流");
+                log.debug("条件判断结果：结束整个工作流");
                 return new ExecutionResult(null, false);
             } else if (action == Condition.Action.BREAK) {
-                log.info("条件判断结果：结束当前分支");
+                log.debug("条件判断结果：结束当前分支");
                 return new ExecutionResult(null, true);
             }
 
@@ -528,7 +528,7 @@ public class WorkflowUtil {
         // 使用线程本地缓存获取或创建实例 - 传入当前的 clazz，确保使用同一个类加载器
         Object instance = getOrCreateInstance(pluginVersion, methodClassInfo, clazz);
 
-        log.info("调用方法：{}.{} 参数数量：{} 实例哈希：{}",
+        log.debug("调用方法：{}.{} 参数数量：{} 实例哈希：{}",
                 methodClassInfo.getClassName(), method.getName(), parameters.length,
                 instance != null ? instance.hashCode() : "null");
 
@@ -540,10 +540,10 @@ public class WorkflowUtil {
         // 检查条件（基于插件返回值）
         Condition.Action action = checkConditions(node);
         if (action == Condition.Action.END) {
-            log.info("条件判断结果：结束整个工作流");
+            log.debug("条件判断结果：结束整个工作流");
             return new ExecutionResult(null, false);
         } else if (action == Condition.Action.BREAK) {
-            log.info("条件判断结果：结束当前分支");
+            log.debug("条件判断结果：结束当前分支");
             return new ExecutionResult(null, true);
         }
 
@@ -597,7 +597,7 @@ public class WorkflowUtil {
             injectServices(instance);
 
             instanceMap.put(cacheKey, instance);
-            log.info("已创建插件实例：{}", cacheKey);
+            log.debug("已创建插件实例：{}", cacheKey);
         } else {
             log.debug("使用缓存的插件实例：{}", cacheKey);
         }
@@ -639,7 +639,7 @@ public class WorkflowUtil {
                 currentClass = currentClass.getSuperclass();
             }
         } catch (Exception e) {
-            log.debug("插件服务注入失败（可能是正常的）: {}", instance.getClass().getSimpleName());
+            log.debug("插件服务注入失败（可能是正常的）：{}", instance.getClass().getSimpleName());
         }
     }
 
@@ -719,7 +719,7 @@ public class WorkflowUtil {
                         parameters[targetIndex] = paramValue;
                         log.debug("设置参数 [{}] = {}", targetIndex, paramValue);
                     } else {
-                        log.warn("目标索引无效：targetIndex={}, parameters.length={}", targetIndex, parameters.length);
+                        log.debug("目标索引无效：targetIndex={}, parameters.length={}", targetIndex, parameters.length);
                     }
                 }
             }
@@ -750,6 +750,7 @@ public class WorkflowUtil {
 
             return parameters;
         } catch (Exception e) {
+            log.error("准备方法参数失败", e);
             throw new RuntimeException("准备方法参数失败", e);
         }
     }

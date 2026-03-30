@@ -39,7 +39,7 @@ public class ScheduledTaskManager {
         try {
             // 扫描所有工作流，初始化定时任务
             log.info("开始初始化定时任务...");
-            com.github.pagehelper.PageInfo<WorkflowInfo> pageInfo = workflowService.findAll(1, Integer.MAX_VALUE);
+            com.github.pagehelper.PageInfo<WorkflowInfo> pageInfo = workflowService.findAll(null,1, Integer.MAX_VALUE);
             for (WorkflowInfo workflow : pageInfo.getList()) {
                 redisWorkflowService.addScheduledTask(workflow);
             }

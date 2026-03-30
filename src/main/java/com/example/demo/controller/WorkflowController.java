@@ -73,9 +73,11 @@ public class WorkflowController {
      * @return 工作流列表
      */
     @GetMapping("/findAll")
-    public Result<?> findByAuthorId(@RequestParam(required = false,defaultValue = "1") int pageNum,
+    public Result<?> findByAuthorId(HttpServletRequest request,
+            @RequestParam(required = false,defaultValue = "1") int pageNum,
                                     @RequestParam(required = false,defaultValue = "12") int pageSize) {
-        return Result.success(null,workflowService.findAll(pageNum, pageSize));
+        String userId = authUtil.getCurrentUserId(request);
+        return Result.success(null,workflowService.findAll(userId,pageNum, pageSize));
     }
 
     /**

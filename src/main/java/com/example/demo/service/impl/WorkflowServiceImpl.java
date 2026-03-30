@@ -120,10 +120,14 @@ public class WorkflowServiceImpl implements WorkflowService {
      * @return 工作流列表
      */
     @Override
-    public PageInfo<WorkflowInfo> findAll(int pageNum, int pageSize) {
+    public PageInfo<WorkflowInfo> findAll(String userId,int pageNum, int pageSize) {
         PageHelper.startPage(pageNum, pageSize);
-        List<String> ids = workflowInfoMapper.selectAllIds();
-
+        List<String> ids;
+        if (userId != null){
+            ids = workflowInfoMapper.selectIdsByUserId(userId);
+        }else {
+            ids = workflowInfoMapper.selectAllIds();
+        }
         if (ids.isEmpty()) {
             return new PageInfo<>(new ArrayList<>());
         }

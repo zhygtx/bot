@@ -36,7 +36,7 @@ public interface WorkflowService {
      * @param pageSize 页大小
      * @return 工作流列表
      */
-    PageInfo<WorkflowInfo> findAll(int pageNum, int pageSize);
+    PageInfo<WorkflowInfo> findAll(String userId,int pageNum, int pageSize);
 
     /**
      * 根据ID查询工作流

@@ -46,6 +46,9 @@ public interface WorkflowInfoMapper {
      */
     List<String> selectAllIds();
 
+    @Select("SELECT id FROM workflow_info WHERE user_id = #{userId}")
+    List<String> selectIdsByUserId(String userId);
+
     @Select("SELECT plugin_id FROM node WHERE plugin_id = #{pluginId}")
     List<String> selectIdsByPluginId(String pluginId);
 
