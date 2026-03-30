@@ -52,7 +52,7 @@ public class ScheduledTaskManager {
     /**
      * 扫描并执行过期任务
      */
-    @Scheduled(cron = "0/2 * * * * ?") // 每2秒 执行一次
+    @Scheduled(cron = "0 * * * * ?") // 每分钟 执行一次
     public void scanAndExecuteTasks() {
         try {
             // 获取所有定时任务
@@ -95,11 +95,9 @@ public class ScheduledTaskManager {
 
         String workflowId = workflow.getId();
         log.info("开始执行定时工作流: {} (ID: {})", workflow.getName(), workflowId);
-        
-        // 构建工作流图
-        WorkflowUtil.WorkflowGraph graph = workflowUtil.buildWorkflowGraph(workflow);
+
         // 执行工作流，不需要传入上下文数据
-        workflowUtil.executeNodesInTopologicalOrder(graph, null);
+        workflowUtil.executeWorkflow(workflow, "", null);
         
         log.info("定时工作流执行完成: {}", workflowId);
     }

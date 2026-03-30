@@ -20,7 +20,7 @@ public interface BotMapper {
      * @param botQQ 机器人QQ
      * @param online 是否在线
      */
-    @Update("UPDATE bot SET online = #{online} WHERE bot_qq = #{botQQ}")
+    @Update("UPDATE bot SET is_online = #{online} WHERE bot_qq = #{botQQ}")
     void updateOnline(Long botQQ, Boolean online);
 
     /**

@@ -128,20 +128,33 @@ public class WorkflowUtil {
 
     /**
      * 按拓扑顺序执行节点
-     * @param graph 工作流图
+     * @param workflowInfo 工作流信息
      * @return 执行结果
      */
-    public JsonNode executeNodesInTopologicalOrder(WorkflowGraph graph)  throws Exception{
-        return executeNodesInTopologicalOrder(graph, null);
+    public JsonNode executeWorkflow(WorkflowInfo workflowInfo, String key, Object object)  throws Exception{
+        try {
+            log.info("开始执行工作流: {} (ID: {})", workflowInfo.getName(), workflowInfo.getId());
+
+            ThreadLocalManager.setUserId(workflowInfo.getUserId());
+
+            // 1. 构建节点依赖关系图
+            WorkflowGraph graph = buildWorkflowGraph(workflowInfo);
+            JsonNode result = executeNodesInTopologicalOrder(workflowInfo,graph, key, object);
+            log.info("工作流执行完成: {}", result);
+            return result;
+        } finally {
+            // 清理线程本地变量
+            ThreadLocalManager.clear();
+        }
     }
 
     /**
      * 按拓扑顺序执行节点
      * @param graph 工作流图
-     * @param botEventData BOT事件数据
+     * @param object BOT事件数据
      * @return 执行结果
      */
-    public JsonNode executeNodesInTopologicalOrder(WorkflowGraph graph, Object botEventData)  throws Exception{
+    public JsonNode executeNodesInTopologicalOrder(WorkflowInfo workflowInfo,WorkflowGraph graph, String key, Object object)  throws Exception{
         if (graph == null) {
             log.warn("工作流图为 null，直接返回空结果");
             return mapper.createObjectNode();
@@ -154,9 +167,10 @@ public class WorkflowUtil {
                 try {
                     // 确保执行上下文已初始化
                     Map<String, Object> context = ThreadLocalManager.getExecutionContext();
+                    ThreadLocalManager.setUserId(workflowInfo.getUserId());
                     // 存储BOT事件数据
-                    if (botEventData != null) {
-                        context.put("botEvent", botEventData);
+                    if (object != null) {
+                        context.put(key, object);
                         log.info("已存储BOT事件数据到上下文");
                     }
                         
@@ -333,33 +347,35 @@ public class WorkflowUtil {
      * @throws Exception 执行过程中的异常
      */
     public ExecutionResult executeSingleNode(Node node) throws Exception {
-        // 处理BOT事件节点
+        ThreadLocalManager.setPluginId(node.getPluginId());
+
+        // 处理 BOT 事件节点
         if (Node.NodeType.botEvent.equals(node.getNodeType())) {
             // 处理定时节点
             if ("scheduledEvent".equals(node.getBotEventName())) {
-                log.info("执行定时节点: {}", node.getId());
+                log.info("执行定时节点：{}", node.getId());
                 // 定时任务无上下文，直接跳过·
                 // 将空结果存入上下文，以便后续节点调用
                 ThreadLocalManager.getExecutionContext().put(node.getId(), new Object());
                 // 检查条件
                 Condition.Action action = checkConditions(node);
                 if (action == Condition.Action.END) {
-                    log.info("条件判断结果: 结束整个工作流");
+                    log.info("条件判断结果：结束整个工作流");
                     return new ExecutionResult(null, false);
                 } else if (action == Condition.Action.BREAK) {
-                    log.info("条件判断结果: 结束当前分支");
+                    log.info("条件判断结果：结束当前分支");
                     return new ExecutionResult(null, true);
                 }
                 return new ExecutionResult(new Object(), true);
             }
-            
-            // 处理普通BOT事件节点
-            log.info("执行BOT事件节点: {}", node.getId());
-            // 从上下文获取预存储的botEvent数据
+
+            // 处理普通 BOT 事件节点
+            log.info("执行 BOT 事件节点：{}", node.getId());
+            // 从上下文获取预存储的 botEvent 数据
             Map<String, Object> context = ThreadLocalManager.getExecutionContext();
             Object botEventData = context.get("botEvent");
             if (botEventData == null) {
-                log.warn("BOT事件节点执行时，上下文中无botEvent数据");
+                log.warn("BOT 事件节点执行时，上下文中无 botEvent 数据");
                 botEventData = new Object();
             }
             // 将数据存入上下文，以便后续节点调用
@@ -367,37 +383,37 @@ public class WorkflowUtil {
             // 检查条件
             Condition.Action action = checkConditions(node);
             if (action == Condition.Action.END) {
-                log.info("条件判断结果: 结束整个工作流");
+                log.info("条件判断结果：结束整个工作流");
                 return new ExecutionResult(null, false);
             } else if (action == Condition.Action.BREAK) {
-                log.info("条件判断结果: 结束当前分支");
+                log.info("条件判断结果：结束当前分支");
                 return new ExecutionResult(null, true);
             }
             return new ExecutionResult(botEventData, true);
         }
-        
-        // 处理BOT动作节点
+
+        // 处理 BOT 动作节点
         if (Node.NodeType.botAction.equals(node.getNodeType())) {
-            log.info("执行BOT动作节点: {}", node.getId());
-            // 获取BotActionService实例
+            log.info("执行 BOT 动作节点：{}", node.getId());
+            // 获取 botActionService 实例
             BotActionService botActionService = applicationContext.getBean(BotActionService.class);
-            
+
             // 获取方法信息
             MethodInfo methodInfo = node.getMethodInfo();
             String methodName;
-            
-            // 如果没有方法信息，尝试根据botActionName获取方法
+
+            // 如果没有方法信息，尝试根据 botActionName 获取方法
             if (methodInfo == null) {
                 if (node.getBotActionName() != null) {
                     methodName = node.getBotActionName();
-                    log.info("根据botActionName获取方法: {}", methodName);
+                    log.info("根据 botActionName 获取方法：{}", methodName);
                 } else {
-                    throw new IllegalStateException("BOT动作节点" + node.getId() + "缺少方法信息和botActionName");
+                    throw new IllegalStateException("BOT 动作节点" + node.getId() + "缺少方法信息和 botActionName");
                 }
             } else {
                 methodName = methodInfo.getName();
             }
-            
+
             // 准备方法参数
             Object[] parameters;
             if (methodInfo != null) {
@@ -406,27 +422,27 @@ public class WorkflowUtil {
                 // 根据方法名确定参数数量
                 int paramCount = getBotActionMethodParamCount(methodName);
                 parameters = new Object[paramCount];
-                
+
                 // 处理数据映射
                 if (node.getDataMaps() != null) {
-                    log.debug("处理BOT动作节点数据映射：{}", node.getDataMaps().size());
+                    log.debug("处理 BOT 动作节点数据映射：{}", node.getDataMaps().size());
                     for (DataMap dataMap : node.getDataMaps()) {
                         Object sourceValue = getSourceValue(dataMap);
                         log.debug("获取源值：{}", sourceValue);
-                        
+
                         // 优先使用 paramIndex
                         Integer paramIndex = dataMap.getParamIndex();
                         int targetIndex;
-                        
+
                         if (paramIndex != null && paramIndex >= 0 && paramIndex < parameters.length) {
                             targetIndex = paramIndex;
                         } else {
-                            // 对于BOT动作，尝试根据参数名确定索引
+                            // 对于 BOT 动作，尝试根据参数名确定索引
                             targetIndex = getBotActionParamIndex(methodName, dataMap.getTargetParamName());
                         }
-                        
+
                         log.debug("目标参数索引：{}", targetIndex);
-                        
+
                         if (targetIndex >= 0 && targetIndex < parameters.length) {
                             // 获取参数值
                             Object paramValue = convertValueType(sourceValue, dataMap.getTargetType());
@@ -437,10 +453,10 @@ public class WorkflowUtil {
                         }
                     }
                 }
-                
+
                 // 处理默认值
                 if (node.getNodeDefaults() != null) {
-                    log.debug("处理BOT动作节点默认值：{}", node.getNodeDefaults().size());
+                    log.debug("处理 BOT 动作节点默认值：{}", node.getNodeDefaults().size());
                     for (NodeDefaults nodeDefault : node.getNodeDefaults()) {
                         Integer paramIndex = nodeDefault.getParamIndex();
                         if (paramIndex != null && paramIndex < parameters.length &&
@@ -452,33 +468,33 @@ public class WorkflowUtil {
                     }
                 }
             }
-            
+
             // 反射调用方法
             Method method = findMethod(BotActionService.class, methodName, parameters.length);
             if (method == null) {
-                throw new NoSuchMethodException("找不到BOT动作方法: " + methodName);
+                throw new NoSuchMethodException("找不到 BOT 动作方法：" + methodName);
             }
-            
+
             method.setAccessible(true);
             Object result = method.invoke(botActionService, parameters);
-            log.debug("BOT动作方法调用结果: {}", result);
-            
+            log.debug("BOT 动作方法调用结果：{}", result);
+
             // 将结果存入上下文
             ThreadLocalManager.getExecutionContext().put(node.getId(), result);
-            
+
             // 检查条件
             Condition.Action action = checkConditions(node);
             if (action == Condition.Action.END) {
-                log.info("条件判断结果: 结束整个工作流");
+                log.info("条件判断结果：结束整个工作流");
                 return new ExecutionResult(null, false);
             } else if (action == Condition.Action.BREAK) {
-                log.info("条件判断结果: 结束当前分支");
+                log.info("条件判断结果：结束当前分支");
                 return new ExecutionResult(null, true);
             }
-            
+
             return new ExecutionResult(result, true);
         }
-        
+
         // 处理普通插件节点
         PluginVersion pluginVersion = node.getPluginVersion();
         if (pluginVersion == null) {
@@ -499,37 +515,38 @@ public class WorkflowUtil {
         // 准备方法参数
         Object[] parameters = prepareMethodParameters(node, methodInfo);
 
-        // 反射调用方法
+        // 反射调用方法 - 修复：使用类加载器加载的类来查找方法和创建实例
         Class<?> clazz = classLoader.loadClass(methodClassInfo.getClassName());
         Method method = findMethod(clazz, methodInfo.getName(), parameters.length);
 
         if (method == null) {
-            throw new NoSuchMethodException("找不到方法: " + methodInfo.getName() +
-                    " 在类: " + methodClassInfo.getClassName());
+            throw new NoSuchMethodException("找不到方法：" + methodInfo.getName() +
+                    " 在类：" + methodClassInfo.getClassName());
         }
 
         method.setAccessible(true);
-        // 使用线程本地缓存获取或创建实例
+        // 使用线程本地缓存获取或创建实例 - 传入当前的 clazz，确保使用同一个类加载器
         Object instance = getOrCreateInstance(pluginVersion, methodClassInfo, clazz);
 
-        log.debug("调用方法: {}.{} 参数数量: {}",
-                methodClassInfo.getClassName(), method.getName(), parameters.length);
+        log.info("调用方法：{}.{} 参数数量：{} 实例哈希：{}",
+                methodClassInfo.getClassName(), method.getName(), parameters.length,
+                instance != null ? instance.hashCode() : "null");
 
         Object result = method.invoke(instance, parameters);
-        log.debug("方法调用结果: {}", result);
+        log.debug("方法调用结果：{}", result);
         // 先将结果存入上下文，以便条件判断使用
         ThreadLocalManager.getExecutionContext().put(node.getId(), result);
-        
+
         // 检查条件（基于插件返回值）
         Condition.Action action = checkConditions(node);
         if (action == Condition.Action.END) {
-            log.info("条件判断结果: 结束整个工作流");
+            log.info("条件判断结果：结束整个工作流");
             return new ExecutionResult(null, false);
         } else if (action == Condition.Action.BREAK) {
-            log.info("条件判断结果: 结束当前分支");
+            log.info("条件判断结果：结束当前分支");
             return new ExecutionResult(null, true);
         }
-        
+
         return new ExecutionResult(result, true);
     }
 
@@ -580,6 +597,9 @@ public class WorkflowUtil {
             injectServices(instance);
 
             instanceMap.put(cacheKey, instance);
+            log.info("已创建插件实例：{}", cacheKey);
+        } else {
+            log.debug("使用缓存的插件实例：{}", cacheKey);
         }
 
         return instance;
@@ -587,31 +607,36 @@ public class WorkflowUtil {
 
     private void injectServices(Object instance) {
         try {
-            Class<?> clazz = instance.getClass();
 
-            // 遍历所有字段
-            for (java.lang.reflect.Field field : clazz.getDeclaredFields()) {
-                field.setAccessible(true);
+            // 遍历类层次结构中的所有字段
+            Class<?> currentClass = instance.getClass();
+            while (currentClass != null && currentClass != Object.class) {
+                // 遍历当前类的所有字段
+                for (java.lang.reflect.Field field : currentClass.getDeclaredFields()) {
+                    field.setAccessible(true);
 
-                // 检查字段是否是接口类型
-                Class<?> fieldType = field.getType();
-                if (fieldType.isInterface()) {
-                    // 尝试从 Spring 容器获取实现类
-                    Object bean;
-                    try {
-                        bean = applicationContext.getBean(fieldType);
-                    } catch (Exception e) {
-                        // 没有这个 Bean，跳过
-                        continue;
+                    // 检查字段是否是接口类型
+                    Class<?> fieldType = field.getType();
+                    if (fieldType.isInterface()) {
+                        // 尝试从 Spring 容器获取实现类
+                        Object bean;
+                        try {
+                            bean = applicationContext.getBean(fieldType);
+                        } catch (Exception e) {
+                            // 没有这个 Bean，跳过
+                            continue;
+                        }
+
+                        // 替换字段的值
+                        field.set(instance, bean);
+                        log.debug("已为插件 {} 自动注入接口：{} -> {}",
+                                instance.getClass().getSimpleName(),
+                                fieldType.getSimpleName(),
+                                bean.getClass().getSimpleName());
                     }
-
-                    // 替换字段的值
-                    field.set(instance, bean);
-                    log.debug("已为插件 {} 自动注入接口：{} -> {}",
-                            instance.getClass().getSimpleName(),
-                            fieldType.getSimpleName(),
-                            bean.getClass().getSimpleName());
                 }
+                // 继续检查父类
+                currentClass = currentClass.getSuperclass();
             }
         } catch (Exception e) {
             log.debug("插件服务注入失败（可能是正常的）: {}", instance.getClass().getSimpleName());
@@ -988,18 +1013,47 @@ public class WorkflowUtil {
     public Method findMethod(Class<?> clazz, String methodName, int parameterCount) {
         // 构建缓存键：类名 + 方法名 + 参数数量
         String cacheKey = clazz.getName() + ":" + methodName + ":" + parameterCount;
-        
+
         // 先从缓存中获取，避免重复反射操作
         return methodCache.computeIfAbsent(cacheKey, key -> {
             log.debug("方法缓存未命中，通过反射查找：{}.{} (参数数:{})",
                     clazz.getSimpleName(), methodName, parameterCount);
-            
+
+            // 1. 先尝试在当前类中查找
             for (Method method : clazz.getDeclaredMethods()) {
                 if (method.getName().equals(methodName) &&
                         method.getParameterCount() == parameterCount) {
                     return method;
                 }
             }
+
+            // 2. 如果没找到，尝试在父类中查找（递归向上）
+            Class<?> superClass = clazz.getSuperclass();
+            while (superClass != null && superClass != Object.class) {
+                for (Method method : superClass.getDeclaredMethods()) {
+                    if (method.getName().equals(methodName) &&
+                            method.getParameterCount() == parameterCount) {
+                        log.debug("在父类 {} 中找到方法：{}.{}",
+                                superClass.getSimpleName(), clazz.getSimpleName(), methodName);
+                        return method;
+                    }
+                }
+                superClass = superClass.getSuperclass();
+            }
+
+            // 3. 最后在接口中查找
+            for (Class<?> face : clazz.getInterfaces()) {
+                for (Method method : face.getMethods()) {
+                    if (method.getName().equals(methodName) &&
+                            method.getParameterCount() == parameterCount) {
+                        log.debug("在接口 {} 中找到方法：{}.{}",
+                                face.getSimpleName(), clazz.getSimpleName(), methodName);
+                        return method;
+                    }
+                }
+            }
+
+            log.warn("未找到方法：{}.{} (参数数:{})", clazz.getSimpleName(), methodName, parameterCount);
             return null;
         });
     }
@@ -1020,4 +1074,3 @@ public class WorkflowUtil {
         private Map<String, Node> nodeMap;
     }
 }
-

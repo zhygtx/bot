@@ -57,23 +57,9 @@ public class BotWorkflowHandler {
      */
     private void executeWorkflow(WorkflowInfo workflowInfo, Object botEventData) {
         try {
-            log.info("开始执行工作流: {} (ID: {})", workflowInfo.getName(), workflowInfo.getId());
-            
-            // 验证工作流配置
-            if (!workflowUtil.validateWorkflow(workflowInfo)) {
-                log.error("工作流配置验证失败: {}", workflowInfo.getId());
-                return;
-            }
-            
-            // 构建工作流图
-            WorkflowUtil.WorkflowGraph graph = workflowUtil.buildWorkflowGraph(workflowInfo);
-            
-            // 执行工作流，传入BOT事件数据
-            workflowUtil.executeNodesInTopologicalOrder(graph, botEventData);
-            
-            log.info("工作流执行完成: {}", workflowInfo.getId());
+            workflowUtil.executeWorkflow(workflowInfo, "botEvent", botEventData);
         } catch (Exception e) {
-            log.error("执行工作流异常: {}", workflowInfo.getId(), e);
+            log.error("执行工作流异常", e);
         }
     }
 }

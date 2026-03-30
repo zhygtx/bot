@@ -38,7 +38,7 @@ public class UserController {
             return Result.error( 400, "该账号已存在");
         }
         userService.insertUser(user);
-        return Result.success();
+        return Result.success(null, null);
     }
 
     /**

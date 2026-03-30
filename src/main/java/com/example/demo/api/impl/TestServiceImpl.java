@@ -2,7 +2,7 @@ package com.example.demo.api.impl;
 
 
 import org.springframework.stereotype.Service;
-import service.TestService;
+import com.github.zhygtx.service.TestService;
 
 @Service
 public class TestServiceImpl implements TestService {

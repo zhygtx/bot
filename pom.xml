@@ -206,7 +206,7 @@
         <dependency>
             <groupId>com.github.zhygtx</groupId>
             <artifactId>generalbot-api</artifactId>
-            <version>0.0.1-test</version>
+            <version>0.0.4</version>
         </dependency>
     </dependencies>
 

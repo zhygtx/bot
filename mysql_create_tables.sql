@@ -1,15 +1,60 @@
+-- 用户信息表
+CREATE TABLE `user` (
+`id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '用户 ID',
+`name` VARCHAR(255) NOT NULL COMMENT '用户名',
+`account` VARCHAR(100) NOT NULL COMMENT '用户账号',
+`pwd` VARCHAR(255) NOT NULL COMMENT '密码',
+`QQ` BIGINT COMMENT 'QQ 号',
+`email` VARCHAR(255) COMMENT '用户邮箱',
+`bot_qq` BIGINT COMMENT '用户所拥有的机器人的 ID',
+`user_role` VARCHAR(50) COMMENT '用户权限',
+`create_time` DATETIME NOT NULL COMMENT '创建时间',
+`update_time` DATETIME NOT NULL COMMENT '最后修改时间',
+INDEX `idx_account` (`account`),
+INDEX `idx_QQ` (`QQ`),
+INDEX `idx_botQQ` (`bot_qq`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户信息表';
+
+-- 机器人信息表
+CREATE TABLE `bot` (
+`id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '机器人 ID',
+`name` VARCHAR(255) NOT NULL COMMENT '机器人名称',
+`bot_qq` BIGINT NOT NULL COMMENT '机器人 QQ',
+`user_id` VARCHAR(36) NOT NULL COMMENT '机器人所有者 ID',
+`is_online` TINYINT(1) DEFAULT 0 NOT NULL COMMENT '机器人是否在线',
+FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE,
+INDEX `idx_bot_qq` (`bot_qq`),
+INDEX `idx_user_id` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4  COMMENT='机器人信息表';
+
+-- 容器信息表
+CREATE TABLE `docker` (
+`container_id` VARCHAR(100) NOT NULL PRIMARY KEY COMMENT '容器 ID',
+`name` VARCHAR(255) NOT NULL COMMENT '容器名称',
+`user_id` VARCHAR(36) NOT NULL COMMENT '容器所属用户',
+`bot_qq` BIGINT COMMENT '容器所属机器人 QQ',
+`port` INT COMMENT '容器外部映射端口',
+`token` VARCHAR(255) COMMENT '容器 token',
+`create_time` DATETIME NOT NULL COMMENT '创建时间',
+`update_time` DATETIME NOT NULL COMMENT '更新时间',
+FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE,
+INDEX `idx_user_id` (`user_id`),
+INDEX `idx_bot_qq` (`bot_qq`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='容器信息表';
+
 -- 插件信息表
 CREATE TABLE `plugin_info` (
-  `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '插件id',
+  `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '插件 id',
   `name` VARCHAR(255) NOT NULL COMMENT '插件名称',
   `description` TEXT COMMENT '插件描述',
-  `author_id` VARCHAR(36) NOT NULL COMMENT '插件作者（即userId）',
-  'author_name' VARCHAR(255) not null COMMENT '作者昵称',
+  `author_id` VARCHAR(36) NOT NULL COMMENT '插件作者 (即 userId)',
+  `author_name` VARCHAR(255) not null COMMENT '作者昵称',
   `latest_version` VARCHAR(50) COMMENT '最新版本号',
   `version_count` INT DEFAULT 0 COMMENT '版本总数',
   `create_time` DATETIME NOT NULL COMMENT '创建时间',
   `update_time` DATETIME NOT NULL COMMENT '更新时间',
-  `is_public` TINYINT DEFAULT 0 not null COMMENT '是否公开'
+  `is_public` TINYINT DEFAULT 0 not null COMMENT '是否公开',
+  FOREIGN KEY (`author_id`) REFERENCES `user` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='插件信息表';
 
 -- 插件版本表
@@ -75,13 +120,14 @@ CREATE TABLE `parameter_info` (
 
 -- 工作流信息表
 CREATE TABLE `workflow_info` (
-  `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '工作流ID',
-  `user_id` VARCHAR(36) NOT NULL COMMENT '工作流创建者ID',
+  `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '工作流 ID',
+  `user_id` VARCHAR(36) NOT NULL COMMENT '工作流创建者 ID',
   `author_name` VARCHAR(255) not null comment '作者昵称',
   `name` VARCHAR(255) NOT NULL COMMENT '工作流名称',
   `description` TEXT COMMENT '工作流描述',
   `create_time` DATETIME NOT NULL COMMENT '工作流创建时间',
-  `update_time` DATETIME NOT NULL COMMENT '工作流更新时间'
+  `update_time` DATETIME NOT NULL COMMENT '工作流更新时间',
+  FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='工作流信息表';
 
 -- 工作流节点表
@@ -161,3 +207,19 @@ CREATE TABLE `node_defaults` (
   `default_value_type` ENUM('String', 'Integer', 'Double', 'Boolean', 'Long') NOT NULL COMMENT '默认值类型',
   FOREIGN KEY (`node_id`) REFERENCES `node` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='节点默认值表';
+
+-- 插件数据存储表
+CREATE TABLE `plugin_data` (
+    `id` integer NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT '主键 ID',
+    `user_id` VARCHAR(36) NOT NULL COMMENT '用户 ID',
+    `plugin_id` VARCHAR(36) NOT NULL COMMENT '插件 ID',
+    `data_index` VARCHAR(255) COMMENT '数据索引/键名',
+    `data` text COMMENT '存储的数据（JSON 格式）',
+    `create_time` DATETIME NOT NULL COMMENT '创建时间',
+    `update_time` DATETIME NOT NULL COMMENT '更新时间',
+    FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`plugin_id`) REFERENCES `plugin_info` (`id`) ON DELETE CASCADE,
+    INDEX idx_user_id (`user_id`),
+    INDEX idx_plugin_id (`plugin_id`),
+    INDEX idx_data_index (`data_index`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='插件数据存储表';
