@@ -39,6 +39,11 @@ public class WorkflowInfo {
     private String description;
 
     /**
+     * 工作流是否可用
+     */
+    private Boolean available;
+
+    /**
      * 工作流节点列表
      */
     private List<Node> nodes;

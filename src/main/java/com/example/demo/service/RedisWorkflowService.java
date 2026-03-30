@@ -18,4 +18,6 @@ public interface RedisWorkflowService {
 
     List<WorkflowInfo> getScheduledTasks();
 
+    void removeWorkflowsByPluginId(String pluginId);
+
 }

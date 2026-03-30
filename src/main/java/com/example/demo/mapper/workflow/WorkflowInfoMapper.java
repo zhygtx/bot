@@ -4,6 +4,7 @@ import com.example.demo.pojo.workflow.WorkflowInfo;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 import java.util.List;
 
@@ -27,6 +28,10 @@ public interface WorkflowInfoMapper {
      */
     int deleteById(String id);
 
+    @Update("UPDATE workflow_info SET available = false " +
+            "WHERE id in (select workflow_id from node where plugin_id = #{pluginId})")
+    void updateAvailable(String pluginId);
+
     /**
      * 判断工作流是否存在
      * @param id 工作流ID
@@ -40,6 +45,9 @@ public interface WorkflowInfoMapper {
      * @return 工作流ID列表
      */
     List<String> selectAllIds();
+
+    @Select("SELECT plugin_id FROM node WHERE plugin_id = #{pluginId}")
+    List<String> selectIdsByPluginId(String pluginId);
 
     /**
      * 根据ID列表获取工作流信息

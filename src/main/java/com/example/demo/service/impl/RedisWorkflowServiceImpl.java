@@ -3,6 +3,7 @@ package com.example.demo.service.impl;
 import com.example.demo.pojo.workflow.Node;
 import com.example.demo.pojo.workflow.WorkflowInfo;
 import com.example.demo.service.RedisWorkflowService;
+import com.example.demo.mapper.workflow.WorkflowInfoMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -12,63 +13,65 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Redis工作流服务类，用于维护工作流的Redis数据
+ * Redis 工作流服务类，用于维护工作流的 Redis 数据
  */
 @Service
 @Slf4j
 public class RedisWorkflowServiceImpl implements RedisWorkflowService {
 
     private final RedisTemplate<String, Object> redisTemplate;
+    private final WorkflowInfoMapper workflowInfoMapper;
 
-    public RedisWorkflowServiceImpl(RedisTemplate<String, Object> redisTemplate) {
+    public RedisWorkflowServiceImpl(RedisTemplate<String, Object> redisTemplate, WorkflowInfoMapper workflowInfoMapper) {
         this.redisTemplate = redisTemplate;
+        this.workflowInfoMapper = workflowInfoMapper;
     }
 
     /**
-     * 为工作流添加Redis数据
+     * 为工作流添加 Redis 数据
      * @param workflowInfo 工作流信息
      */
     public void addWorkflowToRedis(WorkflowInfo workflowInfo) {
         if (workflowInfo == null || workflowInfo.getNodes() == null) {
-            log.warn("工作流信息为空，跳过Redis添加");
+            log.warn("工作流信息为空，跳过 Redis 添加");
             return;
         }
 
-        // 查找BOT事件节点
+        // 查找 BOT 事件节点
         Node botEventNode = findBotEventNode(workflowInfo.getNodes());
         if (botEventNode == null) {
-            log.info("工作流 {} 中无BOT事件节点，跳过Redis添加", workflowInfo.getId());
+            log.info("工作流 {} 中无 BOT 事件节点，跳过 Redis 添加", workflowInfo.getId());
             return;
         }
 
-        // 生成Redis键并添加数据
+        // 生成 Redis 键并添加数据
         String redisKey = generateRedisKey(botEventNode, workflowInfo.getId());
         if (redisKey != null) {
             redisTemplate.opsForValue().set(redisKey, workflowInfo);
-            log.info("工作流 {} 已添加到Redis，键：{}", workflowInfo.getId(), redisKey);
+            log.info("工作流 {} 已添加到 Redis，键：{}", workflowInfo.getId(), redisKey);
         }
     }
 
     /**
-     * 从Redis中删除工作流数据
-     * @param workflowId 工作流ID
+     * 从 Redis 中删除工作流数据
+     * @param workflowId 工作流 ID
      */
     public void removeWorkflowFromRedis(String workflowId) {
-        // 查找所有包含该工作流ID的Redis键
+        // 查找所有包含该工作流 ID 的 Redis 键
         String pattern = "bot:*:event:*:workflow:" + workflowId;
         Set<String> keys = redisTemplate.keys(pattern);
 
         if (!keys.isEmpty()) {
             redisTemplate.delete(keys);
-            log.info("工作流 {} 已从Redis中删除，删除了 {} 个键", workflowId, keys.size());
+            log.info("工作流 {} 已从 Redis 中删除，删除了 {} 个键", workflowId, keys.size());
         } else {
-            log.info("工作流 {} 在Redis中不存在", workflowId);
+            log.info("工作流 {} 在 Redis 中不存在", workflowId);
         }
     }
 
     /**
-     * 根据BOT事件获取相关工作流
-     * @param botQQ BOT QQ号
+     * 根据 BOT 事件获取相关工作流
+     * @param botQQ BOT QQ 号
      * @param eventType 事件类型
      * @return 工作流列表
      */
@@ -84,14 +87,14 @@ public class RedisWorkflowServiceImpl implements RedisWorkflowService {
             }
         }
 
-        log.info("根据BOT事件 {}:{} 找到 {} 个工作流", botQQ, eventType, workflows.size());
+        log.info("根据 BOT 事件 {}:{} 找到 {} 个工作流", botQQ, eventType, workflows.size());
         return workflows;
     }
 
     /**
-     * 查找工作流中的BOT事件节点
+     * 查找工作流中的 BOT 事件节点
      * @param nodes 节点列表
-     * @return BOT事件节点
+     * @return BOT 事件节点
      */
     private Node findBotEventNode(List<Node> nodes) {
         for (Node node : nodes) {
@@ -103,15 +106,15 @@ public class RedisWorkflowServiceImpl implements RedisWorkflowService {
     }
 
     /**
-     * 生成Redis键
+     * 生成 Redis 键
      * 格式：bot:{botQQ}:event:{eventType}:workflow:{workflowId}
-     * @param botEventNode BOT事件节点
-     * @param workflowId 工作流ID
-     * @return Redis键
+     * @param botEventNode BOT 事件节点
+     * @param workflowId 工作流 ID
+     * @return Redis 键
      */
     private String generateRedisKey(Node botEventNode, String workflowId) {
         if (botEventNode == null || botEventNode.getBotQQ() == null || botEventNode.getEventType() == null) {
-            log.warn("BOT事件节点信息不完整，无法生成Redis键");
+            log.warn("BOT 事件节点信息不完整，无法生成 Redis 键");
             return null;
         }
 
@@ -119,7 +122,7 @@ public class RedisWorkflowServiceImpl implements RedisWorkflowService {
     }
 
     /**
-     * 添加定时任务到Redis
+     * 添加定时任务到 Redis
      * @param workflowInfo 工作流信息
      */
     @Override
@@ -138,18 +141,18 @@ public class RedisWorkflowServiceImpl implements RedisWorkflowService {
 
         // 计算下次执行时间戳
         long nextExecutionTime = System.currentTimeMillis() + (scheduledNode.getScheduledTime() * 1000);
-        // 添加到Redis的Sorted Set
+        // 添加到 Redis 的 Sorted Set
         redisTemplate.opsForZSet().add("scheduled_tasks", workflowInfo, nextExecutionTime);
         log.info("工作流 {} 已添加到定时任务，下次执行时间：{}", workflowInfo.getId(), nextExecutionTime);
     }
 
     /**
-     * 从Redis中移除定时任务
-     * @param workflowId 工作流ID
+     * 从 Redis 中移除定时任务
+     * @param workflowId 工作流 ID
      */
     @Override
     public void removeScheduledTask(String workflowId) {
-        // 从Redis的Sorted Set中移除定时任务
+        // 从 Redis 的 Sorted Set 中移除定时任务
         Set<Object> tasks = redisTemplate.opsForZSet().range("scheduled_tasks", 0, -1);
         if (tasks != null) {
             for (Object task : tasks) {
@@ -195,5 +198,32 @@ public class RedisWorkflowServiceImpl implements RedisWorkflowService {
             }
         }
         return null;
+    }
+
+    /**
+     * 根据插件 ID 从 Redis 中删除相关工作流缓存
+     * @param pluginId 插件 ID
+     */
+    @Override
+    public void removeWorkflowsByPluginId(String pluginId) {
+        // 查询所有使用该插件的工作流 ID
+        List<String> workflowIds = workflowInfoMapper.selectIdsByPluginId(pluginId);
+        
+        if (workflowIds == null || workflowIds.isEmpty()) {
+            log.info("没有工作流使用插件 {}，跳过 Redis 缓存清理", pluginId);
+            return;
+        }
+
+        // 1. 删除 BOT 事件工作流的 Redis 缓存
+        for (String workflowId : workflowIds) {
+            removeWorkflowFromRedis(workflowId);
+        }
+        
+        // 2. 删除定时任务工作流
+        for (String workflowId : workflowIds) {
+            removeScheduledTask(workflowId);
+        }
+        
+        log.info("已删除插件 {} 相关的 {} 个工作流的 Redis 缓存（包含 BOT 事件和定时任务）", pluginId, workflowIds.size());
     }
 }

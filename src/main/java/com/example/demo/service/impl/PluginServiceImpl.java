@@ -1,9 +1,11 @@
 package com.example.demo.service.impl;
 
 import com.example.demo.mapper.plugin.*;
+import com.example.demo.mapper.workflow.WorkflowInfoMapper;
 import com.example.demo.pojo.Result;
 import com.example.demo.pojo.plugin.*;
 import com.example.demo.service.PluginService;
+import com.example.demo.service.RedisWorkflowService;
 import com.example.demo.util.MD5Util;
 import com.example.demo.util.PluginUtil;
 import com.example.demo.util.WorkflowUtil;
@@ -36,8 +38,10 @@ public class PluginServiceImpl implements PluginService {
     private final ParameterInfoMapper parameterInfoMapper;
     private final PluginVersionMapper pluginVersionMapper;
     private final WorkflowUtil workflowUtil;
+    private final WorkflowInfoMapper workflowInfoMapper;
+    private final RedisWorkflowService redisWorkflowService;
 
-    public PluginServiceImpl(PluginUtil pluginUtil, PluginMapper pluginMapper, EntityInfoMapper entityInfoMapper, MethodInfoMapper methodInfoMapper, MethodClassInfoMapper methodClassInfoMapper, ParameterInfoMapper parameterInfoMapper, PluginVersionMapper pluginVersionMapper, WorkflowUtil workflowUtil) {
+    public PluginServiceImpl(PluginUtil pluginUtil, PluginMapper pluginMapper, EntityInfoMapper entityInfoMapper, MethodInfoMapper methodInfoMapper, MethodClassInfoMapper methodClassInfoMapper, ParameterInfoMapper parameterInfoMapper, PluginVersionMapper pluginVersionMapper, WorkflowUtil workflowUtil, WorkflowInfoMapper workflowInfoMapper, RedisWorkflowService redisWorkflowService) {
         this.pluginUtil = pluginUtil;
         this.pluginMapper = pluginMapper;
         this.entityInfoMapper = entityInfoMapper;
@@ -46,6 +50,8 @@ public class PluginServiceImpl implements PluginService {
         this.parameterInfoMapper = parameterInfoMapper;
         this.pluginVersionMapper = pluginVersionMapper;
         this.workflowUtil = workflowUtil;
+        this.workflowInfoMapper = workflowInfoMapper;
+        this.redisWorkflowService = redisWorkflowService;
     }
 
     /**
@@ -191,6 +197,9 @@ public class PluginServiceImpl implements PluginService {
     @Override
     @Transactional
     public int remove(String id){
+        //0.标注工作流可用性
+        workflowInfoMapper.updateAvailable(id);
+
         // 1. 查询插件信息
         PluginInfo pluginInfo = pluginMapper.selectById(id);
             
@@ -198,7 +207,10 @@ public class PluginServiceImpl implements PluginService {
         workflowUtil.closeAllClassLoaderForPlugin(id);
         log.info("已清理插件 {} 的所有类加载器缓存", id);
             
-        // 3. 删除所有版本的文件
+        // 3. 从 Redis 中删除相关工作流缓存
+        redisWorkflowService.removeWorkflowsByPluginId(id);
+            
+        // 4. 删除所有版本的文件
         pluginInfo.getPluginVersionList().forEach(version -> {
             String filePath = version.getPath();
             File file = new File(filePath);
@@ -209,7 +221,7 @@ public class PluginServiceImpl implements PluginService {
             }
         });
             
-        // 4. 删除数据库记录
+        // 5. 删除数据库记录
         return pluginMapper.delete(id);
     }
 
