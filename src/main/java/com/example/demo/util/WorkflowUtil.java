@@ -1012,8 +1012,8 @@ public class WorkflowUtil {
      * @return 方法对象
      */
     public Method findMethod(Class<?> clazz, String methodName, int parameterCount) {
-        // 构建缓存键：类名 + 方法名 + 参数数量
-        String cacheKey = clazz.getName() + ":" + methodName + ":" + parameterCount;
+        // 构建缓存键：类名 + 方法名 + 参数数量 + 类加载器哈希码
+        String cacheKey = clazz.getName() + ":" + methodName + ":" + parameterCount + ":" + clazz.getClassLoader().hashCode();
 
         // 先从缓存中获取，避免重复反射操作
         return methodCache.computeIfAbsent(cacheKey, key -> {

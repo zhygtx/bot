@@ -6,6 +6,8 @@ import com.mikuac.shiro.core.BotContainer;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 
+import java.util.Map;
+
 @Service
 public class BotActionServiceImpl implements BotActionService {
 
@@ -22,5 +24,25 @@ public class BotActionServiceImpl implements BotActionService {
     public void sendPrivateMsg(Long botQQ, Long userId, String msg) {
         Bot bot = botContainer.robots.get(botQQ);
         bot.sendPrivateMsg(userId, msg, false);
+    }
+
+    @Override
+    public void sendGroupMsgBatch(Long botQQ, Map<Long, String> msg) {
+        Bot bot = botContainer.robots.get(botQQ);
+        for (Map.Entry<Long, String> entry : msg.entrySet()){
+            Long groupId = entry.getKey();
+            String message = entry.getValue();
+            bot.sendGroupMsg(groupId, message, false);
+        }
+    }
+
+    @Override
+    public void sendPrivateMsgBatch(Long botQQ, Map<Long, String> msg) {
+        Bot bot = botContainer.robots.get(botQQ);
+        for (Map.Entry<Long, String> entry : msg.entrySet()){
+            Long userId = entry.getKey();
+            String message = entry.getValue();
+            bot.sendPrivateMsg(userId, message, false);
+        }
     }
 }

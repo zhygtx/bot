@@ -173,10 +173,11 @@ public class BotInterfaceController {
             // 创建参数信息列表
             List<ParameterInfo> parameters = new ArrayList<>();
             String[] paramNames = methodInfo.paramNames();
+            String[] paramTypes = methodInfo.paramTypes();
             
             for (int i = 0; i < paramNames.length; i++) {
                 String paramName = paramNames[i];
-                String paramType = getParamType(methodName, paramName);
+                String paramType = paramTypes[i];
                 String description = getParamDescription(methodName, paramName);
                 parameters.add(createParameterInfo(String.valueOf(i + 1), paramName, paramType, description, i + 1));
             }
@@ -218,33 +219,6 @@ public class BotInterfaceController {
     }
     
     /**
-     * 获取参数类型
-     */
-    private String getParamType(String methodName, String paramName) {
-        switch (methodName) {
-            case "sendGroupMsg":
-                switch (paramName) {
-                    case "botQQ":
-                    case "groupId":
-                        return "Long";
-                    case "msg":
-                        return "String";
-                }
-                break;
-            case "sendPrivateMsg":
-                switch (paramName) {
-                    case "botQQ":
-                    case "userId":
-                        return "Long";
-                    case "msg":
-                        return "String";
-                }
-                break;
-        }
-        return "Object";
-    }
-    
-    /**
      * 获取参数描述
      */
     private String getParamDescription(String methodName, String paramName) {
@@ -269,6 +243,22 @@ public class BotInterfaceController {
                         return "消息内容";
                 }
                 break;
+            case "sendGroupMsgBatch":
+                switch (paramName) {
+                    case "botQQ":
+                        return "BOT 的 QQ 号";
+                    case "msg":
+                        return "群消息，key 为群号，value 为消息内容";
+                }
+                break;
+            case "sendPrivateMsgBatch":
+                switch (paramName) {
+                    case "botQQ":
+                        return "BOT 的 QQ 号";
+                    case "msg":
+                        return "私聊消息，key 为用户 QQ，value 为消息内容";
+                }
+                break;
         }
         return "参数";
     }
@@ -280,6 +270,8 @@ public class BotInterfaceController {
         return switch (methodName) {
             case "sendGroupMsg" -> "发送群消息";
             case "sendPrivateMsg" -> "发送私聊消息";
+            case "sendGroupMsgBatch" -> "批量发送群消息";
+            case "sendPrivateMsgBatch" -> "批量发送私聊消息";
             default -> methodName;
         };
     }
@@ -291,6 +283,8 @@ public class BotInterfaceController {
         return switch (methodName) {
             case "sendGroupMsg" -> "向指定群发送消息";
             case "sendPrivateMsg" -> "向指定用户发送私聊消息";
+            case "sendGroupMsgBatch" -> "批量向多个群发送消息";
+            case "sendPrivateMsgBatch" -> "批量向多个用户发送私聊消息";
             default -> "BOT 动作";
         };
     }

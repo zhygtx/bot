@@ -38,14 +38,16 @@ public class BotActionScanner {
             for (Method method : botActionServiceClass.getDeclaredMethods()) {
                 String methodName = method.getName();
                 int paramCount = method.getParameterCount();
-                String[] paramNames = new String[paramCount];
 
-                // 获取参数名称（需要编译时保留参数名）
+                // 获取参数名称和类型（需要编译时保留参数名）
+                String[] paramNames = new String[paramCount];
+                String[] paramTypes = new String[paramCount];
                 for (int i = 0; i < paramCount; i++) {
                     paramNames[i] = method.getParameters()[i].getName();
+                    paramTypes[i] = method.getParameters()[i].getType().getSimpleName();
                 }
 
-                BotActionMethodInfo methodInfo = new BotActionMethodInfo(methodName, paramCount, paramNames);
+                BotActionMethodInfo methodInfo = new BotActionMethodInfo(methodName, paramCount, paramNames, paramTypes);
                 botActionMethods.put(methodName, methodInfo);
                 log.info("扫描到BOT动作方法: {}，参数数量: {}，参数: {}", methodName, paramCount, String.join(", ", paramNames));
             }
@@ -94,9 +96,9 @@ public class BotActionScanner {
     }
 
     /**
-     * BOT动作方法信息
+     * BOT 动作方法信息
      */
-    public record BotActionMethodInfo(String methodName, int paramCount, String[] paramNames) {
-
+    public record BotActionMethodInfo(String methodName, int paramCount, String[] paramNames, String[] paramTypes) {
+    
     }
 }

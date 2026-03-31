@@ -42,7 +42,7 @@ public interface BotMapper {
      * 更新机器人信息
      * @param botInfo 机器人
      */
-    @Update("UPDATE bot SET name = #{name}, bot_qq = #{botQQ} WHERE id = #{id}")
+    @Update("UPDATE bot SET name = #{name}, bot_qq = #{botQQ},is_online = false WHERE id = #{id}")
     void update(BotInfo botInfo);
 
     /**
