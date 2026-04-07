@@ -6,6 +6,7 @@ import com.example.demo.pojo.plugin.MethodInfo;
 import com.example.demo.pojo.plugin.ParameterInfo;
 import com.example.demo.pojo.plugin.PluginVersion;
 import com.example.demo.pojo.workflow.*;
+import com.example.demo.service.WorkflowService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
@@ -44,9 +45,12 @@ public class WorkflowUtil {
     // BOT动作扫描器
     private final BotActionScanner botActionScanner;
 
-    public WorkflowUtil(ApplicationContext applicationContext, BotActionScanner botActionScanner) {
+    private final WorkflowService workflowService;
+
+    public WorkflowUtil(ApplicationContext applicationContext, BotActionScanner botActionScanner, WorkflowService workflowService) {
         this.applicationContext = applicationContext;
         this.botActionScanner = botActionScanner;
+        this.workflowService = workflowService;
     }
 
     /**
@@ -197,7 +201,15 @@ public class WorkflowUtil {
                         log.debug("执行节点：{} (第{}个)", currentNodeId, ++processedCount);
                 
                         // 直接在当前线程中执行节点，不使用线程池
-                        ExecutionResult executionResult = executeSingleNode(currentNode);
+                        ExecutionResult executionResult;
+                        try {
+                            executionResult = executeSingleNode(currentNode);
+                        } catch (Exception e) {
+                            // 节点执行失败，记录详细错误
+                            String errorMsg = String.format("节点 %s 执行失败：%s", currentNodeId, e.getMessage());
+                            workflowService.editDisableReason(workflowInfo.getId(), errorMsg);
+                            throw e;
+                        }
                 
                         if (!executionResult.continueExecution()) {
                             // 结束整个工作流
@@ -250,14 +262,17 @@ public class WorkflowUtil {
                 int nodeCount = graph.getNodeMap().size();
                 long workflowTimeoutMs = NODE_TIMEOUT_MS * nodeCount;
                 log.error("工作流执行超时：超过{}ms", workflowTimeoutMs);
+                workflowService.editDisableReason(workflowInfo.getId(), "工作流执行超时（超过" + workflowTimeoutMs + "毫秒）");
                 future.cancel(true);
                 throw new RuntimeException("工作流执行超时（超过" + workflowTimeoutMs + "毫秒）");
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 log.debug("工作流执行被中断");
+                workflowService.editDisableReason(workflowInfo.getId(), "工作流执行被中断:" + e.getMessage());
                 throw new RuntimeException("工作流执行被中断", e);
             } catch (CompletionException | ExecutionException e) {
                 log.error("工作流执行异常", e.getCause());
+                workflowService.editDisableReason(workflowInfo.getId(), "工作流执行异常:" + e.getMessage());
                 Throwable cause = e.getCause();
                 if (cause instanceof Exception) {
                     throw (Exception) cause;

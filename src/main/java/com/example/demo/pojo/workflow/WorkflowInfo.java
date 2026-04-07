@@ -44,6 +44,11 @@ public class WorkflowInfo {
     private Boolean available;
 
     /**
+     * 禁用原因
+     */
+    private String disableReason;
+
+    /**
      * 工作流节点列表
      */
     private List<Node> nodes;

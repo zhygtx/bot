@@ -198,7 +198,7 @@ public class PluginServiceImpl implements PluginService {
     @Transactional
     public int remove(String id){
         //0.标注工作流可用性
-        workflowInfoMapper.updateAvailable(id);
+        workflowInfoMapper.updateAvailable(id, "部分相关插件已下架");
 
         // 1. 查询插件信息
         PluginInfo pluginInfo = pluginMapper.selectById(id);

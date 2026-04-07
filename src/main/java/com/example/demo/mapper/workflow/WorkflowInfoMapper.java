@@ -28,9 +28,13 @@ public interface WorkflowInfoMapper {
      */
     int deleteById(String id);
 
-    @Update("UPDATE workflow_info SET available = false " +
-            "WHERE id in (select workflow_id from node where plugin_id = #{pluginId})")
-    void updateAvailable(String pluginId);
+    @Update("UPDATE workflow_info SET available = false, disable_reason = #{disableReason} " +
+            "WHERE id IN (SELECT workflow_id FROM node WHERE plugin_id = #{pluginId})")
+    void updateAvailable(String pluginId, String disableReason);
+
+    @Update("UPDATE workflow_info SET available = false, disable_reason = #{disableReason} " +
+            "WHERE id = #{id}")
+    void updateAvailableByWorkflowId(String id, String disableReason);
 
     /**
      * 判断工作流是否存在

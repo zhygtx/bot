@@ -31,6 +31,13 @@ public interface WorkflowService {
     int edit(WorkflowInfo workflowInfo);
 
     /**
+     * 修改工作流禁用原因
+     * @param id 工作流ID
+     * @param disableReason 禁用原因
+     */
+    void editDisableReason(String id, String disableReason);
+
+    /**
      * 查询所有工作流
      * @param pageNum 页码
      * @param pageSize 页大小

@@ -126,6 +126,7 @@ CREATE TABLE `workflow_info` (
   `name` VARCHAR(255) NOT NULL COMMENT '工作流名称',
   `description` TEXT COMMENT '工作流描述',
   `available` TINYINT DEFAULT 1 COMMENT '工作流是否可用',
+  `disable_reason` VARCHAR(255) COMMENT '工作流禁用原因',
   `create_time` DATETIME NOT NULL COMMENT '工作流创建时间',
   `update_time` DATETIME NOT NULL COMMENT '工作流更新时间',
   FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE

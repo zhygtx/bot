@@ -86,6 +86,7 @@ public class ScheduledTaskManager {
                     redisWorkflowService.addScheduledTask(workflow);
                 } catch (Exception e) {
                     log.error("执行定时任务失败：workflowId={}", workflowId, e);
+                    workflowService.editDisableReason(workflowId, "定时任务执行出错:" + e.getMessage());
                     // 执行出错时移除定时任务
                     redisWorkflowService.removeScheduledTask(workflowId);
                 }

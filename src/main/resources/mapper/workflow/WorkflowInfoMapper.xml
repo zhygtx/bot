@@ -11,6 +11,7 @@
         <result column="workflow_name" property="name"/>
         <result column="workflow_description" property="description"/>
         <result column="workflow_available" property="available"/>
+        <result column="workflow_disable_reason" property="disableReason"/>
         <result column="workflow_create_time" property="createTime"/>
         <result column="workflow_update_time" property="updateTime"/>
 
@@ -184,7 +185,7 @@
         SELECT
             -- 工作流基本信息
             w.id as workflow_id, w.user_id as workflow_user_id, w.author_name as workflow_author_name, w.name as workflow_name,
-            w.description as workflow_description, w.available as workflow_available,
+            w.description as workflow_description, w.available as workflow_available, w.disable_reason as workflow_disable_reason,
             w.create_time as workflow_create_time,w.update_time as workflow_update_time,
 
             -- 节点基本信息
@@ -298,8 +299,8 @@
     </sql>
 
     <insert id="insert" parameterType="com.example.demo.pojo.workflow.WorkflowInfo">
-        INSERT INTO workflow_info(id, user_id, author_name, name, description, create_time, update_time)
-        VALUES (#{id}, #{userId}, #{authorName}, #{name}, #{description}, #{createTime}, #{updateTime})
+        INSERT INTO workflow_info(id, user_id, author_name, name, description, available, create_time, update_time)
+        VALUES (#{id}, #{userId}, #{authorName}, #{name}, #{description}, #{available}, #{createTime}, #{updateTime})
     </insert>
 
     <delete id="deleteById" parameterType="string">

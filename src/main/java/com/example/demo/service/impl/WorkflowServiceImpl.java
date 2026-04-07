@@ -112,6 +112,19 @@ public class WorkflowServiceImpl implements WorkflowService {
         return result;
     }
 
+    /**
+     * 修改工作流禁用原因
+     * @param id 工作流ID
+     * @param disableReason 禁用原因
+     */
+    @Override
+    @Transactional
+    public void editDisableReason(String id, String disableReason) {
+        workflowInfoMapper.updateAvailableByWorkflowId(id, disableReason);
+        redisWorkflowServiceImpl.removeScheduledTask(id);
+        redisWorkflowServiceImpl.removeWorkflowFromRedis(id);
+    }
+
 
     /**
      * 查询所有工作流
