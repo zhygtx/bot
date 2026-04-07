@@ -48,10 +48,6 @@
         </foreach>
     </delete>
 
-    <delete id="deleteBySql">
-
-    </delete>
-
     <update id="updateByIndex">
         update plugin_data set data = #{data}, update_time = NOW() where user_id = #{userId} and plugin_id = #{pluginId} and data_index = #{index}
     </update>

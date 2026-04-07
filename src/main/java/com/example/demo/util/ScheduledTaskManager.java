@@ -5,6 +5,7 @@ import com.example.demo.service.RedisWorkflowService;
 import com.example.demo.service.WorkflowService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -21,14 +22,17 @@ public class ScheduledTaskManager {
     private final RedisWorkflowService redisWorkflowService;
     private final WorkflowService workflowService;
     private final WorkflowUtil workflowUtil;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     @Autowired
     public ScheduledTaskManager(RedisWorkflowService redisWorkflowService, 
                                @org.springframework.context.annotation.Lazy WorkflowService workflowService, 
-                               WorkflowUtil workflowUtil) {
+                               WorkflowUtil workflowUtil,
+                               RedisTemplate<String, Object> redisTemplate) {
         this.redisWorkflowService = redisWorkflowService;
         this.workflowService = workflowService;
         this.workflowUtil = workflowUtil;
+        this.redisTemplate = redisTemplate;
     }
 
     /**
@@ -55,6 +59,7 @@ public class ScheduledTaskManager {
     @Scheduled(cron = "0 * * * * ?") // 每分钟 执行一次
     public void scanAndExecuteTasks() {
         try {
+            long now = System.currentTimeMillis();
             // 获取所有定时任务
             List<WorkflowInfo> allTasks = redisWorkflowService.getScheduledTasks();
             
@@ -67,9 +72,17 @@ public class ScheduledTaskManager {
             for (WorkflowInfo workflow : allTasks) {
                 String workflowId = workflow.getId();
                 try {
+                    // 检查任务是否到期
+                    Double score = redisTemplate.opsForZSet().score("scheduled_tasks", workflow);
+                    if (score == null || score > now) {
+                        log.debug("工作流 {} 尚未到期，跳过执行", workflowId);
+                        continue;
+                    }
+                    
                     // 执行工作流
                     executeWorkflow(workflow);
-                    // 执行成功，重新添加定时任务（更新下次执行时间）
+                    // 执行成功，移除旧任务并重新添加（更新下次执行时间）
+                    redisWorkflowService.removeScheduledTask(workflowId);
                     redisWorkflowService.addScheduledTask(workflow);
                 } catch (Exception e) {
                     log.error("执行定时任务失败：workflowId={}", workflowId, e);

@@ -139,6 +139,9 @@ public class RedisWorkflowServiceImpl implements RedisWorkflowService {
             return;
         }
 
+        // 先移除旧的定时任务，避免重复
+        removeScheduledTask(workflowInfo.getId());
+        
         // 计算下次执行时间戳
         long nextExecutionTime = System.currentTimeMillis() + (scheduledNode.getScheduledTime() * 1000);
         // 添加到 Redis 的 Sorted Set

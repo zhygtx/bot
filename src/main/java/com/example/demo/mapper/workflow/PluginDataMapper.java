@@ -34,7 +34,7 @@ public interface PluginDataMapper {
 
     int deleteByIds(@Param("ids") List<Integer> ids);
 
-    @Update("update plugin_data set data = #{data} where id = #{id}")
+    @Update("update plugin_data set data = #{data}, update_time = now() where id = #{id}")
     int updateById(Integer id, String data);
 
     int updateByIndex(@Param("index") String index, @Param("data") String data, @Param("userId") String userId, @Param("pluginId") String pluginId);
