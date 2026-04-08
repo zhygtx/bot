@@ -21,12 +21,4 @@ public interface EmailService {
      * @return 验证结果
      */
     boolean verifyCode(String email, String verificationCode);
-
-    /**
-     * 发送邮件
-     * @param email 收件邮箱
-     * @param subject 邮件主题
-     * @param content 邮件内容
-     */
-    Boolean sendEmail(String email, String subject, String content, Boolean isHtml);
 }

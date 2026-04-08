@@ -1,10 +1,10 @@
 package com.example.demo.handler;
 
-import com.example.demo.service.DockerService;
 import com.example.demo.handler.utils.BotContext;
 import com.example.demo.service.BotService;
-import com.example.demo.service.EmailService;
+import com.example.demo.service.DockerService;
 import com.example.demo.service.UserService;
+import com.example.demo.util.EmailUtil;
 import com.mikuac.shiro.core.Bot;
 import com.mikuac.shiro.core.BotContainer;
 import com.mikuac.shiro.core.CoreEvent;
@@ -36,18 +36,18 @@ public class BotCoreEvent extends CoreEvent {
     @Resource
     private BotContainer botContainer;
 
-    private final EmailService emailService;
     private final BotService botService;
     private final BotContext botContext;
     private final DockerService dockerService;
     private final UserService userService;
+    private final EmailUtil emailUtil;
 
-    public BotCoreEvent(BotService botService, BotContext botContext, EmailService emailService, DockerService dockerService, UserService userService) {
+    public BotCoreEvent(BotService botService, BotContext botContext, DockerService dockerService, UserService userService, EmailUtil emailUtil) {
         this.botService = botService;
         this.botContext = botContext;
-        this.emailService = emailService;
         this.dockerService = dockerService;
         this.userService = userService;
+        this.emailUtil = emailUtil;
     }
 
     private final Map<Long, Map<Long, String>> botsCache = new ConcurrentHashMap<>();
@@ -107,7 +107,7 @@ public class BotCoreEvent extends CoreEvent {
         if (removedBotData != null) {
             String email = userService.selectEmail(account);
             if (email != null) {
-                emailService.sendEmail(email, "Bot下线通知" , "您的QQBot已下线，如非手动下线请检查账号状态或联系管理员" , false);
+                emailUtil.sendEmail(email, "Bot下线通知" , "您的QQBot已下线，如非手动下线请检查账号状态或联系管理员" , false);
             }
             log.info("[Bot 下线] QQ: {}, 已从在线缓存移除", account);
             botService.updateOnline(account, false);
@@ -184,7 +184,7 @@ public class BotCoreEvent extends CoreEvent {
                     botsCache.remove(botQQ);
                     log.info("Bot[{}]意外离线", botQQ);
                     String email = userService.selectEmail(botQQ);
-                    emailService.sendEmail(email, "Bot下通知" , "您的QQBot异常离线，如非手动下线请检查账号状态或联系管理员" , false);
+                    emailUtil.sendEmail(email, "Bot下通知" , "您的QQBot异常离线，如非手动下线请检查账号状态或联系管理员" , false);
                     log.info("[Bot 离线] QQ: {} 已从在线缓存移除", botQQ);
                     botService.updateOnline(botQQ, false);
                     dockerService.deleteContainer(botQQ);

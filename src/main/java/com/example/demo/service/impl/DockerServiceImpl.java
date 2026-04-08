@@ -5,9 +5,9 @@ import com.example.demo.pojo.Docker;
 import com.example.demo.pojo.Result;
 import com.example.demo.pojo.User;
 import com.example.demo.service.DockerService;
-import com.example.demo.service.EmailService;
 import com.example.demo.service.UserService;
 import com.example.demo.util.DockerUtil;
+import com.example.demo.util.EmailUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -20,16 +20,16 @@ import java.util.List;
 @Slf4j
 public class DockerServiceImpl implements DockerService {
 
-    private final EmailService emailService;
     private final DockerUtil dockerUtil;
     private final DockerMapper dockerMapper;
     private final UserService userService;
+    private final EmailUtil emailUtil;
 
-    public DockerServiceImpl(DockerUtil dockerUtil, DockerMapper dockerMapper, EmailService emailService, UserService userService) {
+    public DockerServiceImpl(DockerUtil dockerUtil, DockerMapper dockerMapper, UserService userService, EmailUtil emailUtil) {
         this.dockerUtil = dockerUtil;
         this.dockerMapper = dockerMapper;
-        this.emailService = emailService;
         this.userService = userService;
+        this.emailUtil = emailUtil;
     }
 
     /**
@@ -115,7 +115,7 @@ public class DockerServiceImpl implements DockerService {
         String containerId = docker.getContainerId();
         dockerUtil.deleteContainer(containerId);
         dockerMapper.deleteByContainerId(containerId);
-        emailService.sendEmail(user.getEmail(), "容器删除通知", "您的容器已被清理，如非本人操作请联系管理员", false);
+        emailUtil.sendEmail(user.getEmail(), "容器删除通知", "您的容器已被清理，如非本人操作请联系管理员", false);
     }
 
     /**
@@ -142,7 +142,7 @@ public class DockerServiceImpl implements DockerService {
                 dockerUtil.deleteContainer(docker.getContainerId());
                 dockerMapper.deleteByContainerId(docker.getContainerId());
                 String email = userService.selectEmail(docker.getUserId());
-                emailService.sendEmail(email, "容器删除通知", "由于您登录的QQ与登记的QQ并不一致现已被程序自动清除", false);
+                emailUtil.sendEmail(email, "容器删除通知", "由于您登录的QQ与登记的QQ并不一致现已被程序自动清除", false);
 
             }
         }
