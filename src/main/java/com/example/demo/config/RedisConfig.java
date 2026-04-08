@@ -26,7 +26,6 @@ public class RedisConfig {
     }
 
     @Bean(name = "redisTemplate")
-    @SuppressWarnings("all")
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);

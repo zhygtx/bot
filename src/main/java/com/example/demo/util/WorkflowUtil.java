@@ -13,6 +13,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
@@ -47,7 +48,7 @@ public class WorkflowUtil {
 
     private final WorkflowService workflowService;
 
-    public WorkflowUtil(ApplicationContext applicationContext, BotActionScanner botActionScanner, WorkflowService workflowService) {
+    public WorkflowUtil(ApplicationContext applicationContext, BotActionScanner botActionScanner, @Lazy WorkflowService workflowService) {
         this.applicationContext = applicationContext;
         this.botActionScanner = botActionScanner;
         this.workflowService = workflowService;

@@ -1,6 +1,5 @@
 package com.example.demo.handler;
 
-import com.example.demo.handler.utils.BotContext;
 import com.example.demo.service.BotService;
 import com.example.demo.service.DockerService;
 import com.example.demo.service.UserService;
@@ -15,12 +14,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 自定义核心事件处理器，用于管理 Bot 的上线/下线以及在线状态缓存。
@@ -37,20 +32,18 @@ public class BotCoreEvent extends CoreEvent {
     private BotContainer botContainer;
 
     private final BotService botService;
-    private final BotContext botContext;
     private final DockerService dockerService;
     private final UserService userService;
     private final EmailUtil emailUtil;
 
-    public BotCoreEvent(BotService botService, BotContext botContext, DockerService dockerService, UserService userService, EmailUtil emailUtil) {
+    public BotCoreEvent(BotService botService, DockerService dockerService, UserService userService, EmailUtil emailUtil) {
         this.botService = botService;
-        this.botContext = botContext;
         this.dockerService = dockerService;
         this.userService = userService;
         this.emailUtil = emailUtil;
     }
 
-    private final Map<Long, Map<Long, String>> botsCache = new ConcurrentHashMap<>();
+    private final Set<Long> botsCache = new HashSet<>();
 
     /**
      * 处理 Bot 上线事件。
@@ -68,25 +61,11 @@ public class BotCoreEvent extends CoreEvent {
         // 3. 检查该 Bot 是否在白名单中
         if (whitelistedBots.contains(botQQ)) {
             // 4. 异步处理：延迟一段时间后再获取并缓存Bot信息
-            CompletableFuture.runAsync(() -> {
-                try {
-                    // 延迟3秒等待Bot完全初始化
-                    Thread.sleep(3000);
 
-                    // 获取Bot群角色信息
-                    Map<Long, String> botGroupRoles = botContext.getBotGroupRoles(bot);
-                    botsCache.putIfAbsent(botQQ, botGroupRoles);
-
-                    // 记录日志
-                    log.info("[Bot 上线] QQ: {}, 已添加到在线缓存", botQQ);
-                    botService.updateOnline(botQQ, true);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    log.error("[Bot 上线] QQ: {} 处理被中断", botQQ, e);
-                } catch (Exception e) {
-                    log.error("[Bot 上线] QQ: {} 信息获取失败", botQQ, e);
-                }
-            });
+            // 记录日志
+            log.info("[Bot 上线] QQ: {}, 已添加到在线缓存", botQQ);
+            botsCache.add(botQQ);
+            botService.updateOnline(botQQ, true);
 
         } else {
             log.warn("[Bot 上线拒绝] QQ: {} 不在白名单中", botQQ);
@@ -101,10 +80,10 @@ public class BotCoreEvent extends CoreEvent {
     @Override
     public void offline(long account) {
         // 1. 从在线缓存中移除该 Bot 的信息
-        Map<Long, String> removedBotData = botsCache.remove(account);
+        boolean removedBotData = botsCache.remove(account);
 
         // 2. 记录日志
-        if (removedBotData != null) {
+        if (removedBotData) {
             String email = userService.selectEmail(account);
             if (email != null) {
                 emailUtil.sendEmail(email, "Bot下线通知" , "您的QQBot已下线，如非手动下线请检查账号状态或联系管理员" , false);
@@ -163,7 +142,7 @@ public class BotCoreEvent extends CoreEvent {
     /**
      * 定时更新在线缓存。
      */
-    @Scheduled(fixedDelay = 60_000, initialDelay = 60_000)
+    @Scheduled(cron = "0 */5 * * * *")
     public void updateBotsCache() {
         log.debug("[Bot 缓存更新] 正在更新缓存...");
         if (botContainer.robots.isEmpty()){
@@ -171,16 +150,12 @@ public class BotCoreEvent extends CoreEvent {
             return;
         }
 
-        Set<Long> botQQsSnapshot = new HashSet<>(botsCache.keySet());
-        for (Long botQQ : botQQsSnapshot) {
+        Set<Long> botQQs = new HashSet<>(botsCache);
+        for (Long botQQ : botQQs) {
             try {
                 Bot bot = botContainer.robots.get(botQQ);
                 Boolean online = bot.getStatus().getData().getOnline();
-                if (online) {
-                    log.debug("[Bot 缓存更新] QQ: {} 已更新", botQQ);
-                    Map<Long, String> botGroupRoles = botContext.getBotGroupRoles(bot);
-                    botsCache.put(botQQ, botGroupRoles);
-                } else {
+                if (!online) {
                     botsCache.remove(botQQ);
                     log.info("Bot[{}]意外离线", botQQ);
                     String email = userService.selectEmail(botQQ);
@@ -203,24 +178,6 @@ public class BotCoreEvent extends CoreEvent {
      * @return 包含所有在线 Bot QQ 号的 Set 集合
      */
     public Set<Long> getBotQqs() {
-        return new HashSet<>(botsCache.keySet());
-    }
-
-    /**
-     * 获取在线 Bot 缓存的快照。
-     * @return 在线 Bot 缓存的副本
-     */
-    public Map<Long, Map<Long, String>> getBotsCacheSnapshot() {
-        return new HashMap<>(botsCache);
-    }
-
-    /**
-     * 根据 Bot QQ 号获取其群角色映射。
-     * @param botQQ Bot 的 QQ 号
-     * @return Bot 的群角色映射副本，如果 Bot 不在线则返回 null
-     */
-    public Map<Long, String> getBotGroupRoles(Long botQQ) {
-        Map<Long, String> roles = botsCache.get(botQQ);
-        return roles != null ? new HashMap<>(roles) : null;
+        return new HashSet<>(botsCache);
     }
 }

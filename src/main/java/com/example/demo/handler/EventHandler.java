@@ -45,11 +45,6 @@ public class EventHandler implements BotMessageEventInterceptor {
         Long userId = event.getUserId();
         if (botCoreEvent.getBotQqs().contains(userId)) {
             log.debug("[{}]拦截到bot消息: , 发送消息的bot: {}", bot.getSelfId(), userId);
-            if (event instanceof GroupMessageEvent groupMessageEvent){
-                GroupMsg groupMsg = messageProcessor.groupProcess(bot, groupMessageEvent);
-            } else if (event instanceof PrivateMessageEvent privateMessageEvent) {
-                PrivateMsg privateMsg = messageProcessor.privateProcess(bot, privateMessageEvent);
-            }
             return false;
         }
         return true;
