@@ -159,7 +159,7 @@ public class BotCoreEvent extends CoreEvent {
                     botsCache.remove(botQQ);
                     log.info("Bot[{}]意外离线", botQQ);
                     String email = userService.selectEmail(botQQ);
-                    emailUtil.sendEmail(email, "Bot下通知" , "您的QQBot异常离线，如非手动下线请检查账号状态或联系管理员" , false);
+                    emailUtil.sendEmail(email, "Bot下线通知" , "您的QQBot异常离线，如非手动下线请检查账号状态或联系管理员" , false);
                     log.info("[Bot 离线] QQ: {} 已从在线缓存移除", botQQ);
                     botService.updateOnline(botQQ, false);
                     dockerService.deleteContainer(botQQ);

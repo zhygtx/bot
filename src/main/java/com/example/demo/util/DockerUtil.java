@@ -17,13 +17,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
 import java.net.ServerSocket;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -108,9 +105,10 @@ public class DockerUtil {
             HostConfig hostConfig = HostConfig.newHostConfig()
                     .withPortBindings(portBinding)
                     .withBinds(new Bind(configFile.getAbsolutePath(), new Volume("/app/napcat/config/onebot11.json"))) // 只挂载单个配置文件
-                    .withNetworkMode("bridge"); // 使用bridge网络
+                    .withNetworkMode("bridge") // 使用bridge网络
+                    .withExtraHosts("host.docker.internal:host-gateway"); // 添加extra_hosts以支持Linux Docker Engine
 
-            log.info("设置容器配置 - 端口绑定: {}, 配置文件挂载: {} -> /app/napcat/config/onebot11.json, 网络模式: bridge",
+            log.info("设置容器配置 - 端口绑定: {}, 配置文件挂载: {} -> /app/napcat/config/onebot11.json, 网络模式: bridge, extra_hosts: host.docker.internal:host-gateway",
                     portBinding, configFile.getAbsolutePath());
 
             CreateContainerCmd createContainerCmd = dockerClient.createContainerCmd(imageName)
@@ -142,50 +140,14 @@ public class DockerUtil {
 
 
     /**
-     * 获取Docker网络的网关地址
-     * @return Docker网关地址
-     * @throws Exception 网络操作异常
+     * 获取宿主IP地址（跨平台兼容）
+     * @return 宿主IP地址
      */
-    public String getHostIpAddress() throws Exception {
-        log.debug("开始获取Docker网络的网关地址");
-
-        // 获取所有网络接口
-        Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
-
-        while (interfaces.hasMoreElements()) {
-            NetworkInterface networkInterface = interfaces.nextElement();
-            log.debug("检查网络接口: {}, 是否为回环: {}, 是否为虚拟: {}, 是否激活: {}",
-                    networkInterface.getName(), networkInterface.isLoopback(),
-                    networkInterface.isVirtual(), networkInterface.isUp());
-
-            // 跳过回环接口和虚拟接口
-            if (networkInterface.isLoopback() || networkInterface.isVirtual() || !networkInterface.isUp()) {
-                continue;
-            }
-
-            // 获取接口的IP地址
-            Enumeration<InetAddress> addresses = networkInterface.getInetAddresses();
-            while (addresses.hasMoreElements()) {
-                InetAddress address = addresses.nextElement();
-
-                // 检查是否为IPv4地址且不是本地地址
-                if (!address.isLoopbackAddress() && address.getHostAddress().contains(".")) {
-                    String ip = address.getHostAddress();
-                    log.debug("发现IP地址: {}", ip);
-
-                    // 检查是否为Docker网络的网关地址（172.17.0.1）
-                    if (ip.startsWith("172.17.0.")) {
-                        log.debug("返回Docker网络的默认网关地址: {}", ip);
-                        return "172.17.0.1";
-                    }
-
-                }
-            }
-        }
-
-        log.warn("未找到Docker网关地址，返回默认IP: 172.17.0.1");
-        // 如果没有找到Docker网关地址，返回默认的Docker网关
-        return "172.17.0.1";
+    public String getHostIpAddress() {
+        // 优先使用 host.docker.internal（Docker Desktop 官方推荐）
+        // Windows Docker Desktop、Mac Docker Desktop、Linux Docker Desktop 4.28+ 都支持
+        log.info("使用 host.docker.internal 作为容器访问宿主机的地址（跨平台兼容）");
+        return "host.docker.internal";
     }
 
 

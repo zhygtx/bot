@@ -300,7 +300,7 @@
 
     <insert id="insert" parameterType="com.example.demo.pojo.workflow.WorkflowInfo">
         INSERT INTO workflow_info(id, user_id, author_name, name, description, available, create_time, update_time)
-        VALUES (#{id}, #{userId}, #{authorName}, #{name}, #{description}, #{available}, #{createTime}, #{updateTime})
+        VALUES (#{id}, #{userId}, #{authorName}, #{name}, #{description}, true, #{createTime}, #{updateTime})
     </insert>
 
     <delete id="deleteById" parameterType="string">

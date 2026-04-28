@@ -28,6 +28,9 @@
         </encoder>
     </appender>
 
+
+    <logger name="com.example.demo" level="DEBUG" />
+
     <!-- 根日志级别配置 -->
     <root level="INFO">
         <appender-ref ref="CONSOLE" />
