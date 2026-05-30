@@ -6,6 +6,7 @@ import com.example.demo.pojo.plugin.MethodInfo;
 import com.example.demo.pojo.plugin.ParameterInfo;
 import com.example.demo.pojo.plugin.PluginVersion;
 import com.example.demo.pojo.workflow.*;
+import com.example.demo.scanner.BotActionScanner;
 import com.example.demo.service.WorkflowService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

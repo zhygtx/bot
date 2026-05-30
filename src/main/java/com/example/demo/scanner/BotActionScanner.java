@@ -115,4 +115,38 @@ public class BotActionScanner {
     public List<ActionMetadata> getAllActions() {
         return Collections.unmodifiableList(actionMetadataList);
     }
+
+    /**
+     * 获取BOT动作方法的参数数量
+     * @param methodName 方法名
+     * @return 参数数量
+     */
+    public int getMethodParamCount(String methodName) {
+        for (ActionMetadata metadata : actionMetadataList) {
+            if (metadata.getActionName().equals(methodName)) {
+                return metadata.getParameters().size();
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * 获取BOT动作方法的参数索引
+     * @param methodName 方法名
+     * @param paramName 参数名
+     * @return 参数索引
+     */
+    public int getMethodParamIndex(String methodName, String paramName) {
+        for (ActionMetadata metadata : actionMetadataList) {
+            if (metadata.getActionName().equals(methodName)) {
+                List<ParameterInfo> params = metadata.getParameters();
+                for (int i = 0; i < params.size(); i++) {
+                    if (params.get(i).getName().equals(paramName)) {
+                        return i;
+                    }
+                }
+            }
+        }
+        return -1;
+    }
 }
