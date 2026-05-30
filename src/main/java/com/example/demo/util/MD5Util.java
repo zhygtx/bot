@@ -1,6 +1,6 @@
 package com.example.demo.util;
 
-import com.example.demo.interceptor.ExcludeFromMD5;
+import com.example.demo.annotation.ExcludeFromMD5;
 
 import java.io.File;
 import java.io.FileInputStream;
