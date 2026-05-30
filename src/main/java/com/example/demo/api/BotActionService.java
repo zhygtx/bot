@@ -10,7 +10,7 @@ public interface BotActionService {
     /**
      * 发送群消息
      * @param botQQ 机器人QQ
-     * @param groupId 群号
+      * @param groupQQ 群号
      * @param msg 消息
      */
     @BotAction(
@@ -20,14 +20,14 @@ public interface BotActionService {
     )
     void sendGroupMsg(
         @ActionParam(description = "BOT 的 QQ 号", order = 1) Long botQQ,
-        @ActionParam(description = "群号", order = 2) Long groupId,
+        @ActionParam(description = "群号", order = 2) Long groupQQ,
         @ActionParam(description = "消息内容", order = 3) String msg
     );
 
     /**
      * 发送私聊消息
      * @param botQQ 机器人QQ
-     * @param userId 用户QQ
+      * @param userQQ 用户QQ
      * @param msg 消息
      */
     @BotAction(
@@ -37,7 +37,7 @@ public interface BotActionService {
     )
     void sendPrivateMsg(
         @ActionParam(description = "BOT 的 QQ 号", order = 1) Long botQQ,
-        @ActionParam(description = "用户的 QQ 号", order = 2) Long userId,
+        @ActionParam(description = "用户的 QQ 号", order = 2) Long userQQ,
         @ActionParam(description = "消息内容", order = 3) String msg
     );
 
@@ -68,4 +68,21 @@ public interface BotActionService {
         @ActionParam(description = "BOT 的 QQ 号", order = 1) Long botQQ,
         @ActionParam(description = "私聊消息，key 为用户 QQ，value 为消息内容", order = 2) Map<Long, String> msg
     );
+
+    /**
+     * 设置群成员头衔
+     * @param botQQ 机器人QQ
+     * @param groupQQ 群号
+     * @param userQQ 用户QQ
+     * @param specialTitle 头衔
+     */
+    @BotAction(
+            name = "设置群成员头衔",
+            description = "设置群成员特殊头衔",
+            order = 5
+    )
+    void setGroupSpecialTitle(@ActionParam(description = "BOT 的 QQ 号", order = 1) Long botQQ,
+                              @ActionParam(description = "群号", order = 2) Long groupQQ,
+                              @ActionParam(description = "用户QQ", order = 3) Long userQQ,
+                              @ActionParam(description = "头衔", order = 4) String specialTitle);
 }

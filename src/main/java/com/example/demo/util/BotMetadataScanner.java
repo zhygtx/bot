@@ -180,16 +180,18 @@ public class BotMetadataScanner {
         String name = clazz.getSimpleName();
         
         // 基本类型处理
-        if ("boolean".equals(name)) return "boolean";
-        if ("byte".equals(name)) return "byte";
-        if ("short".equals(name)) return "short";
-        if ("int".equals(name)) return "int";
-        if ("long".equals(name)) return "Long";
-        if ("float".equals(name)) return "float";
-        if ("double".equals(name)) return "double";
-        if ("char".equals(name)) return "char";
-        
-        return name;
+        return switch (name) {
+            case "boolean" -> "boolean";
+            case "byte" -> "byte";
+            case "short" -> "short";
+            case "int" -> "int";
+            case "long" -> "Long";
+            case "float" -> "float";
+            case "double" -> "double";
+            case "char" -> "char";
+            default -> name;
+        };
+
     }
     
     /**
