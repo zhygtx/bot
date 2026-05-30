@@ -1,9 +1,7 @@
 package com.example.demo.handler;
 
-import com.example.demo.handler.utils.MessageProcessor;
-import com.example.demo.pojo.event.GroupEvent;
-import com.example.demo.pojo.event.GroupMsg;
-import com.example.demo.pojo.event.PrivateMsg;
+import com.example.demo.annotation.BotEvent;
+import com.example.demo.annotation.EventParam;
 import com.mikuac.shiro.annotation.*;
 import com.mikuac.shiro.annotation.common.Shiro;
 import com.mikuac.shiro.core.Bot;
@@ -24,21 +22,13 @@ import org.springframework.stereotype.Component;
 public class EventHandler implements BotMessageEventInterceptor {
 
     private final BotCoreEvent botCoreEvent;
-    private final MessageProcessor messageProcessor;
     private final BotWorkflowHandler botWorkflowHandler;
 
-    public EventHandler(BotCoreEvent botCoreEvent, MessageProcessor messageProcessor, BotWorkflowHandler botWorkflowHandler) {
+    public EventHandler(BotCoreEvent botCoreEvent, BotWorkflowHandler botWorkflowHandler) {
         this.botCoreEvent = botCoreEvent;
-        this.messageProcessor = messageProcessor;
         this.botWorkflowHandler = botWorkflowHandler;
     }
 
-    /**
-     * 拦截Bot消息
-     * @param bot   Bot实例，用于与服务器通信
-     * @param event 消息事件对象，包含事件详细信息
-     * @return true 表示处理该事件，false 表示不处理该事件
-     */
     @SneakyThrows
     @Override
     public boolean preHandle(Bot bot, MessageEvent event) {
@@ -50,100 +40,104 @@ public class EventHandler implements BotMessageEventInterceptor {
         return true;
     }
 
-    /**
-     * 拦截Bot消息处理完成
-     * @param bot   Bot实例，用于与服务器通信
-     * @param event 消息事件对象，包含事件详细信息
-     */
     @Override
     public void afterCompletion(Bot bot, MessageEvent event){}
 
-    /**
-     * 群消息处理
-     * @param bot   Bot实例，用于与服务器通信
-     * @param event 群消息事件对象，包含事件详细信息
-     */
     @SneakyThrows
     @GroupMessageHandler
+    @BotEvent(
+        name = "群消息",
+        description = "当 BOT 收到群消息时触发",
+        order = 1,
+        eventType = "GroupMessage",
+        entityName = "GroupMessageEvent"
+    )
+    @EventParam(name = "botId", description = "BOT的QQ号", order = 1, type = "Long")
+    @EventParam(name = "groupId", description = "群号", order = 2, type = "Long")
+    @EventParam(name = "userId", description = "发送者的 QQ 号", order = 3, type = "Long")
+    @EventParam(name = "message", description = "消息内容", order = 4, example = "你好")
+    @EventParam(name = "messageId", description = "消息ID", order = 5, type = "Long")
+    @EventParam(name = "isAt", description = "是否@了BOT", order = 6, type = "Boolean")
     public void groupMessage(Bot bot, GroupMessageEvent event){
         log.debug("[群消息][BOT:{}] 群号: {}, 发送者: {}, 消息内容: {}",
                 bot.getSelfId(), event.getGroupId(), event.getUserId(), event.getMessage());
-        GroupMsg groupMsg = messageProcessor.groupProcess(bot, event);
-        botWorkflowHandler.handleBotEvent(bot.getSelfId(), groupMsg.getEventType().name(), groupMsg);
+        botWorkflowHandler.handleBotEvent(bot.getSelfId(), "GroupMessage", event);
     }
 
-    /**
-     * 私聊消息处理
-     * @param bot   Bot实例，用于与服务器通信
-     * @param event 私聊消息事件对象，包含事件详细信息
-     */
     @SneakyThrows
     @PrivateMessageHandler
+    @BotEvent(
+        name = "私聊消息",
+        description = "当 BOT 收到私聊消息时触发",
+        order = 2,
+        eventType = "PrivateMessage",
+        entityName = "PrivateMessageEvent"
+    )
+    @EventParam(name = "botId", description = "BOT 的 QQ 号", order = 1, type = "Long")
+    @EventParam(name = "userId", description = "发送者的 QQ 号", order = 2, type = "Long")
+    @EventParam(name = "message", description = "消息内容", order = 3, example = "你好")
+    @EventParam(name = "messageId", description = "消息ID", order = 4, type = "Long")
     public void privateMessage(Bot bot, PrivateMessageEvent event){
         log.debug("[私聊消息][BOT:{}] 发送者: {}, 消息内容: {}",
                 bot.getSelfId(), event.getUserId(), event.getMessage());
-        PrivateMsg privateMsg = messageProcessor.privateProcess(bot, event);
-        botWorkflowHandler.handleBotEvent(bot.getSelfId(), privateMsg.getEventType().name(), privateMsg);
+        botWorkflowHandler.handleBotEvent(bot.getSelfId(), "PrivateMessage", event);
     }
 
-    /**
-     * 群成员减少事件
-     * @param bot   Bot实例，用于与服务器通信
-     * @param event 群成员减少事件对象，包含事件详细信息
-     */
     @SneakyThrows
     @GroupDecreaseHandler
-    public void GroupDecreaseHandler(Bot bot, GroupDecreaseNoticeEvent event){
+    @BotEvent(
+        name = "群成员减少",
+        description = "当有成员退出群时触发",
+        order = 3,
+        eventType = "GroupDecrease",
+        entityName = "GroupDecreaseNoticeEvent"
+    )
+    @EventParam(name = "botId", description = "BOT 的 QQ 号", order = 1, type = "Long")
+    @EventParam(name = "groupId", description = "群号", order = 2, type = "Long")
+    @EventParam(name = "userId", description = "被处理人ID（退群成员的 QQ 号）", order = 3, type = "Long")
+    @EventParam(name = "operatorId", description = "操作人ID（踢人者的 QQ 号）", order = 4, type = "Long")
+    public void groupDecreaseHandler(Bot bot, GroupDecreaseNoticeEvent event){
         log.debug("[群成员减少][BOT:{}] 群号: {}, 处理人: {}, 被处理人: {}",
                 bot.getSelfId(), event.getGroupId(), event.getOperatorId(), event.getUserId());
-        GroupEvent groupEvent = GroupEvent.builder()
-                .eventType(GroupEvent.Type.GroupDecrease)
-                .botId(bot.getSelfId())
-                .groupId(event.getGroupId())
-                .operatorId(event.getOperatorId())
-                .userId(event.getUserId())
-                .data(event)
-                .build();
-        botWorkflowHandler.handleBotEvent(bot.getSelfId(), groupEvent.getEventType().name(), groupEvent);
+        botWorkflowHandler.handleBotEvent(bot.getSelfId(), "GroupDecrease", event);
     }
 
-    /**
-     * 群成员增加事件
-     * @param bot   Bot实例，用于与服务器通信
-     * @param event 群成员增加事件对象，包含事件详细信息
-     */
     @SneakyThrows
     @GroupIncreaseHandler
-    public void GroupIncreaseHandler(Bot bot, GroupIncreaseNoticeEvent event){
+    @BotEvent(
+        name = "群成员增加",
+        description = "当有新成员加入群时触发",
+        order = 4,
+        eventType = "GroupIncrease",
+        entityName = "GroupIncreaseNoticeEvent"
+    )
+    @EventParam(name = "botId", description = "BOT 的 QQ 号", order = 1, type = "Long")
+    @EventParam(name = "groupId", description = "群号", order = 2, type = "Long")
+    @EventParam(name = "userId", description = "被处理人ID（新成员的 QQ 号）", order = 3, type = "Long")
+    @EventParam(name = "operatorId", description = "操作人ID（邀请人的 QQ 号）", order = 4, type = "Long")
+    public void groupIncreaseHandler(Bot bot, GroupIncreaseNoticeEvent event){
         log.debug("[群成员增加][BOT:{}] 群号: {}, 处理人: {}, 被处理人: {}",
                 bot.getSelfId(), event.getGroupId(), event.getOperatorId(), event.getUserId());
-        GroupEvent groupEvent = GroupEvent.builder()
-                .eventType(GroupEvent.Type.GroupIncrease)
-                .botId(bot.getSelfId())
-                .groupId(event.getGroupId())
-                .operatorId(event.getOperatorId())
-                .userId(event.getUserId())
-                .data(event)
-                .build();
-        botWorkflowHandler.handleBotEvent(bot.getSelfId(), groupEvent.getEventType().name(), groupEvent);
+        botWorkflowHandler.handleBotEvent(bot.getSelfId(), "GroupIncrease", event);
     }
 
-    /**
-     * 群成员增加请求事件
-     * @param bot   Bot实例，用于与服务器通信
-     * @param event 群成员增加请求事件对象，包含事件详细信息
-     */
     @SneakyThrows
     @GroupAddRequestHandler
-    public void GroupAddRequestHandler(Bot bot, GroupAddRequestEvent event){
-        GroupEvent groupEvent = GroupEvent.builder()
-                .eventType(GroupEvent.Type.GroupAddRequest)
-                .botId(bot.getSelfId())
-                .groupId(event.getGroupId())
-                .operatorId(event.getInvitorId())
-                .userId(event.getUserId())
-                .data(event)
-                .build();
-        botWorkflowHandler.handleBotEvent(bot.getSelfId(), groupEvent.getEventType().name(), groupEvent);
+    @BotEvent(
+        name = "群加请求",
+        description = "当有人申请加群时触发",
+        order = 5,
+        eventType = "GroupAddRequest",
+        entityName = "GroupAddRequestEvent"
+    )
+    @EventParam(name = "botId", description = "BOT 的 QQ 号", order = 1, type = "Long")
+    @EventParam(name = "groupId", description = "群号", order = 2, type = "Long")
+    @EventParam(name = "userId", description = "申请人的 QQ 号", order = 3, type = "Long")
+    @EventParam(name = "invitorId", description = "邀请人ID", order = 4, type = "Long")
+    @EventParam(name = "message", description = "加群请求消息", order = 5)
+    public void groupAddRequestHandler(Bot bot, GroupAddRequestEvent event){
+        log.debug("[群加请求][BOT:{}] 群号: {}, 申请人: {}, 邀请人: {}",
+                bot.getSelfId(), event.getGroupId(), event.getUserId(), event.getInvitorId());
+        botWorkflowHandler.handleBotEvent(bot.getSelfId(), "GroupAddRequest", event);
     }
 }

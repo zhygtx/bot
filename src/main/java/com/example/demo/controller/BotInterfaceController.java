@@ -3,7 +3,8 @@ package com.example.demo.controller;
 import com.example.demo.metadata.ActionMetadata;
 import com.example.demo.metadata.EventMetadata;
 import com.example.demo.pojo.Result;
-import com.example.demo.util.BotMetadataScanner;
+import com.example.demo.scanner.BotEventScanner;
+import com.example.demo.scanner.BotActionScanner;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,10 +21,12 @@ import java.util.List;
 @RequestMapping("/api/bot")
 public class BotInterfaceController {
 
-    private final BotMetadataScanner metadataScanner;
+    private final BotActionScanner metadataScanner;
+    private final BotEventScanner botEventScanner;
 
-    public BotInterfaceController(BotMetadataScanner metadataScanner) {
+    public BotInterfaceController(BotActionScanner metadataScanner, BotEventScanner botEventScanner) {
         this.metadataScanner = metadataScanner;
+        this.botEventScanner = botEventScanner;
     }
 
     /**
@@ -32,10 +35,10 @@ public class BotInterfaceController {
      */
     @GetMapping("/events")
     public Result<?> getBotEvents() {
-        List<EventMetadata> events = metadataScanner.getAllEvents();
+        List<EventMetadata> events = botEventScanner.getEventMetadataList();
         return Result.success(null, events);
     }
-    
+
     /**
      * 获取 BOT 动作列表
      * @return BOT 动作列表

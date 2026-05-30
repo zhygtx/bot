@@ -4,8 +4,9 @@ import java.lang.annotation.*;
 
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
+@Repeatable(EventParams.class)
 @Documented
-public @interface BotEvent {
+public @interface EventParam {
 
     String name();
 
@@ -13,9 +14,9 @@ public @interface BotEvent {
 
     int order() default 0;
 
-    String eventType();
+    boolean required() default false;
 
-    String entityName() default "";
+    String type() default "String";
 
-    boolean enabled() default true;
+    String example() default "";
 }
