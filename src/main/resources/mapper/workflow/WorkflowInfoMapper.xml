@@ -67,7 +67,14 @@
                         <result column="entity_name" property="name"/>
                         <result column="entity_plugin_version_id" property="pluginVersionId"/>
                         <result column="entity_entity_name" property="entityName"/>
-                        <result column="entity_attributes" property="attributes"/>
+                        <!-- 关联属性信息 -->
+                        <collection property="attributes" ofType="com.example.demo.pojo.plugin.Attribute">
+                            <id column="attribute_id" property="id"/>
+                            <result column="attribute_description" property="description"/>
+                            <result column="attribute_entity_info_id" property="entityInfoId"/>
+                            <result column="attribute_type" property="type"/>
+                            <result column="attribute_name" property="name"/>
+                        </collection>
                     </collection>
                     
                     <!-- 方法类信息列表 -->
@@ -250,7 +257,11 @@
             -- 实体类信息
             e.id as entity_id, e.description as entity_description,
             e.name as entity_name, e.plugin_version_id as entity_plugin_version_id,
-            e.entity_name as entity_entity_name, e.attributes as entity_attributes,
+            e.entity_name as entity_entity_name,
+            
+            -- 属性信息
+            a.id as attribute_id, a.description as attribute_description,
+            a.entity_info_id as attribute_entity_info_id, a.type as attribute_type, a.name as attribute_name,
 
             -- 条件信息
             c.id as condition_id, c.node_id as condition_node_id,
@@ -291,6 +302,9 @@
 
             -- 左连接实体信息表
                  LEFT JOIN entity_info e ON pv.id = e.plugin_version_id
+
+            -- 左连接属性信息表
+                 LEFT JOIN attribute a ON e.id = a.entity_info_id
 
             -- 左连接条件表
                  LEFT JOIN `condition` c ON n.id = c.node_id

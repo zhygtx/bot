@@ -21,6 +21,7 @@ import java.io.File;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Slf4j
@@ -37,11 +38,12 @@ public class PluginServiceImpl implements PluginService {
     private final MethodClassInfoMapper methodClassInfoMapper;
     private final ParameterInfoMapper parameterInfoMapper;
     private final PluginVersionMapper pluginVersionMapper;
+    private final AttributeMapper attributeMapper;
     private final WorkflowUtil workflowUtil;
     private final WorkflowInfoMapper workflowInfoMapper;
     private final RedisWorkflowService redisWorkflowService;
 
-    public PluginServiceImpl(PluginUtil pluginUtil, PluginMapper pluginMapper, EntityInfoMapper entityInfoMapper, MethodInfoMapper methodInfoMapper, MethodClassInfoMapper methodClassInfoMapper, ParameterInfoMapper parameterInfoMapper, PluginVersionMapper pluginVersionMapper, WorkflowUtil workflowUtil, WorkflowInfoMapper workflowInfoMapper, RedisWorkflowService redisWorkflowService) {
+    public PluginServiceImpl(PluginUtil pluginUtil, PluginMapper pluginMapper, EntityInfoMapper entityInfoMapper, MethodInfoMapper methodInfoMapper, MethodClassInfoMapper methodClassInfoMapper, ParameterInfoMapper parameterInfoMapper, PluginVersionMapper pluginVersionMapper, AttributeMapper attributeMapper, WorkflowUtil workflowUtil, WorkflowInfoMapper workflowInfoMapper, RedisWorkflowService redisWorkflowService) {
         this.pluginUtil = pluginUtil;
         this.pluginMapper = pluginMapper;
         this.entityInfoMapper = entityInfoMapper;
@@ -49,6 +51,7 @@ public class PluginServiceImpl implements PluginService {
         this.methodClassInfoMapper = methodClassInfoMapper;
         this.parameterInfoMapper = parameterInfoMapper;
         this.pluginVersionMapper = pluginVersionMapper;
+        this.attributeMapper = attributeMapper;
         this.workflowUtil = workflowUtil;
         this.workflowInfoMapper = workflowInfoMapper;
         this.redisWorkflowService = redisWorkflowService;
@@ -140,6 +143,13 @@ public class PluginServiceImpl implements PluginService {
                     .flatMap(List::stream)
                     .toList();
             
+            // 收集所有 Attribute 信息
+            List<Attribute> attributeList = entityInfoList.stream()
+                    .map(EntityInfo::getAttributes)
+                    .filter(Objects::nonNull)
+                    .flatMap(List::stream)
+                    .toList();
+            
             // 校验所有参数类型是否合法
             for (ParameterInfo parameter : parameterInfoList) {
                 if (!parameter.isValidType()) {
@@ -166,6 +176,7 @@ public class PluginServiceImpl implements PluginService {
 
             sqlResult += pluginVersionMapper.insert(pluginVersion);
             sqlResult += entityInfoList.isEmpty() ? 0 : entityInfoMapper.insert(entityInfoList);
+            sqlResult += attributeList.isEmpty() ? 0 : attributeMapper.insert(attributeList);
             sqlResult += methodClassInfoList.isEmpty() ? 0 : methodClassInfoMapper.insert(methodClassInfoList);
             sqlResult += methodInfoList.isEmpty() ? 0 : methodInfoMapper.insert(methodInfoList);
             sqlResult += parameterInfoList.isEmpty() ? 0 : parameterInfoMapper.insert(parameterInfoList);
@@ -241,6 +252,12 @@ public class PluginServiceImpl implements PluginService {
                 .map(PluginVersion::getEntityInfoList)
                 .flatMap(List::stream)
                 .toList();
+        // 收集所有 Attribute 信息
+        List<Attribute> attributeList = entityInfoList.stream()
+                .map(EntityInfo::getAttributes)
+                .filter(Objects::nonNull)
+                .flatMap(List::stream)
+                .toList();
         List<MethodClassInfo> methodClassInfoList = pluginVersionList.stream()
                 .map(PluginVersion::getMethodClassInfoList)
                 .flatMap(List::stream)
@@ -255,6 +272,7 @@ public class PluginServiceImpl implements PluginService {
                 .toList();
         sqlResult +=  pluginVersionMapper.update(pluginVersionList);
         sqlResult += entityInfoList.isEmpty() ? 0 : entityInfoMapper.update(entityInfoList);
+        sqlResult += attributeList.isEmpty() ? 0 : attributeMapper.update(attributeList);
         sqlResult += methodClassInfoList.isEmpty() ? 0 : methodClassInfoMapper.update(methodClassInfoList);
         sqlResult += methods.isEmpty() ? 0 : methodInfoMapper.update(methods);
         sqlResult += parameters.isEmpty() ? 0 : parameterInfoMapper.update(parameters);

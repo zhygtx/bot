@@ -1,7 +1,6 @@
 package com.example.demo.util;
 
 import com.example.demo.pojo.plugin.*;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -17,8 +16,6 @@ import java.util.jar.JarFile;
 @Slf4j
 @Component
 public class PluginUtil {
-
-    private static final ObjectMapper mapper = new ObjectMapper();
 
     /**
      * 扫描实体类信息
@@ -61,10 +58,25 @@ public class PluginUtil {
                         entityInfo.setEntityName(className);
                         entityInfo.setName(clazz.getSimpleName());  // 设置简写名称
 
-                        // 获取类的属性信息
+                        // 获取类的属性信息并转换为 Attribute 列表
                         Object instance = clazz.getDeclaredConstructor().newInstance();
                         Map<String, Object> attributeMap = ReflectionUtil.getAttributeMapWithType(instance);
-                        entityInfo.setAttributes(mapper.writeValueAsString(attributeMap));
+                        
+                        // 将 Map 转换为 Attribute 列表
+                        List<Attribute> attributes = new ArrayList<>();
+                        for (Map.Entry<String, Object> attrEntry : attributeMap.entrySet()) {
+                            Attribute attribute = new Attribute();
+                            attribute.setId(UUID.randomUUID().toString());
+                            attribute.setEntityInfoId(entityInfo.getId());
+                            attribute.setName(attrEntry.getKey());
+                            // 从值中提取类型信息（假设值的格式为 "type:value" 或者直接使用值的类名）
+                            Object value = attrEntry.getValue();
+                            String type = value != null ? value.getClass().getSimpleName() : "Object";
+                            attribute.setType(type);
+                            attribute.setDescription(""); // 默认空描述
+                            attributes.add(attribute);
+                        }
+                        entityInfo.setAttributes(attributes);
 
                         entityInfos.add(entityInfo);
                         log.info("发现实体类: {}", className);

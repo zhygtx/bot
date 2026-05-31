@@ -15,7 +15,9 @@
             pv.entity_package as plugin_version_entity_package, pv.method_package as plugin_version_method_package, 
             pv.compatible_version as plugin_version_compatible_version,
             e.id as entity_id, e.description as entity_description, e.name as entity_name, 
-            e.plugin_version_id as entity_plugin_version_id, e.entity_name as entity_entity_name, e.attributes as entity_attributes,
+            e.plugin_version_id as entity_plugin_version_id, e.entity_name as entity_entity_name,
+            a.id as attribute_id, a.description as attribute_description, 
+            a.entity_info_id as attribute_entity_info_id, a.type as attribute_type, a.name as attribute_name,
             mc.id as method_class_id, mc.description as method_class_description, 
             mc.plugin_version_id as method_class_plugin_version_id, mc.class_name as method_class_class_name, 
             mc.simple_class_name as method_class_simple_class_name, mc.package_name as method_class_package_name,
@@ -26,6 +28,7 @@
         FROM plugin_info p
         LEFT JOIN plugin_version pv ON p.id = pv.plugin_id
         LEFT JOIN entity_info e ON pv.id = e.plugin_version_id
+        LEFT JOIN attribute a ON e.id = a.entity_info_id
         LEFT JOIN method_class_info mc ON pv.id = mc.plugin_version_id
         LEFT JOIN method_info m ON mc.id = m.method_class_id
         LEFT JOIN parameter_info param ON m.id = param.method_id
@@ -64,7 +67,14 @@
                 <result column="entity_name" property="name"/>
                 <result column="entity_plugin_version_id" property="pluginVersionId"/>
                 <result column="entity_entity_name" property="entityName"/>
-                <result column="entity_attributes" property="attributes"/>
+                <!-- 关联属性信息 -->
+                <collection property="attributes" ofType="com.example.demo.pojo.plugin.Attribute">
+                    <id column="attribute_id" property="id"/>
+                    <result column="attribute_description" property="description"/>
+                    <result column="attribute_entity_info_id" property="entityInfoId"/>
+                    <result column="attribute_type" property="type"/>
+                    <result column="attribute_name" property="name"/>
+                </collection>
             </collection>
             <!-- 关联方法类信息 -->
             <collection property="methodClassInfoList" ofType="com.example.demo.pojo.plugin.MethodClassInfo">

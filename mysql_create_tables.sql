@@ -80,9 +80,18 @@ CREATE TABLE `entity_info` (
   `name` VARCHAR(255) NOT NULL COMMENT '实体类简写名称',
   `plugin_version_id` VARCHAR(36) NOT NULL COMMENT '实体类所属插件版本id',
   `entity_name` VARCHAR(255) NOT NULL COMMENT '实体全限定名',
-  `attributes` TEXT COMMENT '实体类属性信息(JSON格式)',
   FOREIGN KEY (`plugin_version_id`) REFERENCES `plugin_version` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='实体类信息表';
+
+-- 属性信息表
+CREATE TABLE `attribute` (
+  `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '属性id',
+  `description` TEXT COMMENT '属性描述',
+  `entity_info_id` VARCHAR(36) NOT NULL COMMENT '属性所属实体类id',
+  `type` VARCHAR(255) NOT NULL COMMENT '属性类型',
+  `name` VARCHAR(255) NOT NULL COMMENT '属性名称',
+  FOREIGN KEY (`entity_info_id`) REFERENCES `entity_info` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='属性信息表';
 
 -- 方法类信息表
 CREATE TABLE `method_class_info` (
