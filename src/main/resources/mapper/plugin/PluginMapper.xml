@@ -22,7 +22,7 @@
             mc.plugin_version_id as method_class_plugin_version_id, mc.class_name as method_class_class_name, 
             mc.simple_class_name as method_class_simple_class_name, mc.package_name as method_class_package_name,
             m.id as method_id, m.description as method_description, m.method_class_id as method_method_class_id, 
-            m.name as method_name, m.return_type as method_return_type,
+            m.name as method_name, m.return_type as method_return_type, m.return_description as method_return_description,
             param.id as parameter_id, param.description as parameter_description, 
             param.method_id as parameter_method_id, param.name as parameter_name, param.type as parameter_type, param.order as parameter_order
         FROM plugin_info p
@@ -91,6 +91,7 @@
                     <result column="method_method_class_id" property="methodClassId"/>
                     <result column="method_name" property="name"/>
                     <result column="method_return_type" property="returnType"/>
+                    <result column="method_return_description" property="returnDescription"/>
                     <!-- 关联参数信息 -->
                     <collection property="parameters" ofType="com.example.demo.pojo.plugin.ParameterInfo">
                         <id column="parameter_id" property="id"/>

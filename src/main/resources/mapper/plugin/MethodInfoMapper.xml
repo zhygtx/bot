@@ -4,10 +4,10 @@
 <mapper namespace="com.example.demo.mapper.plugin.MethodInfoMapper">
 
     <insert id="insert" parameterType="java.util.List">
-        INSERT INTO method_info (id, description, method_class_id, name, return_type)
+        INSERT INTO method_info (id, description, method_class_id, name, return_type, return_description)
         VALUES
         <foreach collection="list" item="item" separator=",">
-            (#{item.id},#{item.description} ,#{item.methodClassId}, #{item.name}, #{item.returnType})
+            (#{item.id},#{item.description} ,#{item.methodClassId}, #{item.name}, #{item.returnType}, #{item.returnDescription})
         </foreach>
     </insert>
     <update id="update" parameterType="java.util.List">
@@ -15,6 +15,11 @@
         SET description = case id
             <foreach collection="list" item="item">
                 when #{item.id} then #{item.description}
+            </foreach>
+        end,
+        return_description = case id
+            <foreach collection="list" item="item">
+                when #{item.id} then #{item.returnDescription}
             </foreach>
         end
         WHERE id in

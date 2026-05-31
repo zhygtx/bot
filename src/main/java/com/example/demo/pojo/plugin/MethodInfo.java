@@ -48,4 +48,10 @@ public class MethodInfo {
      * 系统生成系统与用户均不可修改
      */
     private String returnType;
+
+    /**
+     * 方法返回值描述
+     * 系统生成默认为空用户可修改
+     */
+    private String returnDescription;
 }

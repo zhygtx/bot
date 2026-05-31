@@ -111,6 +111,7 @@ CREATE TABLE `method_info` (
   `method_class_id` VARCHAR(36) NOT NULL COMMENT '方法所属方法类ID',
   `name` VARCHAR(255) NOT NULL COMMENT '方法名',
   `return_type` VARCHAR(255) NOT NULL COMMENT '方法返回值类型',
+  `return_description` TEXT COMMENT '方法返回值描述',
   FOREIGN KEY (`method_class_id`) REFERENCES `method_class_info` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='方法信息表';
 

@@ -93,6 +93,7 @@
                             <result column="method_method_class_id" property="methodClassId"/>
                             <result column="method_name" property="name"/>
                             <result column="method_return_type" property="returnType"/>
+                            <result column="method_return_description" property="returnDescription"/>
                         </collection>
                     </collection>
                 </collection>
@@ -130,6 +131,7 @@
                 <result column="method_method_class_id" property="methodClassId"/>
                 <result column="method_name" property="name"/>
                 <result column="method_return_type" property="returnType"/>
+                <result column="method_return_description" property="returnDescription"/>
                 
                 <!-- 方法参数列表 -->
                 <collection property="parameters" ofType="com.example.demo.pojo.plugin.ParameterInfo">
@@ -247,7 +249,7 @@
             -- 方法信息
             m.id as method_id, m.description as method_description,
             m.method_class_id as method_method_class_id, m.name as method_name,
-            m.return_type as method_return_type,
+            m.return_type as method_return_type, m.return_description as method_return_description,
             
             -- 参数信息
             pinfo.id as parameter_id, pinfo.description as parameter_description,
