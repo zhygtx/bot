@@ -134,10 +134,10 @@ public class EventHandler implements BotMessageEventInterceptor {
     @EventParam(name = "groupId", description = "群号", order = 2, type = "Long")
     @EventParam(name = "userId", description = "申请人的 QQ 号", order = 3, type = "Long")
     @EventParam(name = "invitorId", description = "邀请人ID", order = 4, type = "Long")
-    @EventParam(name = "message", description = "加群请求消息", order = 5)
+    @EventParam(name = "comment", description = "加群请求消息", order = 5)
     public void groupAddRequestHandler(Bot bot, GroupAddRequestEvent event){
-        log.debug("[群加请求][BOT:{}] 群号: {}, 申请人: {}, 邀请人: {}",
-                bot.getSelfId(), event.getGroupId(), event.getUserId(), event.getInvitorId());
+        log.debug("[群加请求][BOT:{}] 群号: {}, 申请人: {}, 邀请人: {}, 请求内容：{}",
+                bot.getSelfId(), event.getGroupId(), event.getUserId(), event.getInvitorId(),event.getComment());
         botWorkflowHandler.handleBotEvent(bot.getSelfId(), "GroupAddRequest", event);
     }
 }

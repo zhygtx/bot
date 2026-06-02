@@ -23,6 +23,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
 import java.util.concurrent.*;
+import org.springframework.beans.factory.annotation.Qualifier;
 
 /**
  * 工作流工具类
@@ -46,13 +47,22 @@ public class WorkflowUtil {
     private final ApplicationContext applicationContext;
     // BOT动作扫描器
     private final BotActionScanner botActionScanner;
-
+    // 工作流服务
     private final WorkflowService workflowService;
+    // 全局工作流执行线程池
+    private final ExecutorService workflowExecutor;
+    // 并发限流信号量
+    private final Semaphore workflowSemaphore;
 
-    public WorkflowUtil(ApplicationContext applicationContext, BotActionScanner botActionScanner, @Lazy WorkflowService workflowService) {
+    public WorkflowUtil(ApplicationContext applicationContext, BotActionScanner botActionScanner, 
+                       @Lazy WorkflowService workflowService,
+                       @Qualifier("workflowExecutor") ExecutorService workflowExecutor,
+                       @Qualifier("workflowSemaphore") Semaphore workflowSemaphore) {
         this.applicationContext = applicationContext;
         this.botActionScanner = botActionScanner;
         this.workflowService = workflowService;
+        this.workflowExecutor = workflowExecutor;
+        this.workflowSemaphore = workflowSemaphore;
     }
 
     /**
@@ -137,18 +147,27 @@ public class WorkflowUtil {
      * @param workflowInfo 工作流信息
      * @return 执行结果
      */
-    public JsonNode executeWorkflow(WorkflowInfo workflowInfo, String key, Object object)  throws Exception{
+    public JsonNode executeWorkflow(WorkflowInfo workflowInfo, String key, Object object) throws Exception {
+        log.debug("开始执行工作流：{} (ID: {})", workflowInfo.getName(), workflowInfo.getId());
+        
+        // 尝试获取并发许可，超时则拒绝
+        boolean acquired = workflowSemaphore.tryAcquire(500, TimeUnit.MILLISECONDS);
+        if (!acquired) {
+            log.warn("工作流 {} 执行被拒绝：系统并发数已达上限", workflowInfo.getId());
+            throw new RuntimeException("系统繁忙，请稍后重试");
+        }
+        
         try {
-            log.debug("开始执行工作流：{} (ID: {})", workflowInfo.getName(), workflowInfo.getId());
-
             ThreadLocalManager.setUserId(workflowInfo.getUserId());
 
             // 1. 构建节点依赖关系图
             WorkflowGraph graph = buildWorkflowGraph(workflowInfo);
-            JsonNode result = executeNodesInTopologicalOrder(workflowInfo,graph, key, object);
+            JsonNode result = executeNodesInTopologicalOrder(workflowInfo, graph, key, object);
             log.debug("工作流执行完成：{}", result);
             return result;
         } finally {
+            // 释放并发许可
+            workflowSemaphore.release();
             // 清理线程本地变量
             ThreadLocalManager.clear();
         }
@@ -160,137 +179,108 @@ public class WorkflowUtil {
      * @param object BOT事件数据
      * @return 执行结果
      */
-    public JsonNode executeNodesInTopologicalOrder(WorkflowInfo workflowInfo,WorkflowGraph graph, String key, Object object)  throws Exception{
+    public JsonNode executeNodesInTopologicalOrder(WorkflowInfo workflowInfo, WorkflowGraph graph, String key, Object object) throws Exception {
         if (graph == null) {
             log.warn("工作流图为 null，直接返回空结果");
             return mapper.createObjectNode();
         }
-            
-        // 使用线程池执行整个工作流，确保所有节点在同一个线程中运行
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        try {
-            CompletableFuture<JsonNode> future = CompletableFuture.supplyAsync(() -> {
-                try {
-                    // 确保执行上下文已初始化
-                    Map<String, Object> context = ThreadLocalManager.getExecutionContext();
-                    ThreadLocalManager.setUserId(workflowInfo.getUserId());
-                    // 存储BOT事件数据
-                    if (object != null) {
-                        context.put(key, object);
-                        log.debug("已存储 BOT 事件数据到上下文");
-                    }
-                        
-                    Map<String, Node> nodeMap = graph.getNodeMap();
-                    List<Set<String>> inDegreeBuckets = initializeInDegreeBuckets(nodeMap.values());
-                    Map<String, Integer> nodeToInDegree = new HashMap<>();
-                
-                    // 初始化节点入度映射
-                    for (Node node : nodeMap.values()) {
-                        nodeToInDegree.put(node.getId(), node.getInDegree());
-                    }
-                
-                    List<JsonNode> finalResults = new ArrayList<>();
-                    int processedCount = 0;
-                
-                    while (true) {
-                        // 获取入度为 0 的节点
-                        String currentNodeId = getNextZeroInDegreeNode(inDegreeBuckets);
-                        if (currentNodeId == null) {
-                            break; // 没有更多可执行的节点
-                        }
-                
-                        Node currentNode = nodeMap.get(currentNodeId);
-                        log.debug("执行节点：{} (第{}个)", currentNodeId, ++processedCount);
-                
-                        // 直接在当前线程中执行节点，不使用线程池
-                        ExecutionResult executionResult;
-                        try {
-                            executionResult = executeSingleNode(currentNode);
-                        } catch (Exception e) {
-                            // 节点执行失败，记录详细错误
-                            String errorMsg = String.format("节点 %s 执行失败：%s", currentNodeId, e.getMessage());
-                            workflowService.editDisableReason(workflowInfo.getId(), errorMsg);
-                            throw e;
-                        }
-                
-                        if (!executionResult.continueExecution()) {
-                            // 结束整个工作流
-                            log.debug("工作流执行被条件终止");
-                            return mapper.createObjectNode();
-                        }
-                
-                        if (executionResult.result() != null) {
-                            // 如果是最后一个节点，保存结果
-                            if (currentNode.getNextNodeId() == null || currentNode.getNextNodeId().isEmpty()) {
-                                finalResults.add(mapper.valueToTree(executionResult.result()));
-                            }
-                
-                            // 更新后续节点的入度
-                            updateSuccessorNodesInDegree(currentNode, nodeToInDegree, inDegreeBuckets);
-                        } else {
-                            // 条件判断为 BREAK，结束当前分支
-                            log.debug("跳过节点{}的后续分支", currentNodeId);
-                        }
-                    }
-                
-                    if (processedCount != nodeMap.size()) {
-                        log.warn("工作流执行异常：预期执行{}个节点，实际执行{}个节点",
-                                nodeMap.size(), processedCount);
-                    }
-                
-                    // 返回多结束节点的结果
-                    if (finalResults.isEmpty()) {
-                        return mapper.createObjectNode();
-                    } else if (finalResults.size() == 1) {
-                        return finalResults.get(0);
-                    } else {
-                        // 多个结束节点，返回结果数组
-                        return mapper.valueToTree(finalResults);
-                    }
-                } catch (Exception e) {
-                    throw new CompletionException(e);
-                } finally {
-                    // 清理ThreadLocal变量
-                    ThreadLocalManager.clear();
-                }
-            }, executor);
 
+        // 使用全局线程池执行工作流，避免重复创建线程池
+        CompletableFuture<JsonNode> future = CompletableFuture.supplyAsync(() -> {
             try {
-                // 设置整个工作流的超时时间，为单个节点超时时间的n倍（n为节点数量）
-                int nodeCount = graph.getNodeMap().size();
-                long workflowTimeoutMs = NODE_TIMEOUT_MS * nodeCount;
-                return future.get(workflowTimeoutMs, TimeUnit.MILLISECONDS);
-            } catch (TimeoutException e) {
-                int nodeCount = graph.getNodeMap().size();
-                long workflowTimeoutMs = NODE_TIMEOUT_MS * nodeCount;
-                log.error("工作流执行超时：超过{}ms", workflowTimeoutMs);
-                workflowService.editDisableReason(workflowInfo.getId(), "工作流执行超时（超过" + workflowTimeoutMs + "毫秒）");
-                future.cancel(true);
-                throw new RuntimeException("工作流执行超时（超过" + workflowTimeoutMs + "毫秒）");
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                log.debug("工作流执行被中断");
-                workflowService.editDisableReason(workflowInfo.getId(), "工作流执行被中断:" + e.getMessage());
-                throw new RuntimeException("工作流执行被中断", e);
-            } catch (CompletionException | ExecutionException e) {
-                log.error("工作流执行异常", e.getCause());
-                workflowService.editDisableReason(workflowInfo.getId(), "工作流执行异常:" + e.getMessage());
-                Throwable cause = e.getCause();
-                if (cause instanceof Exception) {
-                    throw (Exception) cause;
+                Map<String, Object> context = ThreadLocalManager.getExecutionContext();
+                ThreadLocalManager.setUserId(workflowInfo.getUserId());
+                if (object != null) {
+                    context.put(key, object);
+                    log.debug("已存储 BOT 事件数据到上下文");
+                }
+
+                Map<String, Node> nodeMap = graph.getNodeMap();
+                List<Set<String>> inDegreeBuckets = initializeInDegreeBuckets(nodeMap.values());
+                Map<String, Integer> nodeToInDegree = new HashMap<>();
+
+                for (Node node : nodeMap.values()) {
+                    nodeToInDegree.put(node.getId(), node.getInDegree());
+                }
+
+                List<JsonNode> finalResults = new ArrayList<>();
+                int processedCount = 0;
+
+                while (true) {
+                    String currentNodeId = getNextZeroInDegreeNode(inDegreeBuckets);
+                    if (currentNodeId == null) {
+                        break;
+                    }
+
+                    Node currentNode = nodeMap.get(currentNodeId);
+                    log.debug("执行节点：{} (第{}个)", currentNodeId, ++processedCount);
+
+                    ExecutionResult executionResult;
+                    try {
+                        executionResult = executeSingleNode(currentNode);
+                    } catch (Exception e) {
+                        String errorMsg = String.format("节点 %s 执行失败：%s", currentNodeId, e.getMessage());
+                        workflowService.editDisableReason(workflowInfo.getId(), errorMsg);
+                        throw e;
+                    }
+
+                    if (!executionResult.continueExecution()) {
+                        log.debug("工作流执行被条件终止");
+                        return mapper.createObjectNode();
+                    }
+
+                    if (executionResult.result() != null) {
+                        if (currentNode.getNextNodeId() == null || currentNode.getNextNodeId().isEmpty()) {
+                            finalResults.add(mapper.valueToTree(executionResult.result()));
+                        }
+                        updateSuccessorNodesInDegree(currentNode, nodeToInDegree, inDegreeBuckets);
+                    } else {
+                        log.debug("跳过节点{}的后续分支", currentNodeId);
+                    }
+                }
+
+                if (processedCount != nodeMap.size()) {
+                    log.warn("工作流执行异常：预期执行{}个节点，实际执行{}个节点",
+                            nodeMap.size(), processedCount);
+                }
+
+                if (finalResults.isEmpty()) {
+                    return mapper.createObjectNode();
+                } else if (finalResults.size() == 1) {
+                    return finalResults.get(0);
                 } else {
-                    throw new RuntimeException("工作流执行异常", cause);
+                    return mapper.valueToTree(finalResults);
                 }
+            } catch (Exception e) {
+                throw new CompletionException(e);
+            } finally {
+                ThreadLocalManager.clear();
             }
-        } finally {
-            executor.shutdown();
-            try {
-                if (!executor.awaitTermination(1, TimeUnit.SECONDS)) {
-                    executor.shutdownNow();
-                }
-            } catch (InterruptedException e) {
-                executor.shutdownNow();
-                Thread.currentThread().interrupt();
+        }, workflowExecutor);
+
+        int nodeCount = graph.getNodeMap().size();
+        long workflowTimeoutMs = NODE_TIMEOUT_MS * nodeCount;
+
+        try {
+            return future.get(workflowTimeoutMs, TimeUnit.MILLISECONDS);
+        } catch (TimeoutException e) {
+            log.error("工作流执行超时：超过{}ms", workflowTimeoutMs);
+            workflowService.editDisableReason(workflowInfo.getId(), "工作流执行超时（超过" + workflowTimeoutMs + "毫秒）");
+            future.cancel(true);
+            throw new RuntimeException("工作流执行超时（超过" + workflowTimeoutMs + "毫秒）");
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.debug("工作流执行被中断");
+            workflowService.editDisableReason(workflowInfo.getId(), "工作流执行被中断:" + e.getMessage());
+            throw new RuntimeException("工作流执行被中断", e);
+        } catch (CompletionException | ExecutionException e) {
+            log.error("工作流执行异常", e.getCause());
+            workflowService.editDisableReason(workflowInfo.getId(), "工作流执行异常:" + e.getMessage());
+            Throwable cause = e.getCause();
+            if (cause instanceof Exception) {
+                throw (Exception) cause;
+            } else {
+                throw new RuntimeException("工作流执行异常", cause);
             }
         }
     }
