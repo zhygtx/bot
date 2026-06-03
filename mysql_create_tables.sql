@@ -257,6 +257,7 @@ CREATE TABLE `node_log` (
   `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '节点日志ID',
   `workflow_log_id` VARCHAR(36) NOT NULL COMMENT '工作流日志ID',
   `method_id` VARCHAR(36) COMMENT '节点使用的插件方法ID',
+  `node_id` VARCHAR(36) NOT NULL COMMENT '节点ID',
   `execution_time` BIGINT COMMENT '节点执行耗时（毫秒）',
   `order` INT COMMENT '节点执行次序',
   `input` TEXT COMMENT '节点输入内容（JSON格式）',

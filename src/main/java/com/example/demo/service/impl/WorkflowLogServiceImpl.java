@@ -7,8 +7,8 @@ import com.example.demo.pojo.log.WorkflowLog;
 import com.example.demo.service.WorkflowLogService;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -31,14 +31,12 @@ public class WorkflowLogServiceImpl implements WorkflowLogService {
      *
      * @param workflowLog 工作流日志
      * @param nodeLogs    节点日志列表
-     * @return 添加结果
      */
     @Override
-    @Transactional
-    public int add(WorkflowLog workflowLog, List<NodeLog> nodeLogs) {
-        int workflowLogResult = workflowLogMapper.insert(workflowLog);
-        int nodeLogResult = nodeLogMapper.insert(nodeLogs);
-        return workflowLogResult + nodeLogResult;
+    @Async
+    public void add(WorkflowLog workflowLog, List<NodeLog> nodeLogs) {
+        workflowLogMapper.insert(workflowLog);
+        nodeLogMapper.insert(nodeLogs);
     }
 
     /**

@@ -34,6 +34,9 @@ public class BotEventScanner {
         scanEvents();
     }
 
+    /**
+     * 扫描BOT事件
+     */
     private void scanEvents() {
         try {
             Map<String, Object> shiroBeans = applicationContext.getBeansWithAnnotation(Shiro.class);
@@ -69,6 +72,12 @@ public class BotEventScanner {
         }
     }
 
+    /**
+     * 提取事件元数据
+     * @param method 方法
+     * @param botEvent 注解
+     * @return 事件元数据
+     */
     private EventMetadata extractEventMetadata(Method method, BotEvent botEvent) {
         List<FieldMetadata> fields = new ArrayList<>();
 
@@ -101,6 +110,11 @@ public class BotEventScanner {
             .build();
     }
 
+    /**
+     * 根据事件类型获取事件元数据
+     * @param eventType 事件类型
+     * @return 事件元数据
+     */
     public EventMetadata getEventByType(String eventType) {
         return eventMetadataList.stream()
             .filter(e -> e.getEventType().equals(eventType))
@@ -108,6 +122,10 @@ public class BotEventScanner {
             .orElse(null);
     }
 
+    /**
+     * 获取所有启用的事件
+     * @return 所有启用的事件
+     */
     public List<EventMetadata> getEnabledEvents() {
         return eventMetadataList.stream()
             .filter(e -> e.getOrder() >= 0)

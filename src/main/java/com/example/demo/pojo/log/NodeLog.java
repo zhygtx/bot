@@ -1,6 +1,7 @@
 package com.example.demo.pojo.log;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -10,6 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
+@Builder
 public class NodeLog {
 
     /**
@@ -21,6 +23,11 @@ public class NodeLog {
      * 工作流日志 ID
      */
     private String workflowLogId;
+
+    /**
+     * 节点 ID
+     */
+    private String nodeId;
 
     /**
      * 节点使用的插件方法ID

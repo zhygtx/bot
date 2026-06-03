@@ -11,7 +11,7 @@ import java.util.List;
  */
 public interface WorkflowLogService {
 
-    int add(WorkflowLog workflowLog, List<NodeLog> nodeLogs);
+    void add(WorkflowLog workflowLog, List<NodeLog> nodeLogs);
 
     PageInfo<WorkflowLog> findWorkflowLogs(String userId, int pageNum, int pageSize);
 
