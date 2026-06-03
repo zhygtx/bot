@@ -1,7 +1,7 @@
 package com.example.demo.service;
 
-import com.example.demo.pojo.BotInfo;
-import com.example.demo.pojo.Result;
+import com.example.demo.pojo.entity.BotInfo;
+import com.example.demo.pojo.entity.Result;
 
 import java.util.Set;
 

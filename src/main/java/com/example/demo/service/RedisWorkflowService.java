@@ -1,6 +1,6 @@
 package com.example.demo.service;
 
-import com.example.demo.pojo.workflow.WorkflowInfo;
+import com.example.demo.pojo.entity.workflow.WorkflowInfo;
 
 import java.util.List;
 

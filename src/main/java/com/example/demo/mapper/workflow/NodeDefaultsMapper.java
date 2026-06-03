@@ -1,6 +1,6 @@
 package com.example.demo.mapper.workflow;
 
-import com.example.demo.pojo.workflow.NodeDefaults;
+import com.example.demo.pojo.entity.workflow.NodeDefaults;
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;

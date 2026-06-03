@@ -1,4 +1,4 @@
-package com.example.demo.pojo.plugin;
+package com.example.demo.pojo.entity.plugin;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -7,50 +7,45 @@ import lombok.NoArgsConstructor;
 import java.util.List;
 
 /**
- * 方法类信息
+ * 实体类信息
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class MethodClassInfo {
+public class EntityInfo {
     /**
-     * 方法类id
+     * 实体类id
      * 系统生成系统与用户均不可修改
      */
     private String id;
 
     /**
-     * 类描述
+     * 实体类描述
      * 系统生成默认为空用户可修改
      */
     private String description;
 
     /**
-     * 方法类版本id
+     * 实体类简写名称
+     * 系统生成系统与用户均不可修改
+     */
+    private String name;
+
+    /**
+     * 实体类所属插件版本id
      * 系统生成系统与用户均不可修改
      */
     private String pluginVersionId;
 
     /**
-     * 类全限定名
+    * 实体全限定名
      * 系统生成系统与用户均不可修改
-     */
-    private String className;
+    */
+    private String entityName;
 
     /**
-     * 简单类名
+     * 实体类属性信息列表
      * 系统生成系统与用户均不可修改
      */
-    private String simpleClassName;
-
-    /**
-     * 包名
-     * 系统生成系统与用户均不可修改
-     */
-    private String packageName;
-
-    /**
-     * 该类中的方法列表
-     */
-    private List<MethodInfo> methods;
+    private List<Attribute> attributes;
 }

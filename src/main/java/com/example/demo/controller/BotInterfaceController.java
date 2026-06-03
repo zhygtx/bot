@@ -2,7 +2,7 @@ package com.example.demo.controller;
 
 import com.example.demo.metadata.ActionMetadata;
 import com.example.demo.metadata.EventMetadata;
-import com.example.demo.pojo.Result;
+import com.example.demo.pojo.entity.Result;
 import com.example.demo.scanner.BotEventScanner;
 import com.example.demo.scanner.BotActionScanner;
 import lombok.extern.slf4j.Slf4j;

@@ -1,4 +1,4 @@
-package com.example.demo.pojo;
+package com.example.demo.pojo.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;

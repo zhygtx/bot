@@ -1,7 +1,7 @@
 package com.example.demo.controller;
 
-import com.example.demo.pojo.Result;
-import com.example.demo.pojo.User;
+import com.example.demo.pojo.entity.Result;
+import com.example.demo.pojo.entity.User;
 import com.example.demo.service.EmailService;
 import com.example.demo.service.UserService;
 import com.example.demo.util.AuthUtil;

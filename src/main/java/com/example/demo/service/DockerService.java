@@ -1,8 +1,8 @@
 package com.example.demo.service;
 
-import com.example.demo.pojo.Docker;
-import com.example.demo.pojo.Result;
-import com.example.demo.pojo.User;
+import com.example.demo.pojo.entity.Docker;
+import com.example.demo.pojo.entity.Result;
+import com.example.demo.pojo.entity.User;
 
 /**
  * docker 服务接口

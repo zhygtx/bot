@@ -1,13 +1,13 @@
 package com.example.demo.util;
 
 import com.example.demo.api.BotActionService;
-import com.example.demo.pojo.log.NodeLog;
-import com.example.demo.pojo.log.WorkflowLog;
-import com.example.demo.pojo.plugin.MethodClassInfo;
-import com.example.demo.pojo.plugin.MethodInfo;
-import com.example.demo.pojo.plugin.ParameterInfo;
-import com.example.demo.pojo.plugin.PluginVersion;
-import com.example.demo.pojo.workflow.*;
+import com.example.demo.pojo.entity.log.NodeLog;
+import com.example.demo.pojo.entity.log.WorkflowLog;
+import com.example.demo.pojo.entity.plugin.MethodClassInfo;
+import com.example.demo.pojo.entity.plugin.MethodInfo;
+import com.example.demo.pojo.entity.plugin.ParameterInfo;
+import com.example.demo.pojo.entity.plugin.PluginVersion;
+import com.example.demo.pojo.entity.workflow.*;
 import com.example.demo.scanner.BotActionScanner;
 import com.example.demo.service.WorkflowLogService;
 import com.example.demo.service.WorkflowService;

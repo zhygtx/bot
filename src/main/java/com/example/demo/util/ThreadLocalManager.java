@@ -1,7 +1,7 @@
 package com.example.demo.util;
 
-import com.example.demo.pojo.log.NodeLog;
-import com.example.demo.pojo.log.WorkflowLog;
+import com.example.demo.pojo.entity.log.NodeLog;
+import com.example.demo.pojo.entity.log.WorkflowLog;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;

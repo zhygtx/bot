@@ -1,6 +1,6 @@
 package com.example.demo.mapper;
 
-import com.example.demo.pojo.User;
+import com.example.demo.pojo.entity.User;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;

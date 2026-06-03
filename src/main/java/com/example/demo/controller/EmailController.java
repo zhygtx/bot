@@ -1,6 +1,6 @@
 package com.example.demo.controller;
 
-import com.example.demo.pojo.Result;
+import com.example.demo.pojo.entity.Result;
 import com.example.demo.service.EmailService;
 import com.example.demo.service.UserService;
 import org.springframework.web.bind.annotation.RequestMapping;

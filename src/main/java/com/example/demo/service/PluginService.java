@@ -1,7 +1,7 @@
 package com.example.demo.service;
 
-import com.example.demo.pojo.Result;
-import com.example.demo.pojo.plugin.PluginInfo;
+import com.example.demo.pojo.entity.Result;
+import com.example.demo.pojo.entity.plugin.PluginInfo;
 import com.github.pagehelper.PageInfo;
 import org.springframework.web.multipart.MultipartFile;
 

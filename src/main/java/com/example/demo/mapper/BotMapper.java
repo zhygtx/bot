@@ -1,6 +1,6 @@
 package com.example.demo.mapper;
 
-import com.example.demo.pojo.BotInfo;
+import com.example.demo.pojo.entity.BotInfo;
 import org.apache.ibatis.annotations.*;
 
 import java.util.Set;

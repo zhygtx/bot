@@ -1,7 +1,7 @@
 package com.example.demo.service;
 
-import com.example.demo.pojo.log.NodeLog;
-import com.example.demo.pojo.log.WorkflowLog;
+import com.example.demo.pojo.entity.log.NodeLog;
+import com.example.demo.pojo.entity.log.WorkflowLog;
 import com.github.pagehelper.PageInfo;
 
 import java.util.List;
@@ -13,7 +13,7 @@ public interface WorkflowLogService {
 
     void add(WorkflowLog workflowLog, List<NodeLog> nodeLogs);
 
-    PageInfo<WorkflowLog> findWorkflowLogs(String userId, int pageNum, int pageSize);
+    PageInfo<WorkflowLog> findWorkflowLogs(String userId, String workflowName, Long startTime, Long endTime, int pageNum, int pageSize);
 
     List<NodeLog> findNodeLogs(String workflowLogId);
 }

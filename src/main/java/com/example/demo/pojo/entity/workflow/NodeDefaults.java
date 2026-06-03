@@ -1,4 +1,4 @@
-package com.example.demo.pojo.workflow;
+package com.example.demo.pojo.entity.workflow;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

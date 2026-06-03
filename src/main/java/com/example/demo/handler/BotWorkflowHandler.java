@@ -1,6 +1,6 @@
 package com.example.demo.handler;
 
-import com.example.demo.pojo.workflow.WorkflowInfo;
+import com.example.demo.pojo.entity.workflow.WorkflowInfo;
 import com.example.demo.service.RedisWorkflowService;
 import com.example.demo.util.WorkflowUtil;
 import lombok.extern.slf4j.Slf4j;

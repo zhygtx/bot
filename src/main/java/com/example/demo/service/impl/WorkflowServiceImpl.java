@@ -1,7 +1,9 @@
 package com.example.demo.service.impl;
 
+import com.example.demo.mapper.log.WorkflowLogMapper;
 import com.example.demo.mapper.workflow.*;
-import com.example.demo.pojo.workflow.*;
+import com.example.demo.pojo.dto.WorkflowInfoDto;
+import com.example.demo.pojo.entity.workflow.*;
 import com.example.demo.service.WorkflowService;
 import com.example.demo.util.WorkflowUtil;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -31,8 +33,9 @@ public class WorkflowServiceImpl implements WorkflowService {
     private final ConditionMapper conditionMapper;
     private final DataMapMapper dataMapMapper;
     private final RedisWorkflowServiceImpl redisWorkflowServiceImpl;
+    private final WorkflowLogMapper workflowLogMapper;
 
-    public WorkflowServiceImpl(WorkflowInfoMapper workflowInfoMapper, NodeDefaultsMapper nodeDefaultsMapper, NodeNextRelationMapper nodeNextRelationMapper, NodePreRelationMapper nodePreRelationMapper, NodeMapper nodeMapper, ConditionMapper conditionMapper, DataMapMapper dataMapMapper, WorkflowUtil workflowUtil, RedisWorkflowServiceImpl redisWorkflowServiceImpl) {
+    public WorkflowServiceImpl(WorkflowInfoMapper workflowInfoMapper, NodeDefaultsMapper nodeDefaultsMapper, NodeNextRelationMapper nodeNextRelationMapper, NodePreRelationMapper nodePreRelationMapper, NodeMapper nodeMapper, ConditionMapper conditionMapper, DataMapMapper dataMapMapper, WorkflowUtil workflowUtil, RedisWorkflowServiceImpl redisWorkflowServiceImpl, WorkflowLogMapper workflowLogMapper) {
         this.workflowInfoMapper = workflowInfoMapper;
         this.nodeDefaultsMapper = nodeDefaultsMapper;
         this.nodeNextRelationMapper = nodeNextRelationMapper;
@@ -42,6 +45,7 @@ public class WorkflowServiceImpl implements WorkflowService {
         this.dataMapMapper = dataMapMapper;
         this.workflowUtil = workflowUtil;
         this.redisWorkflowServiceImpl = redisWorkflowServiceImpl;
+        this.workflowLogMapper = workflowLogMapper;
     }
 
     /**
@@ -133,7 +137,7 @@ public class WorkflowServiceImpl implements WorkflowService {
      * @return 工作流列表
      */
     @Override
-    public PageInfo<WorkflowInfo> findAll(String userId,int pageNum, int pageSize) {
+    public PageInfo<WorkflowInfoDto> findAll(String userId,int pageNum, int pageSize) {
         PageHelper.startPage(pageNum, pageSize);
         List<String> ids;
         if (userId != null){
@@ -145,9 +149,40 @@ public class WorkflowServiceImpl implements WorkflowService {
             return new PageInfo<>(new ArrayList<>());
         }
 
-        List<WorkflowInfo> workflowInfos = workflowInfoMapper.selectAll(ids);
+        List<WorkflowInfoDto> workflowInfos = workflowInfoMapper.selectAll(ids);
+        
+        // 获取统计信息
+        List<Map<String, Object>> statsList = workflowLogMapper.selectStatsByWorkflowIds(ids);
+        
+        // 将统计信息转换为 Map，方便查找
+        Map<String, Map<String, Object>> statsMap = new HashMap<>();
+        for (Map<String, Object> stats : statsList) {
+            String workflowId = (String) stats.get("workflowId");
+            statsMap.put(workflowId, stats);
+        }
+        
+        // 填充统计数据到工作流信息中
+        for (WorkflowInfoDto dto : workflowInfos) {
+            Map<String, Object> stats = statsMap.get(dto.getId());
+            if (stats != null) {
+                dto.setExecuteCount(((Number) stats.get("executeCount")).intValue());
+                Object avgExecTime = stats.get("averageExecutionTime");
+                if (avgExecTime != null) {
+                    dto.setAverageExecutionTime(((Number) avgExecTime).intValue());
+                }
+                Object avgNodeCount = stats.get("averageNodeCount");
+                if (avgNodeCount != null) {
+                    dto.setAverageNodeCount(((Number) avgNodeCount).intValue());
+                }
+            } else {
+                // 没有执行记录时设置默认值
+                dto.setExecuteCount(0);
+                dto.setAverageExecutionTime(0);
+                dto.setAverageNodeCount(0);
+            }
+        }
 
-        PageInfo<WorkflowInfo> pageInfo = new PageInfo<>(workflowInfos);
+        PageInfo<WorkflowInfoDto> pageInfo = new PageInfo<>(workflowInfos);
         pageInfo.setTotal(workflowInfoMapper.countAll());
 
         return pageInfo;

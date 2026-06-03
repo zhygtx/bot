@@ -1,6 +1,6 @@
 package com.example.demo.util;
 
-import com.example.demo.pojo.workflow.WorkflowInfo;
+import com.example.demo.pojo.entity.workflow.WorkflowInfo;
 import com.example.demo.service.RedisWorkflowService;
 import com.example.demo.service.WorkflowService;
 import lombok.extern.slf4j.Slf4j;
@@ -9,7 +9,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import jakarta.annotation.PostConstruct;
 import java.util.List;
 
 /**
@@ -38,20 +37,20 @@ public class ScheduledTaskManager {
     /**
      * 初始化定时任务
      */
-    @PostConstruct
-    public void init() {
-        try {
-            // 扫描所有工作流，初始化定时任务
-            log.info("开始初始化定时任务...");
-            com.github.pagehelper.PageInfo<WorkflowInfo> pageInfo = workflowService.findAll(null,1, Integer.MAX_VALUE);
-            for (WorkflowInfo workflow : pageInfo.getList()) {
-                redisWorkflowService.addScheduledTask(workflow);
-            }
-            log.info("定时任务初始化完成");
-        } catch (Exception e) {
-            log.error("初始化定时任务失败", e);
-        }
-    }
+//    @PostConstruct
+//    public void init() {
+//        try {
+//            // 扫描所有工作流，初始化定时任务
+//            log.info("开始初始化定时任务...");
+//            com.github.pagehelper.PageInfo<WorkflowInfo> pageInfo = workflowService.findAll(null,1, Integer.MAX_VALUE);
+//            for (WorkflowInfo workflow : pageInfo.getList()) {
+//                redisWorkflowService.addScheduledTask(workflow);
+//            }
+//            log.info("定时任务初始化完成");
+//        } catch (Exception e) {
+//            log.error("初始化定时任务失败", e);
+//        }
+//    }
 
     /**
      * 扫描并执行过期任务

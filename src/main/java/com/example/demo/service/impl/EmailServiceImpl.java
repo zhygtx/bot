@@ -1,6 +1,6 @@
 package com.example.demo.service.impl;
 
-import com.example.demo.pojo.Result;
+import com.example.demo.pojo.entity.Result;
 import com.example.demo.service.EmailService;
 import com.example.demo.util.EmailUtil;
 import lombok.extern.slf4j.Slf4j;

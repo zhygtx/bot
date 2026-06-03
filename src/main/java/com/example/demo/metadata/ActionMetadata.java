@@ -1,6 +1,6 @@
 package com.example.demo.metadata;
 
-import com.example.demo.pojo.plugin.ParameterInfo;
+import com.example.demo.pojo.entity.plugin.ParameterInfo;
 import lombok.Builder;
 import lombok.Data;
 

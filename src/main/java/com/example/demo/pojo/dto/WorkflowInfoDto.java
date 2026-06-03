@@ -1,4 +1,4 @@
-package com.example.demo.pojo.workflow;
+package com.example.demo.pojo.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
@@ -6,12 +6,14 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
+/**
+ * 工作流信息DTO
+ */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class WorkflowInfo {
+public class WorkflowInfoDto {
 
     /**
      * 工作流ID
@@ -24,19 +26,9 @@ public class WorkflowInfo {
     private String userId;
 
     /**
-     * 工作流创建者名称
-     */
-    private String authorName;
-
-    /**
      * 工作流名称
      */
     private String name;
-
-    /**
-     * 工作流描述
-     */
-    private String description;
 
     /**
      * 工作流是否可用
@@ -49,11 +41,6 @@ public class WorkflowInfo {
     private String disableReason;
 
     /**
-     * 工作流节点列表
-     */
-    private List<Node> nodes;
-
-    /**
      * 工作流创建时间
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
@@ -64,4 +51,24 @@ public class WorkflowInfo {
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updateTime;
+
+    /**
+     * 工作流执行次数
+     */
+    private Integer executeCount;
+
+    /**
+     * 工作流平均执行时间
+     */
+    private Integer averageExecutionTime;
+
+    /**
+     * 工作流节点数
+     */
+    private Integer nodeCount;
+
+    /**
+     * 工作流平均节点数
+     */
+    private Integer averageNodeCount;
 }

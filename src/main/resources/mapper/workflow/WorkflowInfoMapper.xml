@@ -4,19 +4,18 @@
 <mapper namespace="com.example.demo.mapper.workflow.WorkflowInfoMapper">
 
     <!-- 工作流信息结果映射 -->
-    <resultMap id="workflowInfoMap" type="com.example.demo.pojo.workflow.WorkflowInfo">
+    <resultMap id="workflowInfoMap" type="com.example.demo.pojo.entity.workflow.WorkflowInfo">
         <id column="workflow_id" property="id"/>
         <result column="workflow_user_id" property="userId"/>
         <result column="workflow_author_name" property="authorName"/>
         <result column="workflow_name" property="name"/>
-        <result column="workflow_description" property="description"/>
         <result column="workflow_available" property="available"/>
         <result column="workflow_disable_reason" property="disableReason"/>
         <result column="workflow_create_time" property="createTime"/>
         <result column="workflow_update_time" property="updateTime"/>
 
         <!-- 工作流节点列表 -->
-        <collection property="nodes" ofType="com.example.demo.pojo.workflow.Node">
+        <collection property="nodes" ofType="com.example.demo.pojo.entity.workflow.Node">
             <id column="node_id" property="id"/>
             <result column="node_x" property="x"/>
             <result column="node_y" property="y"/>
@@ -34,7 +33,7 @@
             <result column="node_in_degree" property="inDegree"/>
 
             <!-- 插件信息 -->
-            <association property="pluginInfo" javaType="com.example.demo.pojo.plugin.PluginInfo">
+            <association property="pluginInfo" javaType="com.example.demo.pojo.entity.plugin.PluginInfo">
                 <id column="plugin_id" property="id"/>
                 <result column="plugin_name" property="name"/>
                 <result column="plugin_description" property="description"/>
@@ -47,7 +46,7 @@
                 <result column="plugin_is_public" property="isPublic"/>
                 
                 <!-- 插件版本列表 -->
-                <collection property="pluginVersionList" ofType="com.example.demo.pojo.plugin.PluginVersion">
+                <collection property="pluginVersionList" ofType="com.example.demo.pojo.entity.plugin.PluginVersion">
                     <id column="plugin_version_id" property="id"/>
                     <result column="plugin_version_plugin_id" property="pluginId"/>
                     <result column="plugin_version_version" property="version"/>
@@ -61,14 +60,14 @@
                     <result column="plugin_version_compatible_version" property="compatibleVersion"/>
                     
                     <!-- 实体类信息列表 -->
-                    <collection property="entityInfoList" ofType="com.example.demo.pojo.plugin.EntityInfo">
+                    <collection property="entityInfoList" ofType="com.example.demo.pojo.entity.plugin.EntityInfo">
                         <id column="entity_id" property="id"/>
                         <result column="entity_description" property="description"/>
                         <result column="entity_name" property="name"/>
                         <result column="entity_plugin_version_id" property="pluginVersionId"/>
                         <result column="entity_entity_name" property="entityName"/>
                         <!-- 关联属性信息 -->
-                        <collection property="attributes" ofType="com.example.demo.pojo.plugin.Attribute">
+                        <collection property="attributes" ofType="com.example.demo.pojo.entity.plugin.Attribute">
                             <id column="attribute_id" property="id"/>
                             <result column="attribute_description" property="description"/>
                             <result column="attribute_entity_info_id" property="entityInfoId"/>
@@ -78,7 +77,7 @@
                     </collection>
                     
                     <!-- 方法类信息列表 -->
-                    <collection property="methodClassInfoList" ofType="com.example.demo.pojo.plugin.MethodClassInfo">
+                    <collection property="methodClassInfoList" ofType="com.example.demo.pojo.entity.plugin.MethodClassInfo">
                         <id column="method_class_id" property="id"/>
                         <result column="method_class_description" property="description"/>
                         <result column="method_class_plugin_version_id" property="pluginVersionId"/>
@@ -87,7 +86,7 @@
                         <result column="method_class_package_name" property="packageName"/>
                         
                         <!-- 方法列表 -->
-                        <collection property="methods" ofType="com.example.demo.pojo.plugin.MethodInfo">
+                        <collection property="methods" ofType="com.example.demo.pojo.entity.plugin.MethodInfo">
                             <id column="method_id" property="id"/>
                             <result column="method_description" property="description"/>
                             <result column="method_method_class_id" property="methodClassId"/>
@@ -100,7 +99,7 @@
             </association>
 
             <!-- 插件版本信息 -->
-            <association property="pluginVersion" javaType="com.example.demo.pojo.plugin.PluginVersion">
+            <association property="pluginVersion" javaType="com.example.demo.pojo.entity.plugin.PluginVersion">
                 <id column="plugin_version_id" property="id"/>
                 <result column="plugin_version_plugin_id" property="pluginId"/>
                 <result column="plugin_version_version" property="version"/>
@@ -115,7 +114,7 @@
             </association>
 
             <!-- 方法类信息 -->
-            <association property="methodClassInfo" javaType="com.example.demo.pojo.plugin.MethodClassInfo">
+            <association property="methodClassInfo" javaType="com.example.demo.pojo.entity.plugin.MethodClassInfo">
                 <id column="method_class_id" property="id"/>
                 <result column="method_class_description" property="description"/>
                 <result column="method_class_plugin_version_id" property="pluginVersionId"/>
@@ -125,7 +124,7 @@
             </association>
 
             <!-- 方法信息 -->
-            <association property="methodInfo" javaType="com.example.demo.pojo.plugin.MethodInfo">
+            <association property="methodInfo" javaType="com.example.demo.pojo.entity.plugin.MethodInfo">
                 <id column="method_id" property="id"/>
                 <result column="method_description" property="description"/>
                 <result column="method_method_class_id" property="methodClassId"/>
@@ -134,7 +133,7 @@
                 <result column="method_return_description" property="returnDescription"/>
                 
                 <!-- 方法参数列表 -->
-                <collection property="parameters" ofType="com.example.demo.pojo.plugin.ParameterInfo">
+                <collection property="parameters" ofType="com.example.demo.pojo.entity.plugin.ParameterInfo">
                     <id column="parameter_id" property="id"/>
                     <result column="parameter_order" property="order"/>
                     <result column="parameter_description" property="description"/>
@@ -145,7 +144,7 @@
             </association>
 
             <!-- 节点条件 -->
-            <association property="condition" javaType="com.example.demo.pojo.workflow.Condition">
+            <association property="condition" javaType="com.example.demo.pojo.entity.workflow.Condition">
                 <id column="condition_id" property="id"/>
                 <result column="condition_node_id" property="nodeId"/>
                 <result column="condition_true_action" property="trueAction"/>
@@ -153,7 +152,7 @@
             </association>
 
             <!-- 数据映射列表 -->
-            <collection property="dataMaps" ofType="com.example.demo.pojo.workflow.DataMap">
+            <collection property="dataMaps" ofType="com.example.demo.pojo.entity.workflow.DataMap">
                 <id column="data_map_id" property="id"/>
                 <result column="data_map_node_id" property="nodeId"/>
                 <result column="data_map_source_node_id" property="sourceNodeId"/>
@@ -176,7 +175,7 @@
             </collection>
 
             <!-- 节点默认值列表 -->
-            <collection property="nodeDefaults" ofType="com.example.demo.pojo.workflow.NodeDefaults">
+            <collection property="nodeDefaults" ofType="com.example.demo.pojo.entity.workflow.NodeDefaults">
                 <id column="node_defaults_id" property="id"/>
                 <result column="node_defaults_node_id" property="nodeId"/>
                 <result column="node_defaults_param_index" property="paramIndex"/>
@@ -190,11 +189,23 @@
 
     </resultMap>
 
+    <!-- WorkflowInfoDto 结果映射 -->
+    <resultMap id="workflowInfoDtoMap" type="com.example.demo.pojo.dto.WorkflowInfoDto">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="name" property="name"/>
+        <result column="available" property="available"/>
+        <result column="disable_reason" property="disableReason"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="node_count" property="nodeCount"/>
+    </resultMap>
+
     <sql id="select">
         SELECT
             -- 工作流基本信息
             w.id as workflow_id, w.user_id as workflow_user_id, w.author_name as workflow_author_name, w.name as workflow_name,
-            w.description as workflow_description, w.available as workflow_available, w.disable_reason as workflow_disable_reason,
+            w.available as workflow_available, w.disable_reason as workflow_disable_reason,
             w.create_time as workflow_create_time,w.update_time as workflow_update_time,
 
             -- 节点基本信息
@@ -314,9 +325,9 @@
 
     </sql>
 
-    <insert id="insert" parameterType="com.example.demo.pojo.workflow.WorkflowInfo">
-        INSERT INTO workflow_info(id, user_id, author_name, name, description, available, create_time, update_time)
-        VALUES (#{id}, #{userId}, #{authorName}, #{name}, #{description}, true, #{createTime}, #{updateTime})
+    <insert id="insert" parameterType="com.example.demo.pojo.entity.workflow.WorkflowInfo">
+        INSERT INTO workflow_info(id, user_id, author_name, name, available, create_time, update_time)
+        VALUES (#{id}, #{userId}, #{authorName}, #{name}, true, #{createTime}, #{updateTime})
     </insert>
 
     <delete id="deleteById" parameterType="string">
@@ -329,15 +340,6 @@
         ORDER BY create_time DESC
     </select>
 
-    <select id="selectAll" resultMap="workflowInfoMap">
-        <include refid="select"/>
-        WHERE w.id IN
-        <foreach collection="ids" item="id" open="(" separator="," close=")">
-            #{id}
-        </foreach>
-        ORDER BY w.create_time DESC
-    </select>
-
     <!-- 根据ID查询工作流信息（包含完整关联数据） -->
     <select id="getById" resultMap="workflowInfoMap" parameterType="string">
         <include refid="select"/>
@@ -347,6 +349,27 @@
     <!-- 计算工作流总数 -->
     <select id="countAll" resultType="int">
         SELECT COUNT(DISTINCT w.id) FROM workflow_info w
+    </select>
+
+    <!-- 根据ID列表获取工作流信息（包含节点数量统计） -->
+    <select id="selectAll" resultMap="workflowInfoDtoMap" parameterType="list">
+        SELECT
+        w.id,
+        w.user_id,
+        w.name,
+        w.available,
+        w.disable_reason,
+        w.create_time,
+        w.update_time,
+        COUNT(n.id) as node_count
+        FROM workflow_info w
+        LEFT JOIN node n ON w.id = n.workflow_id
+        WHERE w.id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        GROUP BY w.id, w.user_id, w.name, w.available, w.disable_reason, w.create_time, w.update_time
+        ORDER BY w.create_time DESC
     </select>
 
 </mapper>

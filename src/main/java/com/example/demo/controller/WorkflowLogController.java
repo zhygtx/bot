@@ -1,6 +1,6 @@
 package com.example.demo.controller;
 
-import com.example.demo.pojo.Result;
+import com.example.demo.pojo.entity.Result;
 import com.example.demo.service.WorkflowLogService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,15 +23,21 @@ public class WorkflowLogController {
     /**
      * 查询工作流日志
      * @param userId 用户ID
+     * @param workflowName 工作流名称（可选）
+     * @param startTime 开始时间（可选）
+     * @param endTime 结束时间（可选）
      * @param pageNum 页码
      * @param pageSize 页大小
      * @return 工作流日志列表
      */
     @GetMapping("/findWorkflowLogs")
     public Result<?> findWorkflowLogs(String userId,
+                                      String workflowName,
+                                      Long startTime,
+                                      Long endTime,
                                       @RequestParam(required = false,defaultValue = "1") Integer pageNum,
                                       @RequestParam(required = false,defaultValue = "10") Integer pageSize) {
-        return Result.success(null,workflowLogService.findWorkflowLogs(userId, pageNum, pageSize));
+        return Result.success(null,workflowLogService.findWorkflowLogs(userId, workflowName, startTime, endTime, pageNum, pageSize));
     }
 
     /**

@@ -1,6 +1,6 @@
 package com.example.demo.mapper.plugin;
 
-import com.example.demo.pojo.plugin.PluginInfo;
+import com.example.demo.pojo.entity.plugin.PluginInfo;
 import org.apache.ibatis.annotations.*;
 
 import java.util.List;

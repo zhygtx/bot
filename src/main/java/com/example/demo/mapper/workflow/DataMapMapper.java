@@ -1,6 +1,6 @@
 package com.example.demo.mapper.workflow;
 
-import com.example.demo.pojo.workflow.DataMap;
+import com.example.demo.pojo.entity.workflow.DataMap;
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;

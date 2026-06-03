@@ -3,7 +3,7 @@
 
 <mapper namespace="com.example.demo.mapper.plugin.PluginVersionMapper">
 
-    <insert id="insert" parameterType="com.example.demo.pojo.plugin.PluginVersion">
+    <insert id="insert" parameterType="com.example.demo.pojo.entity.plugin.PluginVersion">
         insert into plugin_version(id, plugin_id, version, path, file_size, file_md5, create_time, changelog, entity_package, method_package, compatible_version)
         values (#{id}, #{pluginId}, #{version}, #{path}, #{fileSize}, #{fileMd5}, #{createTime}, #{changelog}, #{entityPackage}, #{methodPackage}, #{compatibleVersion})
     </insert>

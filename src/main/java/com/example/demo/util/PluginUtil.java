@@ -1,6 +1,6 @@
 package com.example.demo.util;
 
-import com.example.demo.pojo.plugin.*;
+import com.example.demo.pojo.entity.plugin.*;
 import com.github.zhygtx.annotation.Attribute;
 import com.github.zhygtx.annotation.Entity;
 import com.github.zhygtx.annotation.MethodClass;
@@ -62,10 +62,10 @@ public class PluginUtil {
                         Object instance = clazz.getDeclaredConstructor().newInstance();
                         Map<String, Object> attributeMap = ReflectionUtil.getAttributeMapWithType(instance);
 
-                        List<com.example.demo.pojo.plugin.Attribute> attributes = new ArrayList<>();
+                        List<com.example.demo.pojo.entity.plugin.Attribute> attributes = new ArrayList<>();
                         for (Map.Entry<String, Object> attrEntry : attributeMap.entrySet()) {
-                            com.example.demo.pojo.plugin.Attribute attribute =
-                                new com.example.demo.pojo.plugin.Attribute();
+                            com.example.demo.pojo.entity.plugin.Attribute attribute =
+                                new com.example.demo.pojo.entity.plugin.Attribute();
                             attribute.setId(UUID.randomUUID().toString());
                             attribute.setEntityInfoId(entityInfo.getId());
                             attribute.setName(attrEntry.getKey());

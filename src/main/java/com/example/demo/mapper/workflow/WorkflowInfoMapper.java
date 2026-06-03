@@ -1,6 +1,7 @@
 package com.example.demo.mapper.workflow;
 
-import com.example.demo.pojo.workflow.WorkflowInfo;
+import com.example.demo.pojo.dto.WorkflowInfoDto;
+import com.example.demo.pojo.entity.workflow.WorkflowInfo;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
@@ -61,7 +62,7 @@ public interface WorkflowInfoMapper {
      * @param ids 工作流ID列表
      * @return 工作流信息列表
      */
-    List<WorkflowInfo> selectAll(@Param("ids") List<String> ids);
+    List<WorkflowInfoDto> selectAll(@Param("ids") List<String> ids);
 
     /**
      * 根据ID获取工作流信息

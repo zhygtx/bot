@@ -1,6 +1,6 @@
 package com.example.demo.service;
 
-import com.example.demo.pojo.Result;
+import com.example.demo.pojo.entity.Result;
 
 /**
  * 邮箱服务接口

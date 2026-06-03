@@ -1,4 +1,4 @@
-package com.example.demo.pojo.plugin;
+package com.example.demo.pojo.entity.plugin;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;

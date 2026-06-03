@@ -1,6 +1,6 @@
 package com.example.demo.service;
 
-import com.example.demo.pojo.User;
+import com.example.demo.pojo.entity.User;
 
 /**
  * 用户类服务接口

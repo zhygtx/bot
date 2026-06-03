@@ -2,8 +2,8 @@ package com.example.demo.service.impl;
 
 import com.example.demo.mapper.plugin.*;
 import com.example.demo.mapper.workflow.WorkflowInfoMapper;
-import com.example.demo.pojo.Result;
-import com.example.demo.pojo.plugin.*;
+import com.example.demo.pojo.entity.Result;
+import com.example.demo.pojo.entity.plugin.*;
 import com.example.demo.service.PluginService;
 import com.example.demo.service.RedisWorkflowService;
 import com.example.demo.util.MD5Util;

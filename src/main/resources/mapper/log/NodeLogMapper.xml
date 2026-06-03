@@ -10,7 +10,7 @@
             (#{nodeLog.id}, #{nodeLog.workflowLogId}, #{nodeLog.methodId}, #{nodeLog.nodeId}, #{nodeLog.executionTime}, #{nodeLog.order}, #{nodeLog.input}, #{nodeLog.output}, #{nodeLog.methodName}, #{nodeLog.methodDescription})
         </foreach>
     </insert>
-    <select id="selectByWorkflowLogId" resultType="com.example.demo.pojo.log.NodeLog">
+    <select id="selectByWorkflowLogId" resultType="com.example.demo.pojo.entity.log.NodeLog">
         select * from node_log where workflow_log_id = #{workflowLogId} order by `order`
     </select>
 </mapper>

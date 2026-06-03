@@ -2,8 +2,8 @@ package com.example.demo.service.impl;
 
 import com.example.demo.mapper.BotMapper;
 import com.example.demo.mapper.UserMapper;
-import com.example.demo.pojo.BotInfo;
-import com.example.demo.pojo.Result;
+import com.example.demo.pojo.entity.BotInfo;
+import com.example.demo.pojo.entity.Result;
 import com.example.demo.service.BotService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

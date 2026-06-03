@@ -1,7 +1,7 @@
 package com.example.demo.controller;
 
-import com.example.demo.pojo.Result;
-import com.example.demo.pojo.workflow.WorkflowInfo;
+import com.example.demo.pojo.entity.Result;
+import com.example.demo.pojo.entity.workflow.WorkflowInfo;
 import com.example.demo.service.WorkflowService;
 import com.example.demo.util.AuthUtil;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -75,7 +75,7 @@ public class WorkflowController {
     @GetMapping("/findAll")
     public Result<?> findByAuthorId(HttpServletRequest request,
             @RequestParam(required = false,defaultValue = "1") int pageNum,
-                                    @RequestParam(required = false,defaultValue = "12") int pageSize) {
+            @RequestParam(required = false,defaultValue = "12") int pageSize) {
         String userId = authUtil.getCurrentUserId(request);
         return Result.success(null,workflowService.findAll(userId,pageNum, pageSize));
     }

@@ -1,6 +1,6 @@
 package com.example.demo.mapper.log;
 
-import com.example.demo.pojo.log.NodeLog;
+import com.example.demo.pojo.entity.log.NodeLog;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 

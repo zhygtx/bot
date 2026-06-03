@@ -1,6 +1,6 @@
 package com.example.demo.mapper;
 
-import com.example.demo.pojo.Docker;
+import com.example.demo.pojo.entity.Docker;
 import org.apache.ibatis.annotations.*;
 
 import java.util.List;

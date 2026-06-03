@@ -1,9 +1,9 @@
-package com.example.demo.pojo.workflow;
+package com.example.demo.pojo.entity.workflow;
 
-import com.example.demo.pojo.plugin.MethodClassInfo;
-import com.example.demo.pojo.plugin.MethodInfo;
-import com.example.demo.pojo.plugin.PluginInfo;
-import com.example.demo.pojo.plugin.PluginVersion;
+import com.example.demo.pojo.entity.plugin.MethodClassInfo;
+import com.example.demo.pojo.entity.plugin.MethodInfo;
+import com.example.demo.pojo.entity.plugin.PluginInfo;
+import com.example.demo.pojo.entity.plugin.PluginVersion;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

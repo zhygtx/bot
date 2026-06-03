@@ -2,8 +2,8 @@ package com.example.demo.service.impl;
 
 import com.example.demo.mapper.log.NodeLogMapper;
 import com.example.demo.mapper.log.WorkflowLogMapper;
-import com.example.demo.pojo.log.NodeLog;
-import com.example.demo.pojo.log.WorkflowLog;
+import com.example.demo.pojo.entity.log.NodeLog;
+import com.example.demo.pojo.entity.log.WorkflowLog;
 import com.example.demo.service.WorkflowLogService;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
@@ -40,15 +40,18 @@ public class WorkflowLogServiceImpl implements WorkflowLogService {
     }
 
     /**
-     * 根据用户ID查询工作流日志
+     * 根据用户ID、工作流名称和时间范围查询工作流日志
      *
      * @param userId 用户ID
+     * @param workflowName 工作流名称
+     * @param startTime 开始时间
+     * @param endTime 结束时间
      * @return 工作流日志列表
      */
     @Override
-    public PageInfo<WorkflowLog> findWorkflowLogs(String userId, int pageNum, int pageSize) {
+    public PageInfo<WorkflowLog> findWorkflowLogs(String userId, String workflowName, Long startTime, Long endTime, int pageNum, int pageSize) {
         PageHelper.startPage(pageNum, pageSize);
-        return new PageInfo<>(workflowLogMapper.selectByUserId(userId));
+        return new PageInfo<>(workflowLogMapper.selectByCondition(userId, workflowName, startTime, endTime));
     }
 
     /**

@@ -1,6 +1,6 @@
 package com.example.demo.exception;
 
-import com.example.demo.pojo.Result;
+import com.example.demo.pojo.entity.Result;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
