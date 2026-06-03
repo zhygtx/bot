@@ -235,3 +235,35 @@ CREATE TABLE `plugin_data` (
     INDEX idx_plugin_id (`plugin_id`),
     INDEX idx_data_index (`data_index`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='插件数据存储表';
+
+-- 工作流日志表
+CREATE TABLE `workflow_log` (
+  `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '工作流日志ID',
+  `workflow_id` VARCHAR(36) NOT NULL COMMENT '工作流ID',
+  `user_id` VARCHAR(36) NOT NULL COMMENT '用户ID',
+  `expected_node_count` INT COMMENT '工作流预计执行节点个数',
+  `actual_node_count` INT COMMENT '工作流实际执行节点个数',
+  `execution_time` BIGINT COMMENT '工作流执行耗时（毫秒）',
+  `start_time` BIGINT COMMENT '工作流执行开始时间戳',
+  `initial_context` TEXT COMMENT '工作流初始上下文（JSON格式）',
+  `workflow_name` VARCHAR(255) COMMENT '工作流名称',
+  INDEX `idx_workflow_id` (`workflow_id`),
+  INDEX `idx_user_id` (`user_id`),
+  INDEX `idx_start_time` (`start_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='工作流日志表';
+
+-- 节点日志表
+CREATE TABLE `node_log` (
+  `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '节点日志ID',
+  `workflow_log_id` VARCHAR(36) NOT NULL COMMENT '工作流日志ID',
+  `method_id` VARCHAR(36) COMMENT '节点使用的插件方法ID',
+  `execution_time` BIGINT COMMENT '节点执行耗时（毫秒）',
+  `order` INT COMMENT '节点执行次序',
+  `input` TEXT COMMENT '节点输入内容（JSON格式）',
+  `output` TEXT COMMENT '节点输出内容（JSON格式）',
+  `method_name` VARCHAR(255) COMMENT '节点方法名称',
+  `method_description` TEXT COMMENT '节点方法描述',
+  INDEX `idx_workflow_log_id` (`workflow_log_id`),
+  INDEX `idx_method_id` (`method_id`),
+  INDEX `idx_order` (`order`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='节点日志表';

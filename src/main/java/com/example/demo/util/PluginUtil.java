@@ -1,6 +1,10 @@
 package com.example.demo.util;
 
 import com.example.demo.pojo.plugin.*;
+import com.github.zhygtx.annotation.Attribute;
+import com.github.zhygtx.annotation.Entity;
+import com.github.zhygtx.annotation.MethodClass;
+import com.github.zhygtx.annotation.Param;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -10,12 +14,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -54,8 +53,8 @@ public class PluginUtil {
                         entityInfo.setEntityName(className);
                         entityInfo.setName(clazz.getSimpleName());
 
-                        com.github.zhygtx.annotation.Entity entityAnnotation =
-                            clazz.getAnnotation(com.github.zhygtx.annotation.Entity.class);
+                        Entity entityAnnotation =
+                            clazz.getAnnotation(Entity.class);
                         if (entityAnnotation != null) {
                             entityInfo.setDescription(entityAnnotation.description());
                         }
@@ -76,8 +75,8 @@ public class PluginUtil {
 
                             try {
                                 Field field = clazz.getDeclaredField(attrEntry.getKey());
-                                com.github.zhygtx.annotation.Attribute attrAnnotation =
-                                    field.getAnnotation(com.github.zhygtx.annotation.Attribute.class);
+                                Attribute attrAnnotation =
+                                    field.getAnnotation(Attribute.class);
                                 if (attrAnnotation != null) {
                                     attribute.setDescription(attrAnnotation.description());
                                 }
@@ -145,8 +144,8 @@ public class PluginUtil {
                         classInfo.setSimpleClassName(clazz.getSimpleName());
                         classInfo.setPackageName(clazz.getPackage().getName());
 
-                        com.github.zhygtx.annotation.MethodClass serviceAnnotation =
-                            clazz.getAnnotation(com.github.zhygtx.annotation.MethodClass.class);
+                        MethodClass serviceAnnotation =
+                            clazz.getAnnotation(MethodClass.class);
                         if (serviceAnnotation != null) {
                             classInfo.setDescription(serviceAnnotation.description());
                         }
@@ -189,8 +188,8 @@ public class PluginUtil {
                                 paramInfo.setType(paramTypes[i].getSimpleName());
                                 paramInfo.setOrder(i + 1);
 
-                                com.github.zhygtx.annotation.Param paramAnnotation =
-                                    params[i].getAnnotation(com.github.zhygtx.annotation.Param.class);
+                                Param paramAnnotation =
+                                    params[i].getAnnotation(Param.class);
                                 if (paramAnnotation != null) {
                                     paramInfo.setDescription(paramAnnotation.description());
                                 }
