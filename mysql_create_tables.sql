@@ -259,11 +259,17 @@ CREATE TABLE `node_log` (
   `node_id` VARCHAR(36) NOT NULL COMMENT '节点ID',
   `execution_time` BIGINT COMMENT '节点执行耗时（毫秒）',
   `order` INT COMMENT '节点执行次序',
-  `input` longtext COMMENT '节点输入内容（JSON格式）',
-  `output` longtext COMMENT '节点输出内容（JSON格式）',
+  `input` text COMMENT '节点输入内容（JSON格式）',
+  `output` text COMMENT '节点输出内容（JSON格式）',
   `method_name` VARCHAR(255) COMMENT '节点方法名称',
   `method_description` TEXT COMMENT '节点方法描述',
   INDEX `idx_workflow_log_id` (`workflow_log_id`),
   INDEX `idx_method_id` (`method_id`),
   INDEX `idx_order` (`order`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='节点日志表';
+
+-- 大数据存储表
+CREATE TABLE `big_text` (
+  `key` VARCHAR(128) NOT NULL PRIMARY KEY COMMENT '大数据引用键',
+  `value` LONGTEXT NOT NULL COMMENT '实际数据内容'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='大数据存储表';

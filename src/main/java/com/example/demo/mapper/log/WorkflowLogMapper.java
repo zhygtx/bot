@@ -4,7 +4,6 @@ import com.example.demo.pojo.entity.log.WorkflowLog;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
 import java.util.Map;
@@ -22,25 +21,21 @@ public interface WorkflowLogMapper {
     int insert(WorkflowLog workflowLog);
 
     /**
-     * 根据用户ID查询工作流日志
-     * @param userId 用户ID
-     * @return 工作流日志列表
-     */
-    @Select("select * from workflow_log where user_id = #{userId}")
-    List<WorkflowLog> selectByUserId(String userId);
-
-    /**
      * 根据条件查询工作流日志
      * @param userId 用户ID
      * @param workflowName 工作流名称
      * @param startTime 开始时间
      * @param endTime 结束时间
+     * @param sortField 排序字段
+     * @param sortOrder 排序方式
      * @return 工作流日志列表
      */
     List<WorkflowLog> selectByCondition(@Param("userId") String userId,
                                         @Param("workflowName") String workflowName,
                                         @Param("startTime") Long startTime,
-                                        @Param("endTime") Long endTime);
+                                        @Param("endTime") Long endTime,
+                                        @Param("sortField") String sortField,
+                                        @Param("sortOrder") String sortOrder);
 
     /**
      * 根据工作流ID列表批量获取统计信息

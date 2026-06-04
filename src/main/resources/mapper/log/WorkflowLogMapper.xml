@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
+<!--suppress XmlUnresolvedReference -->
 <mapper namespace="com.example.demo.mapper.log.WorkflowLogMapper">
 
     <select id="selectByCondition" resultType="com.example.demo.pojo.entity.log.WorkflowLog">
@@ -15,15 +16,29 @@
         <if test="endTime != null">
             AND start_time &lt;= #{endTime}
         </if>
-        ORDER BY start_time DESC
+        <choose>
+            <when test="sortField != null and sortField != ''">
+                ORDER BY 
+                <choose>
+                    <when test="sortField == 'actualNodeCount'">actual_node_count</when>
+                    <when test="sortField == 'executionTime'">execution_time</when>
+                    <otherwise>start_time</otherwise>
+                </choose>
+                <if test="sortOrder != null and sortOrder == 'asc'"> ASC</if>
+                <if test="sortOrder == null or sortOrder != 'asc'"> DESC</if>
+            </when>
+            <otherwise>
+                ORDER BY start_time DESC
+            </otherwise>
+        </choose>
     </select>
 
     <select id="selectStatsByWorkflowIds" resultType="java.util.HashMap">
         SELECT
-            workflow_id as workflowId,
-            COUNT(*) as executeCount,
-            AVG(execution_time) as averageExecutionTime,
-            AVG(actual_node_count) as averageNodeCount
+        workflow_id as workflowId,
+        COUNT(*) as executeCount,
+        AVG(execution_time) as averageExecutionTime,
+        AVG(actual_node_count) as averageNodeCount
         FROM workflow_log
         WHERE workflow_id IN
         <foreach collection="workflowIds" item="id" open="(" separator="," close=")">

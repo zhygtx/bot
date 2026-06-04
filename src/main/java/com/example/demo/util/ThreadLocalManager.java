@@ -14,6 +14,10 @@ import java.util.Map;
  */
 @Slf4j
 public class ThreadLocalManager {
+    
+    public static final String BIG_TEXT_PREFIX = "BIG_TEXT:";
+    public static final int BIG_TEXT_THRESHOLD = 10 * 1024; 
+
     // 方法实例缓存
     private static final ThreadLocal<Map<String, Object>> methodInstanceCache = 
         ThreadLocal.withInitial(HashMap::new);
@@ -28,6 +32,10 @@ public class ThreadLocalManager {
 
     // 节点日志缓存
     private static final ThreadLocal<Map<String, NodeLog>> nodeLogList =
+            ThreadLocal.withInitial(HashMap::new);
+
+    // 大数据缓存（临时存储，工作流结束后统一写入数据库）
+    private static final ThreadLocal<Map<String, String>> bigTextCache =
             ThreadLocal.withInitial(HashMap::new);
 
     // 在ThreadLocalManager类中添加
@@ -122,7 +130,24 @@ public class ThreadLocalManager {
     public static void addNodeLog(NodeLog nodeLog) {
         nodeLogList.get().put(nodeLog.getNodeId(), nodeLog);
     }
-    
+
+    /**
+     * 获取大数据缓存
+     * @return 大数据缓存
+     */
+    public static Map<String, String> getBigTextCache() {
+        return bigTextCache.get();
+    }
+
+    /**
+     * 添加大数据到缓存
+     * @param key 键
+     * @param value 值
+     */
+    public static void addBigText(String key, String value) {
+        bigTextCache.get().put(key, value);
+    }
+
     /**
      * 清理所有ThreadLocal变量
      */
@@ -131,5 +156,6 @@ public class ThreadLocalManager {
         executionContext.remove();
         workflowLog.remove();
         nodeLogList.remove();
+        bigTextCache.remove();
     }
 }

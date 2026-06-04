@@ -1,6 +1,7 @@
 package com.example.demo.util;
 
 import com.example.demo.api.BotActionService;
+import com.example.demo.pojo.entity.log.BigText;
 import com.example.demo.pojo.entity.log.NodeLog;
 import com.example.demo.pojo.entity.log.WorkflowLog;
 import com.example.demo.pojo.entity.plugin.MethodClassInfo;
@@ -245,7 +246,7 @@ public class WorkflowUtil {
                 workflowLog.setActualNodeCount(ThreadLocalManager.getNodeLogList().size());
                 
                 // 保存日志（在同一异步线程中保存）
-                workflowLogService.add(workflowLog, ThreadLocalManager.getNodeLogList());
+                workflowLogService.add(workflowLog, ThreadLocalManager.getNodeLogList(), getBigTextList());
                 log.debug("工作流日志保存完成");
                 
                 return result;
@@ -257,7 +258,7 @@ public class WorkflowUtil {
                     if (workflowLog != null) {
                         workflowLog.setExecutionTime(System.currentTimeMillis() - workflowStartTime);
                         workflowLog.setActualNodeCount(ThreadLocalManager.getNodeLogList().size());
-                        workflowLogService.add(workflowLog, ThreadLocalManager.getNodeLogList());
+                        workflowLogService.add(workflowLog, ThreadLocalManager.getNodeLogList(), getBigTextList());
                         log.debug("异常情况下工作流日志保存完成");
                     }
                 } catch (Exception saveEx) {
@@ -632,17 +633,46 @@ public class WorkflowUtil {
         for (int i = 0; i < parameters.length; i++) {
             methodParameters.put(parameterNames.get(i), parameters[i]);
         }
+        
+        String inputStr;
         try {
-            nodeLog.setInput(mapper.writeValueAsString(methodParameters));
+            inputStr = mapper.writeValueAsString(methodParameters);
         } catch (JsonProcessingException e) {
-            nodeLog.setInput(methodParameters.toString());
+            inputStr = methodParameters.toString();
         }
+        nodeLog.setInput(handleBigText(inputStr, node.getId(), "INPUT"));
+        
+        String outputStr;
         try {
-            nodeLog.setOutput(mapper.writeValueAsString(result));
+            outputStr = mapper.writeValueAsString(result);
         } catch (JsonProcessingException e) {
-            nodeLog.setOutput(result.toString());
+            outputStr = result.toString();
         }
+        nodeLog.setOutput(handleBigText(outputStr, node.getId(), "OUTPUT"));
+        
         ThreadLocalManager.addNodeLog(nodeLog);
+    }
+
+    private String handleBigText(String data, String nodeId, String type) {
+        if (data == null || data.length() <= ThreadLocalManager.BIG_TEXT_THRESHOLD) {
+            return data;
+        }
+        
+        String key = ThreadLocalManager.BIG_TEXT_PREFIX + type + ":" + nodeId + ":" + 
+                     System.currentTimeMillis() + ":" + 
+                     UUID.randomUUID().toString().substring(0, 8);
+        ThreadLocalManager.addBigText(key, data);
+        return key;
+    }
+
+    private List<BigText> getBigTextList() {
+        Map<String, String> cache = ThreadLocalManager.getBigTextCache();
+        if (cache == null || cache.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return cache.entrySet().stream()
+                .map(entry -> new BigText(entry.getKey(), entry.getValue()))
+                .toList();
     }
 
     /**

@@ -26,6 +26,8 @@ public class WorkflowLogController {
      * @param workflowName 工作流名称（可选）
      * @param startTime 开始时间（可选）
      * @param endTime 结束时间（可选）
+     * @param sortField 排序字段（可选：actualNodeCount, executionTime）
+     * @param sortOrder 排序方式（可选：asc, desc）
      * @param pageNum 页码
      * @param pageSize 页大小
      * @return 工作流日志列表
@@ -35,9 +37,11 @@ public class WorkflowLogController {
                                       String workflowName,
                                       Long startTime,
                                       Long endTime,
+                                      String sortField,
+                                      String sortOrder,
                                       @RequestParam(required = false,defaultValue = "1") Integer pageNum,
                                       @RequestParam(required = false,defaultValue = "10") Integer pageSize) {
-        return Result.success(null,workflowLogService.findWorkflowLogs(userId, workflowName, startTime, endTime, pageNum, pageSize));
+        return Result.success(null,workflowLogService.findWorkflowLogs(userId, workflowName, startTime, endTime, sortField, sortOrder, pageNum, pageSize));
     }
 
     /**
@@ -48,5 +52,15 @@ public class WorkflowLogController {
     @GetMapping("/findNodeLogs")
     public Result<?> findNodeLogs(String workflowLogId) {
         return Result.success(null,workflowLogService.findNodeLogs(workflowLogId));
+    }
+
+    /**
+     * 查询大数据内容
+     * @param key 大数据引用键
+     * @return 大数据内容
+     */
+    @GetMapping("/findBigText")
+    public Result<?> findBigText(String key) {
+        return Result.success(null, workflowLogService.findBigText(key));
     }
 }

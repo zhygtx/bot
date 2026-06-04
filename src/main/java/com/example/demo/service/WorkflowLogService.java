@@ -1,5 +1,6 @@
 package com.example.demo.service;
 
+import com.example.demo.pojo.entity.log.BigText;
 import com.example.demo.pojo.entity.log.NodeLog;
 import com.example.demo.pojo.entity.log.WorkflowLog;
 import com.github.pagehelper.PageInfo;
@@ -11,9 +12,11 @@ import java.util.List;
  */
 public interface WorkflowLogService {
 
-    void add(WorkflowLog workflowLog, List<NodeLog> nodeLogs);
+    void add(WorkflowLog workflowLog, List<NodeLog> nodeLogs, List<BigText> bigTextList);
 
-    PageInfo<WorkflowLog> findWorkflowLogs(String userId, String workflowName, Long startTime, Long endTime, int pageNum, int pageSize);
+    PageInfo<WorkflowLog> findWorkflowLogs(String userId, String workflowName, Long startTime, Long endTime, String sortField, String sortOrder, int pageNum, int pageSize);
 
     List<NodeLog> findNodeLogs(String workflowLogId);
+
+    String findBigText(String key);
 }
