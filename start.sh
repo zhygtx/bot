@@ -192,24 +192,6 @@ ensure_npm_installed() {
     echo_success "Node.js 和 npm 环境检查完成"
 }
 
-# 检查并安装 Playwright
-ensure_playwright_installed() {
-    ensure_npm_installed
-
-    echo_info "检查 Playwright 环境..."
-    
-    # 检查 Playwright 是否已安装，添加超时处理
-    if timeout 10s npx playwright --version &> /dev/null; then
-        echo_success "Playwright 已安装"
-        return 0
-    else
-        echo_warning "Playwright 未安装或安装不完整..."
-        echo_info "注意：Playwright 不是核心依赖，将跳过安装以加速应用启动..."
-        echo_info "如果需要使用 Playwright 功能，请手动运行: npm init playwright@latest"
-        return 0
-    fi
-}
-
 # 检查并安装 lsof
 ensure_lsof_installed() {
     echo_info "检查 lsof 工具..."
@@ -268,12 +250,6 @@ case "$1" in
         
         # 启动前检查环境依赖
         ensure_java21_installed
-        
-        # 尝试安装Playwright，但不阻塞应用启动
-        echo_info "尝试检查 Playwright 环境..."
-        if ! ensure_playwright_installed; then
-            echo_warning "Playwright 环境检查失败，但将继续启动应用..."
-        fi
         
         echo_success "核心环境依赖检查完成"
 

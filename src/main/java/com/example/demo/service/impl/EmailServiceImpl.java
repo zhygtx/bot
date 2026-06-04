@@ -4,11 +4,11 @@ import com.example.demo.pojo.entity.Result;
 import com.example.demo.service.EmailService;
 import com.example.demo.util.EmailUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-import org.thymeleaf.TemplateEngine;
-import org.thymeleaf.context.Context;
 
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -16,11 +16,9 @@ import java.util.concurrent.TimeUnit;
 public class EmailServiceImpl implements EmailService {
 
     private final RedisTemplate<String, Object> redisTemplate;
-    private final TemplateEngine templateEngine;
     private final EmailUtil emailUtil;
 
-    public EmailServiceImpl(TemplateEngine templateEngine, RedisTemplate<String, Object> redisTemplate, EmailUtil emailUtil) {
-        this.templateEngine = templateEngine;
+    public EmailServiceImpl(RedisTemplate<String, Object> redisTemplate, EmailUtil emailUtil) {
         this.redisTemplate = redisTemplate;
         // 解决 Windows 系统下 mailcap 文件找不到的问题
         System.setProperty("mail.mime.contenthandler.autoinit", "false");
@@ -42,12 +40,8 @@ public class EmailServiceImpl implements EmailService {
             // 生成6位随机数
             int verificationCode = (int)((Math.random()*9+1)*100000);
 
-            // 创建模板上下文并设置变量
-            Context context = new Context();
-            context.setVariable("verificationCode", verificationCode);
-
-            // 处理HTML模板
-            String htmlContent = templateEngine.process("verification-code", context);
+            // 从静态资源读取HTML模板并替换验证码
+            String htmlContent = loadAndReplaceTemplate(verificationCode);
 
             emailUtil.sendEmail(email, "验证码", htmlContent, true);
 
@@ -58,6 +52,22 @@ public class EmailServiceImpl implements EmailService {
         } catch (Exception e) {
             log.warn("发送验证码邮件失败，邮箱：{}",email,e);
             return Result.error(500,"发送验证码邮件失败");
+        }
+    }
+
+    /**
+     * 从静态资源加载HTML模板并替换占位符
+     * @param verificationCode 验证码
+     * @return HTML内容
+     */
+    private String loadAndReplaceTemplate(int verificationCode) {
+        try {
+            ClassPathResource resource = new ClassPathResource("templates/verification-code.html");
+            String template = new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+            return template.replace("[[${verificationCode}]]", String.valueOf(verificationCode));
+        } catch (Exception e) {
+            log.error("读取邮件模板失败", e);
+            throw new RuntimeException("读取邮件模板失败", e);
         }
     }
 
