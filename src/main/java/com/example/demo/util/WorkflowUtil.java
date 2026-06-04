@@ -249,8 +249,21 @@ public class WorkflowUtil {
                 log.debug("工作流日志保存完成");
                 
                 return result;
-            } catch (Exception e) {
-                throw new CompletionException(e);
+            } catch (Throwable e) {
+                log.error("工作流执行异常，尝试保存已执行的节点日志", e);
+                // 即使发生异常，也要保存已执行的节点日志
+                try {
+                    WorkflowLog workflowLog = ThreadLocalManager.getWorkflowLog();
+                    if (workflowLog != null) {
+                        workflowLog.setExecutionTime(System.currentTimeMillis() - workflowStartTime);
+                        workflowLog.setActualNodeCount(ThreadLocalManager.getNodeLogList().size());
+                        workflowLogService.add(workflowLog, ThreadLocalManager.getNodeLogList());
+                        log.debug("异常情况下工作流日志保存完成");
+                    }
+                } catch (Exception saveEx) {
+                    log.error("保存工作流日志失败", saveEx);
+                }
+                throw new CompletionException(e instanceof Exception ? e : new RuntimeException(e));
             } finally {
                 ThreadLocalManager.clear();
             }
@@ -349,13 +362,19 @@ public class WorkflowUtil {
      * @param nodeMap 节点映射表
      * @param executionOrder 节点执行顺序列表
      * @return 工作流最终执行结果的 JSON 节点
-     * @throws Exception 执行过程中的异常
      */
-    private JsonNode executeNodeList(WorkflowInfo workflowInfo, Map<String, Node> nodeMap, List<String> executionOrder) throws Exception {
+    private JsonNode executeNodeList(WorkflowInfo workflowInfo, Map<String, Node> nodeMap, List<String> executionOrder) {
         List<JsonNode> finalResults = new ArrayList<>();
         int processedCount = 0;
+        Set<String> skippedNodes = new HashSet<>(); // 记录需要跳过的节点
 
         for (String currentNodeId : executionOrder) {
+            // 如果当前节点被标记为跳过，则跳过执行
+            if (skippedNodes.contains(currentNodeId)) {
+                log.debug("跳过节点 {}（因条件分支终止）", currentNodeId);
+                continue;
+            }
+
             Date startTime = new Date();
 
             Node currentNode = nodeMap.get(currentNodeId);
@@ -378,19 +397,41 @@ public class WorkflowUtil {
             ExecutionResult executionResult;
             try {
                 executionResult = executeSingleNode(currentNode);
-            } catch (Exception e) {
+            } catch (Throwable e) {
+                // 节点执行失败时，将错误信息作为该节点的输出
                 String errorMsg = String.format("节点 %s 执行失败：%s", currentNodeId, e.getMessage());
-                workflowService.editDisableReason(workflowInfo.getId(), errorMsg);
+                log.error(errorMsg, e);
+                
                 nodeLog.setOutput(errorMsg);
-                throw e;
-            }finally {
                 nodeLog.setExecutionTime(System.currentTimeMillis() - startTime.getTime());
-                ThreadLocalManager.addNodeLog(nodeLog);
+                ThreadLocalManager.addNodeLog(nodeLog);  // 确保节点日志被添加
+                
+                // 更新工作流禁用原因
+                workflowService.editDisableReason(workflowInfo.getId(), errorMsg);
+                
+                // 节点执行失败后，终止工作流执行
+                log.debug("节点执行失败，终止工作流执行");
+                // 返回空对象，工作流终止，但节点日志已经在 ThreadLocal 中，会在外层保存
+                return mapper.createObjectNode();
             }
 
-            if (!executionResult.continueExecution()) {
-                log.debug("工作流执行被条件终止");
+            // 记录节点执行时间（成功执行时）
+            nodeLog.setExecutionTime(System.currentTimeMillis() - startTime.getTime());
+            ThreadLocalManager.addNodeLog(nodeLog);
+
+            // 处理 END：立即结束整个工作流
+            if (!executionResult.continueExecution() && executionResult.result() == null) {
+                log.debug("工作流执行被条件终止（END）");
                 return mapper.createObjectNode();
+            }
+
+            // 处理 BREAK：标记该条件节点的所有后继节点（包括间接后继）为跳过
+            if (!executionResult.continueExecution()) {
+                log.debug("条件判断结果：结束当前分支（BREAK），跳过节点 {} 的所有后继节点", currentNodeId);
+                Set<String> allSuccessors = findAllSuccessors(currentNodeId, nodeMap);
+                skippedNodes.addAll(allSuccessors);
+                log.debug("已标记 {} 个节点为跳过: {}", allSuccessors.size(), allSuccessors);
+                continue;
             }
 
             if (executionResult.result() != null) {
@@ -400,11 +441,6 @@ public class WorkflowUtil {
             } else {
                 log.debug("跳过节点{}的后续分支", currentNodeId);
             }
-        }
-
-        if (processedCount != nodeMap.size()) {
-            log.warn("工作流执行异常：预期执行{}个节点，实际执行{}个节点",
-                    nodeMap.size(), processedCount);
         }
 
         return buildFinalResult(finalResults);
@@ -433,7 +469,7 @@ public class WorkflowUtil {
      * @return 执行结果和是否继续执行的标志
      * @throws Exception 执行过程中的异常
      */
-    public ExecutionResult executeSingleNode(Node node) throws Exception {
+    public ExecutionResult executeSingleNode(Node node) throws Throwable {
         ThreadLocalManager.setPluginId(node.getPluginId());
 
         return switch (node.getNodeType()) {
@@ -518,7 +554,7 @@ public class WorkflowUtil {
      * @return 执行结果
      * @throws Exception 执行过程中的异常
      */
-    private ExecutionResult executePluginNode(Node node) throws Exception {
+    private ExecutionResult executePluginNode(Node node) throws Throwable {
         log.debug("执行插件节点：{}", node.getId());
 
         PluginVersion pluginVersion = node.getPluginVersion();
@@ -752,6 +788,37 @@ public class WorkflowUtil {
     }
 
     /**
+     * 查找节点的所有后继节点（包括间接后继）
+     * 使用广度优先搜索遍历所有后继节点
+     * @param nodeId 起始节点 ID
+     * @param nodeMap 节点映射表
+     * @return 所有后继节点 ID 集合
+     */
+    private Set<String> findAllSuccessors(String nodeId, Map<String, Node> nodeMap) {
+        Set<String> successors = new HashSet<>();
+        Queue<String> queue = new LinkedList<>();
+        
+        // 获取直接后继节点
+        Node node = nodeMap.get(nodeId);
+        if (node != null && node.getNextNodeId() != null) {
+            queue.addAll(node.getNextNodeId());
+        }
+        
+        // BFS 遍历所有后继节点
+        while (!queue.isEmpty()) {
+            String currentId = queue.poll();
+            if (successors.add(currentId)) { // add 返回 false 表示已存在，避免重复处理
+                Node currentNode = nodeMap.get(currentId);
+                if (currentNode != null && currentNode.getNextNodeId() != null) {
+                    queue.addAll(currentNode.getNextNodeId());
+                }
+            }
+        }
+        
+        return successors;
+    }
+
+    /**
      * 检查节点条件并返回执行结果
      * @param node 节点信息
      * @param result 节点执行结果
@@ -761,10 +828,10 @@ public class WorkflowUtil {
         Condition.Action action = checkConditions(node);
         if (action == Condition.Action.END) {
             log.debug("条件判断结果：结束整个工作流");
-            return new ExecutionResult(null, false);
+            return new ExecutionResult(null, false); // continueExecution=false, result=null 表示 END
         } else if (action == Condition.Action.BREAK) {
             log.debug("条件判断结果：结束当前分支");
-            return new ExecutionResult(null, true);
+            return new ExecutionResult(result, false); // continueExecution=false, result!=null 表示 BREAK
         }
         return new ExecutionResult(result, true);
     }

@@ -190,11 +190,25 @@
             <version>4.3</version>
         </dependency>
 
+        <!-- Playwright 依赖 - HTMLUtil 插件需要此依赖来初始化浏览器 -->
+        <dependency>
+            <groupId>com.microsoft.playwright</groupId>
+            <artifactId>playwright</artifactId>
+            <version>1.57.0</version>
+        </dependency>
+
+        <!-- Thymeleaf Starter - HTMLUtil 插件需要此依赖 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>com.github.zhygtx</groupId>
             <artifactId>generalbot-api</artifactId>
             <version>0.1.2</version>
         </dependency>
+
     </dependencies>
 
     <build>
