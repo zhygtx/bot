@@ -32,6 +32,14 @@ public interface WorkflowService {
     int edit(WorkflowInfo workflowInfo);
 
     /**
+     * 修改工作流启用状态
+     * @param id 工作流ID
+     * @param enabled 启用状态
+     * @return 修改结果
+     */
+    int editEnabled(String id, boolean enabled);
+
+    /**
      * 修改工作流禁用原因
      * @param id 工作流ID
      * @param disableReason 禁用原因

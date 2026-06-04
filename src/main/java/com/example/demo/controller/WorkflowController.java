@@ -67,6 +67,18 @@ public class WorkflowController {
     }
 
     /**
+     * 修改工作流启用状态
+     * @param id 工作流ID
+     * @param enabled 启用状态
+     * @return 修改结果
+     */
+    @PutMapping("/editEnabled")
+    public Result<?> editEnabled(String id, boolean enabled) {
+        int result = workflowService.editEnabled(id, enabled);
+        return result > 0 ? Result.success("修改成功",null) : Result.error(500, "修改工作流启用状态失败");
+    }
+
+    /**
      * 查询所有工作流
      * @param pageNum 页码
      * @param pageSize 页大小

@@ -134,6 +134,7 @@ CREATE TABLE `workflow_info` (
   `user_id` VARCHAR(36) NOT NULL COMMENT '工作流创建者 ID',
   `author_name` VARCHAR(255) not null comment '作者昵称',
   `name` VARCHAR(255) NOT NULL COMMENT '工作流名称',
+  `enabled` TINYINT DEFAULT 1 COMMENT '工作流是否启用',
   `available` TINYINT DEFAULT 1 COMMENT '工作流是否可用',
   `disable_reason` VARCHAR(255) COMMENT '工作流禁用原因',
   `create_time` DATETIME NOT NULL COMMENT '工作流创建时间',

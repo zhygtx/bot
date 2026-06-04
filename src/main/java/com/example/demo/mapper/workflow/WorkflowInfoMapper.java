@@ -29,10 +29,29 @@ public interface WorkflowInfoMapper {
      */
     int deleteById(String id);
 
+    /**
+     * 更新工作流信息启用状态
+     * @param id 工作流ID
+     * @param enabled 是否可用
+     * @return 更新结果
+     */
+    @Update("UPDATE workflow_info SET enabled = #{enabled} WHERE id = #{id}")
+    int updateEnabled(String id, boolean enabled);
+
+    /**
+     * 禁用工作流
+     * @param pluginId 插件ID
+     * @param disableReason 禁用原因
+     */
     @Update("UPDATE workflow_info SET available = false, disable_reason = #{disableReason} " +
             "WHERE id IN (SELECT workflow_id FROM node WHERE plugin_id = #{pluginId})")
     void updateAvailable(String pluginId, String disableReason);
 
+    /**
+     * 禁用工作流
+     * @param id 工作流ID
+     * @param disableReason 禁用原因
+     */
     @Update("UPDATE workflow_info SET available = false, disable_reason = #{disableReason} " +
             "WHERE id = #{id}")
     void updateAvailableByWorkflowId(String id, String disableReason);
@@ -51,9 +70,19 @@ public interface WorkflowInfoMapper {
      */
     List<String> selectAllIds();
 
+    /**
+     * 根据用户ID获取工作流ID列表
+     * @param userId 用户ID
+     * @return 工作流ID列表
+     */
     @Select("SELECT id FROM workflow_info WHERE user_id = #{userId}")
     List<String> selectIdsByUserId(String userId);
 
+    /**
+     * 根据插件ID获取工作流ID列表
+     * @param pluginId 插件ID
+     * @return 工作流ID列表
+     */
     @Select("SELECT plugin_id FROM node WHERE plugin_id = #{pluginId}")
     List<String> selectIdsByPluginId(String pluginId);
 

@@ -9,6 +9,7 @@
         <result column="workflow_user_id" property="userId"/>
         <result column="workflow_author_name" property="authorName"/>
         <result column="workflow_name" property="name"/>
+        <result column="workflow_enabled" property="enabled"/>
         <result column="workflow_available" property="available"/>
         <result column="workflow_disable_reason" property="disableReason"/>
         <result column="workflow_create_time" property="createTime"/>
@@ -194,6 +195,7 @@
         <id column="id" property="id"/>
         <result column="user_id" property="userId"/>
         <result column="name" property="name"/>
+        <result column="enabled" property="enabled"/>
         <result column="available" property="available"/>
         <result column="disable_reason" property="disableReason"/>
         <result column="create_time" property="createTime"/>
@@ -205,7 +207,7 @@
         SELECT
             -- 工作流基本信息
             w.id as workflow_id, w.user_id as workflow_user_id, w.author_name as workflow_author_name, w.name as workflow_name,
-            w.available as workflow_available, w.disable_reason as workflow_disable_reason,
+            w.enabled as workflow_enabled,w.available as workflow_available, w.disable_reason as workflow_disable_reason,
             w.create_time as workflow_create_time,w.update_time as workflow_update_time,
 
             -- 节点基本信息
@@ -326,8 +328,8 @@
     </sql>
 
     <insert id="insert" parameterType="com.example.demo.pojo.entity.workflow.WorkflowInfo">
-        INSERT INTO workflow_info(id, user_id, author_name, name, available, create_time, update_time)
-        VALUES (#{id}, #{userId}, #{authorName}, #{name}, true, #{createTime}, #{updateTime})
+        INSERT INTO workflow_info(id, user_id, author_name, enabled,name, available, create_time, update_time)
+        VALUES (#{id}, #{userId}, #{authorName}, #{enabled}, #{name}, true, #{createTime}, #{updateTime})
     </insert>
 
     <delete id="deleteById" parameterType="string">
@@ -357,6 +359,7 @@
         w.id,
         w.user_id,
         w.name,
+        w.enabled,
         w.available,
         w.disable_reason,
         w.create_time,
@@ -368,7 +371,7 @@
         <foreach collection="ids" item="id" open="(" separator="," close=")">
             #{id}
         </foreach>
-        GROUP BY w.id, w.user_id, w.name, w.available, w.disable_reason, w.create_time, w.update_time
+        GROUP BY w.id, w.user_id, w.name, w.enabled, w.available, w.disable_reason, w.create_time, w.update_time
         ORDER BY w.create_time DESC
     </select>
 

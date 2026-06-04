@@ -34,6 +34,11 @@ public class WorkflowInfo {
     private String name;
 
     /**
+     * 工作流是否启用
+     */
+    private Boolean enabled;
+
+    /**
      * 工作流是否可用
      */
     private Boolean available;

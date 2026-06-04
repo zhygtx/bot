@@ -59,8 +59,8 @@ public class WorkflowServiceImpl implements WorkflowService {
         workflowInfo.setCreateTime(LocalDateTime.now());
         workflowInfo.setUpdateTime(LocalDateTime.now());
 
-        int result = work(workflowInfo);
-        if (result > 0) {
+        int result = insert(workflowInfo);
+        if (result > 0 && workflowInfo.getEnabled()) {
             // 从数据库重新获取完整的工作流信息
             WorkflowInfo savedWorkflow = workflowInfoMapper.getById(workflowInfo.getId());
             if (savedWorkflow != null) {
@@ -91,6 +91,11 @@ public class WorkflowServiceImpl implements WorkflowService {
         return result;
     }
 
+    /**
+     * 修改工作流
+     * @param workflowInfo 工作流信息
+     * @return 修改结果
+     */
     @Override
     @Transactional
     public int edit(WorkflowInfo workflowInfo) {
@@ -101,9 +106,9 @@ public class WorkflowServiceImpl implements WorkflowService {
         redisWorkflowServiceImpl.removeScheduledTask(workflowInfo.getId());
         
         workflowInfoMapper.deleteById(workflowInfo.getId());
-        int result = work(workflowInfo);
+        int result = insert(workflowInfo);
         
-        if (result > 0) {
+        if (result > 0 && workflowInfo.getEnabled()) {
             // 从数据库重新获取完整的工作流信息
             WorkflowInfo updatedWorkflow = workflowInfoMapper.getById(workflowInfo.getId());
             if (updatedWorkflow != null) {
@@ -114,6 +119,27 @@ public class WorkflowServiceImpl implements WorkflowService {
             }
         }
         return result;
+    }
+
+    /**
+     * 启用或禁用工作流
+     * @param id 工作流ID
+     * @param enabled 是否启用
+     * @return 启用或禁用结果
+     */
+    @Override
+    public int editEnabled(String id, boolean enabled){
+        if (enabled){
+            WorkflowInfo workflowInfo = workflowInfoMapper.getById(id);
+            if (workflowInfo != null) {
+                redisWorkflowServiceImpl.addWorkflowToRedis(workflowInfo);
+                redisWorkflowServiceImpl.addScheduledTask(workflowInfo);
+            }
+        }else {
+            redisWorkflowServiceImpl.removeWorkflowFromRedis(id);
+            redisWorkflowServiceImpl.removeScheduledTask(id);
+        }
+        return workflowInfoMapper.updateEnabled(id, enabled);
     }
 
     /**
@@ -218,7 +244,12 @@ public class WorkflowServiceImpl implements WorkflowService {
         return workflowUtil.executeWorkflow(workflowInfo,"",null);
     }
 
-    private int work(WorkflowInfo workflowInfo) {
+    /**
+     * 工作流处理
+     * @param workflowInfo 工作流信息
+     * @return 处理结果
+     */
+    private int insert(WorkflowInfo workflowInfo) {
         List<Node> nodes = workflowInfo.getNodes();
         Map<String,String> dataMapId = new HashMap<>();
         for (Node node : nodes){
