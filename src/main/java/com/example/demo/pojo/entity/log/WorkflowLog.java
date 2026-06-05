@@ -15,9 +15,9 @@ import lombok.NoArgsConstructor;
 public class WorkflowLog {
 
     /**
-     * 工作流日志 ID
+     * 工作流日志 ID（自增主键）
      */
-    private String id;
+    private Long id;
 
     /**
      * 工作流 ID

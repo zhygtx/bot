@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<!--suppress XmlUnresolvedReference -->
 <mapper namespace="com.example.demo.mapper.log.WorkflowLogMapper">
 
     <select id="selectByCondition" resultType="com.example.demo.pojo.entity.log.WorkflowLog">
@@ -11,10 +10,10 @@
             AND workflow_name LIKE CONCAT('%', #{workflowName}, '%')
         </if>
         <if test="startTime != null">
-            AND start_time &gt;= #{startTime}
+            AND start_time >= #{startTime}
         </if>
         <if test="endTime != null">
-            AND start_time &lt;= #{endTime}
+            AND #{endTime} >= start_time
         </if>
         <choose>
             <when test="sortField != null and sortField != ''">
@@ -45,5 +44,9 @@
             #{id}
         </foreach>
         GROUP BY workflow_id
+    </select>
+
+    <select id="getLastInsertId" resultType="java.lang.Long">
+        SELECT LAST_INSERT_ID()
     </select>
 </mapper>

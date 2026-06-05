@@ -50,7 +50,7 @@ public class WorkflowLogController {
      * @return 工作流节点日志列表
      */
     @GetMapping("/findNodeLogs")
-    public Result<?> findNodeLogs(String workflowLogId) {
+    public Result<?> findNodeLogs(Long workflowLogId) {
         return Result.success(null,workflowLogService.findNodeLogs(workflowLogId));
     }
 

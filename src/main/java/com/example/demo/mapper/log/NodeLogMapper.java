@@ -13,16 +13,12 @@ import java.util.List;
 public interface NodeLogMapper {
 
     /**
-     * 添加节点日志
-     * @param nodeLogs 节点日志列表
-     * @return 添加结果
+     * 添加节点日志（批量）
      */
     int insert(@Param("nodeLogs") List<NodeLog> nodeLogs);
 
     /**
      * 根据工作流日志ID查询节点日志
-     * @param workflowLogId 工作流日志ID
-     * @return 节点日志列表
      */
-    List<NodeLog> selectByWorkflowLogId(String workflowLogId);
+    List<NodeLog> selectByWorkflowLogId(Long workflowLogId);
 }

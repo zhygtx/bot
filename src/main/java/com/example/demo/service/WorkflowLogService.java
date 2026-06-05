@@ -16,7 +16,7 @@ public interface WorkflowLogService {
 
     PageInfo<WorkflowLog> findWorkflowLogs(String userId, String workflowName, Long startTime, Long endTime, String sortField, String sortOrder, int pageNum, int pageSize);
 
-    List<NodeLog> findNodeLogs(String workflowLogId);
+    List<NodeLog> findNodeLogs(Long workflowLogId);
 
     String findBigText(String key);
 }

@@ -4,12 +4,13 @@
 <mapper namespace="com.example.demo.mapper.log.NodeLogMapper">
 
     <insert id="insert">
-        insert into node_log(id, workflow_log_id, method_id, node_id, execution_time, `order`, input, output, method_name, method_description)
+        insert into node_log(workflow_log_id, method_id, node_id, execution_time, `order`, input, output, method_name, method_description)
         values
         <foreach collection="nodeLogs" item="nodeLog" separator=",">
-            (#{nodeLog.id}, #{nodeLog.workflowLogId}, #{nodeLog.methodId}, #{nodeLog.nodeId}, #{nodeLog.executionTime}, #{nodeLog.order}, #{nodeLog.input}, #{nodeLog.output}, #{nodeLog.methodName}, #{nodeLog.methodDescription})
+            (#{nodeLog.workflowLogId}, #{nodeLog.methodId}, #{nodeLog.nodeId}, #{nodeLog.executionTime}, #{nodeLog.order}, #{nodeLog.input}, #{nodeLog.output}, #{nodeLog.methodName}, #{nodeLog.methodDescription})
         </foreach>
     </insert>
+
     <select id="selectByWorkflowLogId" resultType="com.example.demo.pojo.entity.log.NodeLog">
         select * from node_log where workflow_log_id = #{workflowLogId} order by `order`
     </select>

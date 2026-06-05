@@ -238,7 +238,7 @@ CREATE TABLE `plugin_data` (
 
 -- 工作流日志表
 CREATE TABLE `workflow_log` (
-  `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '工作流日志ID',
+  `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT '工作流日志ID（自增主键）',
   `workflow_id` VARCHAR(36) NOT NULL COMMENT '工作流ID',
   `user_id` VARCHAR(36) NOT NULL COMMENT '用户ID',
   `expected_node_count` INT COMMENT '工作流预计执行节点个数',
@@ -247,15 +247,15 @@ CREATE TABLE `workflow_log` (
   `start_time` BIGINT COMMENT '工作流执行开始时间戳',
   `initial_context` TEXT COMMENT '工作流初始上下文（JSON格式）',
   `workflow_name` VARCHAR(255) COMMENT '工作流名称',
-  INDEX `idx_workflow_id` (`workflow_id`),
-  INDEX `idx_user_id` (`user_id`),
-  INDEX `idx_start_time` (`start_time`)
+  INDEX `idx_user_id_start_time` (`user_id`, `start_time`),
+  INDEX `idx_workflow_id_start_time` (`workflow_id`, `start_time`),
+  INDEX `idx_workflow_id` (`workflow_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='工作流日志表';
 
 -- 节点日志表
 CREATE TABLE `node_log` (
-  `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '节点日志ID',
-  `workflow_log_id` VARCHAR(36) NOT NULL COMMENT '工作流日志ID',
+  `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT '节点日志ID（自增主键）',
+  `workflow_log_id` BIGINT NOT NULL COMMENT '工作流日志ID',
   `method_id` VARCHAR(36) COMMENT '节点使用的插件方法ID',
   `node_id` VARCHAR(36) NOT NULL COMMENT '节点ID',
   `execution_time` BIGINT COMMENT '节点执行耗时（毫秒）',
@@ -264,9 +264,8 @@ CREATE TABLE `node_log` (
   `output` text COMMENT '节点输出内容（JSON格式）',
   `method_name` VARCHAR(255) COMMENT '节点方法名称',
   `method_description` TEXT COMMENT '节点方法描述',
-  INDEX `idx_workflow_log_id` (`workflow_log_id`),
-  INDEX `idx_method_id` (`method_id`),
-  INDEX `idx_order` (`order`)
+  INDEX `idx_workflow_log_id_order` (`workflow_log_id`, `order`),
+  INDEX `idx_method_id` (`method_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='节点日志表';
 
 -- 大数据存储表

@@ -11,6 +11,7 @@ import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -32,15 +33,16 @@ public class WorkflowLogServiceImpl implements WorkflowLogService {
 
     /**
      * 添加工作流日志
-     *
-     * @param workflowLog  工作流日志
-     * @param nodeLogs     节点日志列表
-     * @param bigTextList  大数据列表
      */
     @Override
     @Async
+    @Transactional
     public void add(WorkflowLog workflowLog, List<NodeLog> nodeLogs, List<BigText> bigTextList) {
         workflowLogMapper.insert(workflowLog);
+        Long workflowLogId = workflowLogMapper.getLastInsertId();
+        for (NodeLog nodeLog : nodeLogs) {
+            nodeLog.setWorkflowLogId(workflowLogId);
+        }
         nodeLogMapper.insert(nodeLogs);
         if (bigTextList != null && !bigTextList.isEmpty()) {
             bigTextMapper.insertBatch(bigTextList);
@@ -49,14 +51,6 @@ public class WorkflowLogServiceImpl implements WorkflowLogService {
 
     /**
      * 根据条件查询工作流日志
-     *
-     * @param userId  用户ID
-     * @param workflowName 工作流名称
-     * @param startTime 开始时间
-     * @param endTime 结束时间
-     * @param sortField 排序字段
-     * @param sortOrder 排序方式
-     * @return 工作流日志列表
      */
     @Override
     public PageInfo<WorkflowLog> findWorkflowLogs(String userId, String workflowName, Long startTime, Long endTime, String sortField, String sortOrder, int pageNum, int pageSize) {
@@ -66,12 +60,9 @@ public class WorkflowLogServiceImpl implements WorkflowLogService {
 
     /**
      * 根据工作流日志ID查询节点日志
-     *
-     * @param workflowLogId 工作流日志ID
-     * @return 节点日志列表
      */
     @Override
-    public List<NodeLog> findNodeLogs(String workflowLogId) {
+    public List<NodeLog> findNodeLogs(Long workflowLogId) {
         return nodeLogMapper.selectByWorkflowLogId(workflowLogId);
     }
 

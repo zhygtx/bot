@@ -15,14 +15,14 @@ import lombok.NoArgsConstructor;
 public class NodeLog {
 
     /**
-     * 节点 ID
+     * 节点日志 ID（自增主键）
      */
-    private String id;
+    private Long id;
 
     /**
      * 工作流日志 ID
      */
-    private String workflowLogId;
+    private Long workflowLogId;
 
     /**
      * 节点 ID

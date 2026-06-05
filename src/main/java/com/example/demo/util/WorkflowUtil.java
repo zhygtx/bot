@@ -225,7 +225,6 @@ public class WorkflowUtil {
                 
                 // 创建工作流日志（在异步线程中创建，避免ThreadLocal问题）
                 WorkflowLog workflowLog = WorkflowLog.builder()
-                        .id(UUID.randomUUID().toString())
                         .workflowId(workflowInfo.getId())
                         .userId(workflowInfo.getUserId())
                         .expectedNodeCount(workflowInfo.getNodes().size())
@@ -385,8 +384,6 @@ public class WorkflowUtil {
             String methodDescription = resolveNodeMethodDescription(currentNode);
             
             NodeLog nodeLog = NodeLog.builder()
-                    .id(UUID.randomUUID().toString())
-                    .workflowLogId(ThreadLocalManager.getWorkflowLog().getId())
                     .nodeId(currentNodeId)
                     .methodId(currentNode.getMethodId())
                     .order(processedCount)
