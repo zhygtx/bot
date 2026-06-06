@@ -1,5 +1,6 @@
 package com.example.demo.mapper.workflow;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.github.zhygtx.pojo.PluginData;
 import org.apache.ibatis.annotations.*;
 
@@ -7,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 @Mapper
-public interface PluginDataMapper {
+public interface PluginDataMapper extends BaseMapper<PluginData> {
 
     @Insert("insert into plugin_data(data,user_id,plugin_id,create_time,update_time) values(#{data},#{userId},#{pluginId},now(),now())")
     int insertByData(String data, String userId, String pluginId);
@@ -38,6 +39,8 @@ public interface PluginDataMapper {
     int updateById(Integer id, String data);
 
     int updateByIndex(@Param("index") String index, @Param("data") String data, @Param("userId") String userId, @Param("pluginId") String pluginId);
+
+    int updateBatchById(@Param("list") List<PluginData> list);
 
     @Select("select * from plugin_data where user_id = #{userId} and plugin_id = #{pluginId}")
     List<PluginData> selectAll(String userId, String pluginId);

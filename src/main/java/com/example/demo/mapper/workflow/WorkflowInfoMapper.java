@@ -101,6 +101,12 @@ public interface WorkflowInfoMapper {
     WorkflowInfo getById(String id);
 
     /**
+     * 查询所有定时任务
+     * @return 定时任务列表
+     */
+    List<WorkflowInfo> selectAllScheduledTask();
+
+    /**
      * 计算工作流总数
      * @return 工作流总数
      */

@@ -375,4 +375,13 @@
         ORDER BY w.create_time DESC
     </select>
 
+    <select id="selectAllScheduledTask" resultType="com.example.demo.pojo.entity.workflow.WorkflowInfo">
+        <include refid="select"/>
+        WHERE w.enabled = true
+        AND w.available = true
+        AND w.disable_reason IS NULL
+        and n.scheduled_time is not null
+        ORDER BY w.create_time DESC
+    </select>
+
 </mapper>

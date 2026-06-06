@@ -1,5 +1,12 @@
 package com.example.demo.api.impl;
 
+import com.baomidou.mybatisplus.core.conditions.Wrapper;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.demo.mapper.workflow.PluginDataMapper;
 import com.example.demo.util.ThreadLocalManager;
 import com.github.zhygtx.pojo.PluginData;
@@ -98,17 +105,93 @@ public class SQLServiceImpl implements SQLService {
     }
 
     @Override
+    @Transactional
+    public int update(List<PluginData> pluginDataList){
+        if (pluginDataList == null || pluginDataList.isEmpty()) {
+            return 0;
+        }
+        return pluginDataMapper.updateBatchById(pluginDataList);
+    }
+
+    @Override
     public List<PluginData> select() {
         return pluginDataMapper.selectAll(ThreadLocalManager.getUserId(), ThreadLocalManager.getPluginId());
     }
 
     @Override
-    public PluginData select(Integer id) {
+    public PluginData selectById(Integer id) {
         return pluginDataMapper.selectById(id);
+    }
+
+    @Override
+    public PluginData selectByIndex(String index) {
+        List<PluginData> list = pluginDataMapper.selectByIndex(index, ThreadLocalManager.getUserId(), ThreadLocalManager.getPluginId());
+        return list != null && !list.isEmpty() ? list.get(0) : null;
     }
 
     @Override
     public List<PluginData> select(String index) {
         return pluginDataMapper.selectByIndex(index, ThreadLocalManager.getUserId(), ThreadLocalManager.getPluginId());
+    }
+
+    @Override
+    public List<PluginData> selectList(Wrapper<PluginData> wrapper) {
+        Wrapper<PluginData> wrappedWrapper = addScopeToWrapper(wrapper);
+        return pluginDataMapper.selectList(wrappedWrapper);
+    }
+
+    @Override
+    public PluginData selectOne(Wrapper<PluginData> wrapper) {
+        Wrapper<PluginData> wrappedWrapper = addScopeToWrapper(wrapper);
+        return pluginDataMapper.selectOne(wrappedWrapper);
+    }
+
+    @Override
+    public int selectCount(Wrapper<PluginData> wrapper) {
+        Wrapper<PluginData> wrappedWrapper = addScopeToWrapper(wrapper);
+        return Math.toIntExact(pluginDataMapper.selectCount(wrappedWrapper));
+    }
+
+    @Override
+    public IPage<PluginData> selectPage(Page<PluginData> page, Wrapper<PluginData> wrapper) {
+        Wrapper<PluginData> wrappedWrapper = addScopeToWrapper(wrapper);
+        return pluginDataMapper.selectPage(page, wrappedWrapper);
+    }
+
+    @Override
+    @Transactional
+    public int update(Wrapper<PluginData> wrapper, PluginData entity) {
+        Wrapper<PluginData> wrappedWrapper = addScopeToWrapper(wrapper);
+        return pluginDataMapper.update(entity, wrappedWrapper);
+    }
+
+    @Override
+    @Transactional
+    public int delete(Wrapper<PluginData> wrapper) {
+        Wrapper<PluginData> wrappedWrapper = addScopeToWrapper(wrapper);
+        return pluginDataMapper.delete(wrappedWrapper);
+    }
+
+
+    @SuppressWarnings("unchecked")
+    private <T extends Wrapper<PluginData>> T addScopeToWrapper(T wrapper) {
+        if (wrapper instanceof LambdaQueryWrapper) {
+            LambdaQueryWrapper<PluginData> lambdaWrapper = (LambdaQueryWrapper<PluginData>) wrapper;
+            return (T) lambdaWrapper.eq(PluginData::getUserId, ThreadLocalManager.getUserId())
+                                     .eq(PluginData::getPluginId, ThreadLocalManager.getPluginId());
+        } else if (wrapper instanceof LambdaUpdateWrapper) {
+            LambdaUpdateWrapper<PluginData> lambdaWrapper = (LambdaUpdateWrapper<PluginData>) wrapper;
+            return (T) lambdaWrapper.eq(PluginData::getUserId, ThreadLocalManager.getUserId())
+                                     .eq(PluginData::getPluginId, ThreadLocalManager.getPluginId());
+        } else if (wrapper instanceof QueryWrapper) {
+            QueryWrapper<PluginData> queryWrapper = (QueryWrapper<PluginData>) wrapper;
+            return (T) queryWrapper.eq("user_id", ThreadLocalManager.getUserId())
+                                     .eq("plugin_id", ThreadLocalManager.getPluginId());
+        } else if (wrapper instanceof UpdateWrapper) {
+            UpdateWrapper<PluginData> updateWrapper = (UpdateWrapper<PluginData>) wrapper;
+            return (T) updateWrapper.eq("user_id", ThreadLocalManager.getUserId())
+                                     .eq("plugin_id", ThreadLocalManager.getPluginId());
+        }
+        return wrapper;
     }
 }

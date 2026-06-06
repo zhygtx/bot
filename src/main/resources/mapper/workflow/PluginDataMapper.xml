@@ -51,4 +51,25 @@
     <update id="updateByIndex">
         update plugin_data set data = #{data}, update_time = NOW() where user_id = #{userId} and plugin_id = #{pluginId} and data_index = #{index}
     </update>
+
+    <update id="updateBatchById">
+        update plugin_data
+        <trim prefix="set" suffixOverrides=",">
+            <trim prefix="data_index = case" suffix="end,">
+                <foreach item="item" collection="list">
+                    when id = #{item.id} then #{item.dataIndex}
+                </foreach>
+            </trim>
+            <trim prefix="data = case" suffix="end,">
+                <foreach item="item" collection="list">
+                    when id = #{item.id} then #{item.data}
+                </foreach>
+            </trim>
+            update_time = NOW(),
+        </trim>
+        where id in
+        <foreach item="item" collection="list" open="(" close=")" separator=",">
+            #{item.id}
+        </foreach>
+    </update>
 </mapper>

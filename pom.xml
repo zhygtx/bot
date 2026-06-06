@@ -46,11 +46,11 @@
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
 
-        <!-- MyBatis Spring Boot Starter 集成MyBatis ORM框架与Spring Boot -->
+        <!-- MyBatis-Plus Spring Boot Starter -->
         <dependency>
-            <groupId>org.mybatis.spring.boot</groupId>
-            <artifactId>mybatis-spring-boot-starter</artifactId>
-            <version>3.0.5</version>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
+            <version>3.5.7</version>
         </dependency>
 
         <!-- MySQL Connector/J 是连接MySQL数据库所需的JDBC驱动程序 -->
@@ -206,7 +206,7 @@
         <dependency>
             <groupId>com.github.zhygtx</groupId>
             <artifactId>generalbot-api</artifactId>
-            <version>0.1.2</version>
+            <version>0.2.2</version>
         </dependency>
 
     </dependencies>

@@ -5,6 +5,8 @@ import com.example.demo.pojo.entity.workflow.WorkflowInfo;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.github.pagehelper.PageInfo;
 
+import java.util.List;
+
 /**
  * 工作流服务接口
  */
@@ -67,6 +69,12 @@ public interface WorkflowService {
      * @return 是否存在
      */
     Boolean existsById(String id);
+
+    /**
+     * 查询所有定时任务
+     * @return 定时任务列表
+     */
+    List<WorkflowInfo> findAllScheduledTask();
 
     /**
      * 测试工作流

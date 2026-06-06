@@ -235,6 +235,15 @@ public class WorkflowServiceImpl implements WorkflowService {
     }
 
     /**
+     * 查询所有定时任务
+     * @return 定时任务列表
+     */
+    @Override
+    public List<WorkflowInfo> findAllScheduledTask() {
+        return workflowInfoMapper.selectAllScheduledTask();
+    }
+
+    /**
      * 测试工作流
      * @param workflowInfo 工作流信息
      * @return 执行结果
