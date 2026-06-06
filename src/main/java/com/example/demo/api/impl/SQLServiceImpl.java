@@ -65,13 +65,13 @@ public class SQLServiceImpl implements SQLService {
     @Override
     @Transactional
     public int delete() {
-        return pluginDataMapper.delete(ThreadLocalManager.getUserId(), ThreadLocalManager.getPluginId());
+        return pluginDataMapper.deleteByUserIdAndPluginId(ThreadLocalManager.getUserId(), ThreadLocalManager.getPluginId());
     }
 
     @Override
     @Transactional
     public int delete(Integer id) {
-        return pluginDataMapper.deleteById(id);
+        return pluginDataMapper.deleteByIdWithInteger(id);
     }
 
     @Override
@@ -95,7 +95,7 @@ public class SQLServiceImpl implements SQLService {
     @Override
     @Transactional
     public int update(Integer id, String data) {
-        return pluginDataMapper.updateById(id, data);
+        return pluginDataMapper.updateByIdWithInteger(id, data);
     }
 
     @Override
@@ -120,7 +120,7 @@ public class SQLServiceImpl implements SQLService {
 
     @Override
     public PluginData selectById(Integer id) {
-        return pluginDataMapper.selectById(id);
+        return pluginDataMapper.selectByIdWithInteger(id);
     }
 
     @Override

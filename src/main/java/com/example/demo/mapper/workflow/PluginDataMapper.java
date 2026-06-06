@@ -23,10 +23,10 @@ public interface PluginDataMapper extends BaseMapper<PluginData> {
     int insertByMapList(@Param("data") Map<String,List<String>> data, @Param("userId") String userId, @Param("pluginId") String pluginId);
 
     @Delete("delete from plugin_data where user_id = #{userId} and plugin_id = #{pluginId}")
-    int delete(String userId, String pluginId);
+    int deleteByUserIdAndPluginId(String userId, String pluginId);
 
     @Delete("delete from plugin_data where id = #{id}")
-    int deleteById(Integer id);
+    int deleteByIdWithInteger(Integer id);
 
     @Delete("delete from plugin_data where data_index = #{index} and user_id = #{userId} and plugin_id = #{pluginId}")
     int deleteByIndex(String index, String userId, String pluginId);
@@ -36,7 +36,7 @@ public interface PluginDataMapper extends BaseMapper<PluginData> {
     int deleteByIds(@Param("ids") List<Integer> ids);
 
     @Update("update plugin_data set data = #{data}, update_time = now() where id = #{id}")
-    int updateById(Integer id, String data);
+    int updateByIdWithInteger(Integer id, String data);
 
     int updateByIndex(@Param("index") String index, @Param("data") String data, @Param("userId") String userId, @Param("pluginId") String pluginId);
 
@@ -46,7 +46,7 @@ public interface PluginDataMapper extends BaseMapper<PluginData> {
     List<PluginData> selectAll(String userId, String pluginId);
 
     @Select("select * from plugin_data where id = #{id}")
-    PluginData selectById(Integer id);
+    PluginData selectByIdWithInteger(Integer id);
 
     @Select("select * from plugin_data where data_index = #{index} and user_id = #{userId} and plugin_id = #{pluginId}")
     List<PluginData> selectByIndex(String index, String userId, String pluginId);
