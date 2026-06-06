@@ -39,6 +39,9 @@ public class BotEventScanner {
      */
     private void scanEvents() {
         try {
+            // 添加定时触发事件
+            addScheduledEvent();
+            
             Map<String, Object> shiroBeans = applicationContext.getBeansWithAnnotation(Shiro.class);
 
             for (Object bean : shiroBeans.values()) {
@@ -70,6 +73,38 @@ public class BotEventScanner {
         } catch (Exception e) {
             log.error("扫描BOT事件失败", e);
         }
+    }
+
+    /**
+     * 添加定时触发事件
+     */
+    private void addScheduledEvent() {
+        List<FieldMetadata> fields = new ArrayList<>();
+        fields.add(FieldMetadata.builder()
+            .fieldName("scheduledTime")
+            .fieldType("Integer")
+            .description("执行间隔时间（秒），最小60秒")
+            .order(0)
+            .required(true)
+            .example("60")
+            .inherited(false)
+            .build());
+
+        EventMetadata.EntityMetadata entityInfo = EventMetadata.EntityMetadata.builder()
+            .entityName("ScheduledEvent")
+            .fields(fields)
+            .build();
+
+        EventMetadata scheduledEvent = EventMetadata.builder()
+            .eventType("scheduledEvent")
+            .eventName("定时触发")
+            .description("按照设定的时间间隔自动触发工作流")
+            .order(-1)
+            .entityInfo(entityInfo)
+            .build();
+
+        eventMetadataList.add(scheduledEvent);
+        log.info("扫描到BOT事件: {} ({}) - {}", scheduledEvent.getEventName(), scheduledEvent.getEventType(), scheduledEvent.getDescription());
     }
 
     /**

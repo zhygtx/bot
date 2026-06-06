@@ -485,11 +485,14 @@ public class WorkflowUtil {
      */
     private ExecutionResult executeBotEventNode(Node node) {
         log.debug("执行 BOT 事件节点：{}", node.getId());
+        NodeLog nodeLog = ThreadLocalManager.getNodeLog(node.getId());
 
         Object resultData;
-        if ("scheduledEvent".equals(node.getBotEventName())) {
+        if ("scheduledEvent".equals(node.getEventType())) {
             resultData = new Object();
             ThreadLocalManager.getExecutionContext().put(node.getId(), resultData);
+            nodeLog.setInput(node.getScheduledTime() + "秒");
+            nodeLog.setOutput(null);
             log.debug("定时节点执行完成");
         } else {
             Map<String, Object> context = ThreadLocalManager.getExecutionContext();
@@ -500,7 +503,6 @@ public class WorkflowUtil {
             }
             resultData = botEventData;
 
-            NodeLog nodeLog = ThreadLocalManager.getNodeLog(node.getId());
             try {
                 nodeLog.setOutput(mapper.writeValueAsString(resultData));
             } catch (JsonProcessingException e) {

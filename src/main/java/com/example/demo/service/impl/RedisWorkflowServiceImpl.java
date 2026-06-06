@@ -98,7 +98,7 @@ public class RedisWorkflowServiceImpl implements RedisWorkflowService {
      */
     private Node findBotEventNode(List<Node> nodes) {
         for (Node node : nodes) {
-            if (Node.NodeType.botEvent.equals(node.getNodeType())) {
+            if (Node.NodeType.botEvent.equals(node.getNodeType()) && !"scheduledEvent".equals(node.getEventType())) {
                 return node;
             }
         }
