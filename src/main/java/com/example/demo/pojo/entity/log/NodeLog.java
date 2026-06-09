@@ -63,4 +63,9 @@ public class NodeLog {
      * 节点方法描述
      */
     private String methodDescription;
+
+    /**
+     * 节点方法报错信息
+     */
+    private Boolean isError;
 }

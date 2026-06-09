@@ -5,7 +5,6 @@ import com.example.demo.service.RedisWorkflowService;
 import com.example.demo.service.WorkflowService;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -24,7 +23,6 @@ public class ScheduledTaskManager {
     private final WorkflowUtil workflowUtil;
     private final RedisTemplate<String, Object> redisTemplate;
 
-    @Autowired
     public ScheduledTaskManager(RedisWorkflowService redisWorkflowService, 
                                @org.springframework.context.annotation.Lazy WorkflowService workflowService, 
                                WorkflowUtil workflowUtil,
@@ -81,9 +79,12 @@ public class ScheduledTaskManager {
                     
                     // 执行工作流
                     executeWorkflow(workflow);
-                    // 执行成功，移除旧任务并重新添加（更新下次执行时间）
-                    redisWorkflowService.removeScheduledTask(workflowId);
-                    redisWorkflowService.addScheduledTask(workflow);
+                    // 检查工作流是否仍存在于定时任务中（节点执行失败时editDisableReason已将其从Redis移除）
+                    if (redisTemplate.opsForZSet().score("scheduled_tasks", workflow) != null) {
+                        // 执行成功，移除旧任务并重新添加（更新下次执行时间）
+                        redisWorkflowService.removeScheduledTask(workflowId);
+                        redisWorkflowService.addScheduledTask(workflow);
+                    }
                 } catch (Exception e) {
                     log.error("执行定时任务失败：workflowId={}", workflowId, e);
                     workflowService.editDisableReason(workflowId, "定时任务执行出错:" + e.getMessage());

@@ -14,8 +14,8 @@ public interface WorkflowLogMapper {
     /**
      * 添加工作流日志（主键自增）
      */
-    @Insert("insert into workflow_log(workflow_id, user_id, expected_node_count, actual_node_count, execution_time, start_time, initial_context, workflow_name) " +
-            "values(#{workflowId}, #{userId}, #{expectedNodeCount}, #{actualNodeCount}, #{executionTime}, #{startTime}, #{initialContext}, #{workflowName})")
+    @Insert("insert into workflow_log(workflow_id, user_id, expected_node_count, actual_node_count, execution_time, start_time, initial_context, workflow_name, error_log, is_error) " +
+            "values(#{workflowId}, #{userId}, #{expectedNodeCount}, #{actualNodeCount}, #{executionTime}, #{startTime}, #{initialContext}, #{workflowName}, #{errorLog}, #{isError})")
     int insert(WorkflowLog workflowLog);
 
     /**
@@ -26,7 +26,8 @@ public interface WorkflowLogMapper {
                                         @Param("startTime") Long startTime,
                                         @Param("endTime") Long endTime,
                                         @Param("sortField") String sortField,
-                                        @Param("sortOrder") String sortOrder);
+                                        @Param("sortOrder") String sortOrder,
+                                        @Param("status") String status);
 
     /**
      * 根据工作流ID列表批量获取统计信息

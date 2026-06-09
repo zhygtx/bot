@@ -28,6 +28,7 @@ public class WorkflowLogController {
      * @param endTime 结束时间（可选）
      * @param sortField 排序字段（可选：actualNodeCount, executionTime）
      * @param sortOrder 排序方式（可选：asc, desc）
+     * @param status 执行状态（可选：success-成功, failed-失败）
      * @param pageNum 页码
      * @param pageSize 页大小
      * @return 工作流日志列表
@@ -39,9 +40,10 @@ public class WorkflowLogController {
                                       Long endTime,
                                       String sortField,
                                       String sortOrder,
+                                      String status,
                                       @RequestParam(required = false,defaultValue = "1") Integer pageNum,
                                       @RequestParam(required = false,defaultValue = "10") Integer pageSize) {
-        return Result.success(null,workflowLogService.findWorkflowLogs(userId, workflowName, startTime, endTime, sortField, sortOrder, pageNum, pageSize));
+        return Result.success(null,workflowLogService.findWorkflowLogs(userId, workflowName, startTime, endTime, sortField, sortOrder, status, pageNum, pageSize));
     }
 
     /**

@@ -58,4 +58,14 @@ public class WorkflowLog {
      * 工作流名称
      */
     private String workflowName;
+
+    /**
+     * 工作流报错日志
+     */
+    private String errorLog;
+
+    /**
+     * 工作流是否报错
+     */
+    private Boolean isError;
 }

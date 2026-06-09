@@ -24,6 +24,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -231,7 +233,7 @@ public class WorkflowUtil {
                         .startTime(workflowStartTime)
                         .initialContext(object != null ? mapper.writeValueAsString(object) : null)
                         .workflowName(workflowInfo.getName())
-                        .initialContext(object != null ? mapper.writeValueAsString(object) : null)
+                        .isError(false)
                         .build();
                 ThreadLocalManager.setWorkflowLog(workflowLog);
                 
@@ -257,6 +259,12 @@ public class WorkflowUtil {
                     if (workflowLog != null) {
                         workflowLog.setExecutionTime(System.currentTimeMillis() - workflowStartTime);
                         workflowLog.setActualNodeCount(ThreadLocalManager.getNodeLogList().size());
+                        workflowLog.setIsError(true);
+                        
+                        // 将完整堆栈保存为 bigText，key 写入 errorLog
+                        String errorKey = saveErrorAsBigText(workflowInfo.getId(), e);
+                        workflowLog.setErrorLog(errorKey);
+                        
                         workflowLogService.add(workflowLog, ThreadLocalManager.getNodeLogList(), getBigTextList());
                         log.debug("异常情况下工作流日志保存完成");
                     }
@@ -389,6 +397,7 @@ public class WorkflowUtil {
                     .order(processedCount)
                     .methodName(methodName)
                     .methodDescription(methodDescription)
+                    .isError(false)
                     .build();
             ThreadLocalManager.addNodeLog(nodeLog);
             
@@ -396,20 +405,27 @@ public class WorkflowUtil {
             try {
                 executionResult = executeSingleNode(currentNode);
             } catch (Throwable e) {
-                // 节点执行失败时，将错误信息作为该节点的输出
-                String errorMsg = String.format("节点 %s 执行失败：%s", currentNodeId, e.getMessage());
-                log.error(errorMsg, e);
+                // 节点执行失败，将完整堆栈保存为 bigText，key 作为节点输出
+                log.error("节点 {} 执行失败", currentNodeId, e);
                 
-                nodeLog.setOutput(errorMsg);
+                String errorKey = saveErrorAsBigText(currentNodeId, e);
+                nodeLog.setOutput(errorKey);
+                nodeLog.setIsError(true);
                 nodeLog.setExecutionTime(System.currentTimeMillis() - startTime.getTime());
-                ThreadLocalManager.addNodeLog(nodeLog);  // 确保节点日志被添加
+                ThreadLocalManager.addNodeLog(nodeLog);
                 
-                // 更新工作流禁用原因
+                // 同步标记工作流日志为错误
+                WorkflowLog wfLog = ThreadLocalManager.getWorkflowLog();
+                if (wfLog != null) {
+                    wfLog.setIsError(true);
+                }
+                
+                // 更新工作流禁用原因（仅保留简要信息）
+                String errorMsg = String.format("节点 %s 执行失败：%s", currentNodeId, e.getMessage());
                 workflowService.editDisableReason(workflowInfo.getId(), errorMsg);
                 
                 // 节点执行失败后，终止工作流执行
                 log.debug("节点执行失败，终止工作流执行");
-                // 返回空对象，工作流终止，但节点日志已经在 ThreadLocal 中，会在外层保存
                 return mapper.createObjectNode();
             }
 
@@ -639,7 +655,7 @@ public class WorkflowUtil {
         } catch (JsonProcessingException e) {
             inputStr = methodParameters.toString();
         }
-        nodeLog.setInput(handleBigText(inputStr, node.getId(), "INPUT"));
+        nodeLog.setInput(handleBigText(inputStr, node.getId()));
         
         String outputStr;
         try {
@@ -647,21 +663,35 @@ public class WorkflowUtil {
         } catch (JsonProcessingException e) {
             outputStr = result.toString();
         }
-        nodeLog.setOutput(handleBigText(outputStr, node.getId(), "OUTPUT"));
+        nodeLog.setOutput(handleBigText(outputStr, node.getId()));
         
         ThreadLocalManager.addNodeLog(nodeLog);
     }
 
-    private String handleBigText(String data, String nodeId, String type) {
+    private String handleBigText(String data, String nodeId) {
         if (data == null || data.length() <= ThreadLocalManager.BIG_TEXT_THRESHOLD) {
             return data;
         }
         
-        String key = ThreadLocalManager.BIG_TEXT_PREFIX + type + ":" + nodeId + ":" + 
+        String key = ThreadLocalManager.BIG_TEXT_PREFIX + nodeId + ":" + 
                      System.currentTimeMillis() + ":" + 
                      UUID.randomUUID().toString().substring(0, 8);
         ThreadLocalManager.addBigText(key, data);
         return key;
+    }
+
+    /**
+     * 将异常的完整堆栈信息保存为 bigText，返回 bigText 引用键
+     * @param nodeId 关联节点/工作流 ID
+     * @param e      异常对象
+     * @return bigText 引用键
+     */
+    private String saveErrorAsBigText(String nodeId, Throwable e) {
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        e.printStackTrace(pw);
+        String stackTrace = sw.toString();
+        return handleBigText(stackTrace, nodeId);
     }
 
     private List<BigText> getBigTextList() {

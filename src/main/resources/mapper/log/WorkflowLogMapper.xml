@@ -15,6 +15,16 @@
         <if test="endTime != null">
             AND #{endTime} >= start_time
         </if>
+        <if test="status != null and status != ''">
+            <choose>
+                <when test="status == 'success'">
+                    AND is_error = 0
+                </when>
+                <when test="status == 'failed'">
+                    AND is_error = 1
+                </when>
+            </choose>
+        </if>
         <choose>
             <when test="sortField != null and sortField != ''">
                 ORDER BY 

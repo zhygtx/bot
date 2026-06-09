@@ -18,7 +18,7 @@ INDEX `idx_botQQ` (`bot_qq`)
 -- 机器人信息表
 CREATE TABLE `bot` (
 `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '机器人 ID',
-`name` VARCHAR(255) NOT NULL COMMENT '机器人名称',
+`name` VARCHAR(255) COMMENT '机器人名称',
 `bot_qq` BIGINT NOT NULL COMMENT '机器人 QQ',
 `user_id` VARCHAR(36) NOT NULL COMMENT '机器人所有者 ID',
 `is_online` TINYINT(1) DEFAULT 0 NOT NULL COMMENT '机器人是否在线',
@@ -247,6 +247,8 @@ CREATE TABLE `workflow_log` (
   `start_time` BIGINT COMMENT '工作流执行开始时间戳',
   `initial_context` TEXT COMMENT '工作流初始上下文（JSON格式）',
   `workflow_name` VARCHAR(255) COMMENT '工作流名称',
+  `error_log` TEXT COMMENT '工作流报错日志',
+  `is_error` TINYINT(1) DEFAULT 0 COMMENT '工作流是否报错',
   INDEX `idx_user_id_start_time` (`user_id`, `start_time`),
   INDEX `idx_workflow_id_start_time` (`workflow_id`, `start_time`),
   INDEX `idx_workflow_id` (`workflow_id`)
@@ -264,6 +266,7 @@ CREATE TABLE `node_log` (
   `output` text COMMENT '节点输出内容（JSON格式）',
   `method_name` VARCHAR(255) COMMENT '节点方法名称',
   `method_description` TEXT COMMENT '节点方法描述',
+  `is_error` TINYINT(1) DEFAULT 0 COMMENT '节点是否报错',
   INDEX `idx_workflow_log_id_order` (`workflow_log_id`, `order`),
   INDEX `idx_method_id` (`method_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='节点日志表';
