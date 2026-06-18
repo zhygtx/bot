@@ -2,6 +2,7 @@ package com.example.demo.service.impl;
 
 import com.example.demo.mapper.plugin.*;
 import com.example.demo.mapper.workflow.WorkflowInfoMapper;
+import com.example.demo.pojo.dto.PluginInfoDto;
 import com.example.demo.pojo.entity.Result;
 import com.example.demo.pojo.entity.plugin.*;
 import com.example.demo.service.PluginService;
@@ -19,8 +20,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -292,59 +293,38 @@ public class PluginServiceImpl implements PluginService {
     }
 
     /**
-     * 获取插件列表
-     * @param authorId 插件作者ID
+     * 根据插件ID和版本ID查询插件信息
+     * @param id 插件ID
+     * @param versionId 版本ID
+     * @return 插件信息
+     */
+    @Override
+    public PluginInfo findByPluginIdAndVersionId(String id, String versionId) {
+        return pluginMapper.selectByPluginIdAndVersionId(id, versionId);
+    }
+
+    /**
+     * 查询插件列表
+     * @param content 搜索内容
+     * @param authorId 创建者ID
+     * @param isPublic 公开状态
      * @param pageNum 页码
      * @param pageSize 页大小
      * @return 插件列表
      */
     @Override
-    public PageInfo<PluginInfo> findByAuthorId(String authorId, int pageNum, int pageSize) {
+    public PageInfo<PluginInfoDto> findPlugins(String content, String authorId, Boolean isPublic, int pageNum, int pageSize) {
         PageHelper.startPage(pageNum, pageSize);
-        List<String> ids = pluginMapper.selectIdsByAuthorId(authorId);
-
-        if (ids.isEmpty()) {
-            return new PageInfo<>(new ArrayList<>());
-        }
-
-        List<PluginInfo> pluginInfos = pluginMapper.selectByIds(ids);
-
-        PageInfo<PluginInfo> pageInfo = new PageInfo<>(pluginInfos);
-        pageInfo.setTotal(pluginMapper.selectCountByAuthorId(authorId));
-
-        return pageInfo;
+        return PageInfo.of(pluginMapper.selectPlugins(content, authorId, isPublic));
     }
 
     /**
-     * 获取公开插件列表
-     * @param pageNum 页码
-     * @param pageSize 页大小
-     * @return 公开插件列表
+     * 根据插件ID查询插件版本信息
+     * @param pluginId 插件ID
+     * @return 插件版本信息
      */
     @Override
-    public PageInfo<PluginInfo> findByPublic(int pageNum, int pageSize) {
-        PageHelper.startPage(pageNum, pageSize);
-        List<String> ids = pluginMapper.selectIdsByPublic();
-
-        if (ids.isEmpty()) {
-            return new PageInfo<>(new ArrayList<>());
-        }
-
-        List<PluginInfo> pluginInfos = pluginMapper.selectByIds(ids);
-
-        PageInfo<PluginInfo> pageInfo = new PageInfo<>(pluginInfos);
-        pageInfo.setTotal(pluginMapper.selectCountByPublic());
-
-        return pageInfo;
-    }
-
-    /**
-     * 获取插件信息
-     * @param id 插件ID
-     * @return 插件信息
-     */
-    @Override
-    public PluginInfo findById(String id) {
-        return pluginMapper.selectById(id);
+    public List<Map<String, Object>> findPluginVersionByPluginId(String pluginId) {
+        return pluginMapper.selectPluginVersionByPluginId(pluginId);
     }
 }

@@ -76,38 +76,40 @@ public class PluginController {
 
     /**
      * 根据id查询插件信息
-     * @param id 插件id
+     * @param pluginId 插件id
+     * @param pluginVersionId 插件版本id
      * @return 插件信息
      */
-    @GetMapping("/{id}")
-    public Result<?> findById(@PathVariable("id") String id) {
-        return Result.success(null,pluginService.findById(id));
+    @GetMapping("/findPlugin")
+    public Result<?> findPlugin(String pluginId, String pluginVersionId) {
+        return Result.success(null,pluginService.findByPluginIdAndVersionId(pluginId, pluginVersionId));
     }
 
     /**
      * 获取插件列表
-     * @param request 请求对象
+      * @param content 模糊查询内容
+     * @param authorId 插件作者id
+     * @param isPublic 插件是否公开
      * @param pageNum 页码
      * @param pageSize 页大小
      * @return 插件列表
      */
-    @GetMapping("/findByAuthorId")
-    public Result<?> findByAuthorId(HttpServletRequest request,
-                                    @RequestParam(required = false,defaultValue = "1") int pageNum,
-                                    @RequestParam(required = false,defaultValue = "12") int pageSize) {
-        String userId = authUtil.getCurrentUserId(request);
-        return Result.success(null,pluginService.findByAuthorId(userId, pageNum, pageSize));
+    @GetMapping("/findPlugins")
+    public Result<?> findPlugins(@RequestParam(required = false) String content,
+                                 @RequestParam(required = false) String authorId,
+                                 @RequestParam(required = false) Boolean isPublic,
+                                 @RequestParam(required = false, defaultValue = "1") int pageNum,
+                                 @RequestParam(required = false, defaultValue = "12") int pageSize) {
+        return Result.success(null,pluginService.findPlugins(content, authorId, isPublic, pageNum, pageSize));
     }
 
     /**
-     * 获取公开插件列表
-     * @param pageNum 页码
-     * @param pageSize 页大小
-     * @return 公开插件列表
+     * 根据插件id查询插件版本信息
+     * @param pluginId 插件id
+     * @return 插件版本信息
      */
-    @GetMapping("/findByPublic")
-    public Result<?> findByPublic(@RequestParam(required = false,defaultValue = "1") int pageNum,
-                                  @RequestParam(required = false,defaultValue = "12") int pageSize) {
-        return Result.success(null,pluginService.findByPublic(pageNum, pageSize));
+    @GetMapping("/findPluginVersionByPluginId")
+    public Result<?> findPluginVersionByPluginId(String pluginId) {
+        return Result.success(null,pluginService.findPluginVersionByPluginId(pluginId));
     }
 }

@@ -2,38 +2,6 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.example.demo.mapper.plugin.PluginMapper">
 
-    <!-- SQL片段定义 -->
-    <!-- 插件信息查询语句 -->
-    <sql id="pluginSelectStatement">
-        SELECT 
-            p.id, p.name, p.description, p.author_id, p.author_name,
-            p.latest_version, p.version_count, 
-            p.create_time, p.update_time,p.is_public,
-            pv.id as plugin_version_id, pv.plugin_id as plugin_version_plugin_id, pv.version as plugin_version_version, 
-            pv.path as plugin_version_path, pv.file_size as plugin_version_file_size, pv.file_md5 as plugin_version_file_md5, 
-            pv.create_time as plugin_version_create_time, pv.changelog as plugin_version_changelog, 
-            pv.entity_package as plugin_version_entity_package, pv.method_package as plugin_version_method_package, 
-            pv.compatible_version as plugin_version_compatible_version,
-            e.id as entity_id, e.description as entity_description, e.name as entity_name, 
-            e.plugin_version_id as entity_plugin_version_id, e.entity_name as entity_entity_name,
-            a.id as attribute_id, a.description as attribute_description, 
-            a.entity_info_id as attribute_entity_info_id, a.type as attribute_type, a.name as attribute_name,
-            mc.id as method_class_id, mc.description as method_class_description, 
-            mc.plugin_version_id as method_class_plugin_version_id, mc.class_name as method_class_class_name, 
-            mc.simple_class_name as method_class_simple_class_name, mc.package_name as method_class_package_name,
-            m.id as method_id, m.description as method_description, m.method_class_id as method_method_class_id, 
-            m.name as method_name, m.return_type as method_return_type, m.return_description as method_return_description,
-            param.id as parameter_id, param.description as parameter_description, 
-            param.method_id as parameter_method_id, param.name as parameter_name, param.type as parameter_type, param.order as parameter_order
-        FROM plugin_info p
-        LEFT JOIN plugin_version pv ON p.id = pv.plugin_id
-        LEFT JOIN entity_info e ON pv.id = e.plugin_version_id
-        LEFT JOIN attribute a ON e.id = a.entity_info_id
-        LEFT JOIN method_class_info mc ON pv.id = mc.plugin_version_id
-        LEFT JOIN method_info m ON mc.id = m.method_class_id
-        LEFT JOIN parameter_info param ON m.id = param.method_id
-    </sql>
-
     <!-- 插件信息表字段映射 -->
     <resultMap id="pluginInfoMap" type="com.example.demo.pojo.entity.plugin.PluginInfo">
         <id column="id" property="id"/>
@@ -106,7 +74,60 @@
         </collection>
     </resultMap>
 
-    <!-- 插入插件信息 -->
+    <!-- 插件信息查询语句 -->
+    <sql id="pluginSelectStatement">
+        SELECT 
+            p.id, p.name, p.description, p.author_id, p.author_name,
+            p.latest_version, p.version_count, 
+            p.create_time, p.update_time,p.is_public,
+            pv.id as plugin_version_id, pv.plugin_id as plugin_version_plugin_id, pv.version as plugin_version_version, 
+            pv.path as plugin_version_path, pv.file_size as plugin_version_file_size, pv.file_md5 as plugin_version_file_md5, 
+            pv.create_time as plugin_version_create_time, pv.changelog as plugin_version_changelog, 
+            pv.entity_package as plugin_version_entity_package, pv.method_package as plugin_version_method_package, 
+            pv.compatible_version as plugin_version_compatible_version,
+            e.id as entity_id, e.description as entity_description, e.name as entity_name, 
+            e.plugin_version_id as entity_plugin_version_id, e.entity_name as entity_entity_name,
+            a.id as attribute_id, a.description as attribute_description, 
+            a.entity_info_id as attribute_entity_info_id, a.type as attribute_type, a.name as attribute_name,
+            mc.id as method_class_id, mc.description as method_class_description, 
+            mc.plugin_version_id as method_class_plugin_version_id, mc.class_name as method_class_class_name, 
+            mc.simple_class_name as method_class_simple_class_name, mc.package_name as method_class_package_name,
+            m.id as method_id, m.description as method_description, m.method_class_id as method_method_class_id, 
+            m.name as method_name, m.return_type as method_return_type, m.return_description as method_return_description,
+            param.id as parameter_id, param.description as parameter_description, 
+            param.method_id as parameter_method_id, param.name as parameter_name, param.type as parameter_type, param.order as parameter_order
+        FROM plugin_info p
+        LEFT JOIN plugin_version pv ON p.id = pv.plugin_id
+        LEFT JOIN entity_info e ON pv.id = e.plugin_version_id
+        LEFT JOIN attribute a ON e.id = a.entity_info_id
+        LEFT JOIN method_class_info mc ON pv.id = mc.plugin_version_id
+        LEFT JOIN method_info m ON mc.id = m.method_class_id
+        LEFT JOIN parameter_info param ON m.id = param.method_id
+    </sql>
+
+    <resultMap id="pluginInfoDtoMap" type="com.example.demo.pojo.dto.PluginInfoDto">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="description" column="description"/>
+        <result property="authorId" column="author_id"/>
+        <result property="authorName" column="author_name"/>
+        <result property="latestVersion" column="latest_version"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="isPublic" column="is_public"/>
+        <collection property="pluginVersionList" ofType="com.example.demo.pojo.dto.PluginVersionDto">
+            <id property="id" column="plugin_version_id"/>
+            <result property="version" column="plugin_version_version"/>
+        </collection>
+    </resultMap>
+
+    <sql id="pluginSelectDto">
+        select p.id , p.name , p.description , p.author_id , p.author_name ,
+        p.latest_version , p.update_time , p.is_public,
+        pv.id as plugin_version_id, pv.version as plugin_version_version
+        from plugin_info p
+        left join plugin_version pv on p.id = pv.plugin_id
+    </sql>
+
     <!-- 插入插件信息 -->
     <insert id="insert" parameterType="com.example.demo.pojo.entity.plugin.PluginInfo">
         INSERT INTO plugin_info (
@@ -120,37 +141,48 @@
         );
     </insert>
 
+    <!-- 更新插件信息 -->
+    <update id="update" parameterType="com.example.demo.pojo.entity.plugin.PluginInfo">
+        UPDATE plugin_info SET
+        description = #{description},
+        <if test="name != null">name = #{name},</if>
+        <if test="authorName != null">author_name = #{authorName},</if>
+        <if test="latestVersion != null">latest_version = #{latestVersion},</if>
+        <if test="versionCount != null">version_count = #{versionCount},</if>
+        <if test="isPublic != null">is_public = #{isPublic},</if>
+        update_time = #{updateTime}
+        WHERE id = #{id}
+    </update>
+
     <!-- 根据ID查询插件信息 -->
     <select id="selectById" resultMap="pluginInfoMap">
         <include refid="pluginSelectStatement"/>
         WHERE p.id = #{id}
     </select>
 
-    <!-- 更新插件信息 -->
-    <update id="update" parameterType="com.example.demo.pojo.entity.plugin.PluginInfo">
-        UPDATE plugin_info SET
-            description = #{description},
-            <if test="name != null">name = #{name},</if>
-            <if test="authorName != null">author_name = #{authorName},</if>
-            <if test="latestVersion != null">latest_version = #{latestVersion},</if>
-            <if test="versionCount != null">version_count = #{versionCount},</if>
-            <if test="isPublic != null">is_public = #{isPublic},</if>
-            update_time = #{updateTime}
-        WHERE id = #{id}
-    </update>
-
-    <!-- 根据作者ID计算插件总数 -->
-    <select id="countByAuthorId" resultType="int">
-        SELECT COUNT(DISTINCT p.id) FROM plugin_info p
-        WHERE p.author_id = #{authorId}
-    </select>
-    <select id="selectByIds" resultMap="pluginInfoMap">
+    <select id="selectByPluginIdAndVersionId" resultMap="pluginInfoMap">
         <include refid="pluginSelectStatement"/>
-        WHERE p.id IN
-        <foreach item="id" collection="ids" separator="," open="(" close=")">
-            #{id}
-        </foreach>
-        ORDER BY p.update_time DESC
+        WHERE p.id = #{id} AND pv.id = #{versionId}
+    </select>
+
+    <select id="selectPlugins" resultMap="pluginInfoDtoMap">
+        <include refid="pluginSelectDto"/>
+        <where>
+            <if test="isPublic != null">AND p.is_public = #{isPublic}</if>
+            <if test="authorId != null">AND p.author_id = #{authorId}</if>
+            <if test="content != null">
+                AND (p.name LIKE CONCAT('%', #{content}, '%')
+                OR p.description LIKE CONCAT('%', #{content}, '%')
+                OR p.author_name LIKE CONCAT('%', #{content}, '%')
+                )
+            </if>
+        </where>
+        ORDER BY pv.create_time DESC
+    </select>
+
+    <select id="selectPluginVersionByPluginId" resultType="java.util.Map">
+        SELECT id, version FROM plugin_version
+        WHERE plugin_id = #{pluginId} ORDER BY create_time DESC
     </select>
 
 </mapper>
