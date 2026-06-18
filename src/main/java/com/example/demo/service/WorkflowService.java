@@ -79,7 +79,7 @@ public interface WorkflowService {
     /**
      * 测试工作流
      * @param workflowInfo 工作流信息
-     * @return 测试结果
+     * @return 工作流执行日志 ID
      */
-    JsonNode test(WorkflowInfo workflowInfo) throws Exception;
+    Long test(WorkflowInfo workflowInfo) throws Exception;
 }

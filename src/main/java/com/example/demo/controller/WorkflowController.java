@@ -4,7 +4,6 @@ import com.example.demo.pojo.entity.Result;
 import com.example.demo.pojo.entity.workflow.WorkflowInfo;
 import com.example.demo.service.WorkflowService;
 import com.example.demo.util.AuthUtil;
-import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -110,8 +109,8 @@ public class WorkflowController {
     @PostMapping("/test")
     public Result<?> test(String workflowId) {
         try {
-            JsonNode test = workflowService.test(workflowService.findById(workflowId));
-            return Result.success(null, test);
+            Long logId = workflowService.test(workflowService.findById(workflowId));
+            return Result.success(null, logId);
         } catch (Exception e) {
             log.error("测试工作流失败：{}", e.getMessage());
             return Result.error(500, "测试工作流失败：" + e.getMessage());

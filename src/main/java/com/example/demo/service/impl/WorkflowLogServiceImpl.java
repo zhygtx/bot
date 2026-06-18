@@ -9,7 +9,6 @@ import com.example.demo.pojo.entity.log.WorkflowLog;
 import com.example.demo.service.WorkflowLogService;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,11 +34,11 @@ public class WorkflowLogServiceImpl implements WorkflowLogService {
      * 添加工作流日志
      */
     @Override
-    @Async
     @Transactional
     public void add(WorkflowLog workflowLog, List<NodeLog> nodeLogs, List<BigText> bigTextList) {
         workflowLogMapper.insert(workflowLog);
         Long workflowLogId = workflowLogMapper.getLastInsertId();
+        workflowLog.setId(workflowLogId);
         for (NodeLog nodeLog : nodeLogs) {
             nodeLog.setWorkflowLogId(workflowLogId);
         }

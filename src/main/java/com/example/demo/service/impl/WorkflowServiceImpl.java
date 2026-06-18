@@ -6,7 +6,6 @@ import com.example.demo.pojo.dto.WorkflowInfoDto;
 import com.example.demo.pojo.entity.workflow.*;
 import com.example.demo.service.WorkflowService;
 import com.example.demo.util.WorkflowUtil;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import lombok.extern.slf4j.Slf4j;
@@ -246,10 +245,10 @@ public class WorkflowServiceImpl implements WorkflowService {
     /**
      * 测试工作流
      * @param workflowInfo 工作流信息
-     * @return 执行结果
+     * @return 工作流执行日志 ID
      */
     @Override
-    public JsonNode test(WorkflowInfo workflowInfo) throws Exception {
+    public Long test(WorkflowInfo workflowInfo) throws Exception {
         return workflowUtil.executeWorkflow(workflowInfo,"",null);
     }
 

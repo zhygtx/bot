@@ -173,10 +173,10 @@ public class WorkflowUtil {
      * @param workflowInfo 工作流信息
      * @param key 输入数据的键名
      * @param object 输入数据对象
-     * @return 工作流执行结果的 JSON 节点
+     * @return 工作流执行日志 ID
      * @throws Exception 执行过程中的异常
      */
-    public JsonNode executeWorkflow(WorkflowInfo workflowInfo, String key, Object object) throws Exception {
+    public Long executeWorkflow(WorkflowInfo workflowInfo, String key, Object object) throws Exception {
         log.debug("开始执行工作流：{} (ID: {})", workflowInfo.getName(), workflowInfo.getId());
         
         boolean acquired = workflowSemaphore.tryAcquire(500, TimeUnit.MILLISECONDS);
@@ -189,11 +189,10 @@ public class WorkflowUtil {
             ThreadLocalManager.setUserId(workflowInfo.getUserId());
             WorkflowGraph graph = buildWorkflowGraph(workflowInfo);
             
-            // 使用全局线程池执行工作流，日志创建和保存都在异步线程中完成
-            JsonNode result = executeNodesInTopologicalOrder(workflowInfo, graph, key, object);
-            log.debug("工作流执行完成：{}", result);
+            Long logId = executeNodesInTopologicalOrder(workflowInfo, graph, key, object);
+            log.debug("工作流执行完成，日志 ID：{}", logId);
 
-            return result;
+            return logId;
         } finally {
             workflowSemaphore.release();
             ThreadLocalManager.clear();
@@ -207,16 +206,16 @@ public class WorkflowUtil {
      * @param graph 工作流图
      * @param key 输入数据的键名
      * @param object 输入数据对象
-     * @return 工作流执行结果的 JSON 节点
+     * @return 工作流执行日志 ID
      * @throws Exception 执行过程中的异常
      */
-    public JsonNode executeNodesInTopologicalOrder(WorkflowInfo workflowInfo, WorkflowGraph graph, String key, Object object) throws Exception {
+    public Long executeNodesInTopologicalOrder(WorkflowInfo workflowInfo, WorkflowGraph graph, String key, Object object) throws Exception {
         if (graph == null) {
             log.warn("工作流图为 null，直接返回空结果");
-            return mapper.createObjectNode();
+            return null;
         }
 
-        CompletableFuture<JsonNode> future = CompletableFuture.supplyAsync(() -> {
+        CompletableFuture<Long> future = CompletableFuture.supplyAsync(() -> {
             long workflowStartTime = System.currentTimeMillis();
             try {
                 setupExecutionContext(workflowInfo, key, object);
@@ -228,16 +227,14 @@ public class WorkflowUtil {
                         workflowInfo.getNodes().size(), object, workflowStartTime));
 
                 List<String> executionOrder = topologicalSort(nodeMap);
-                JsonNode result = executeNodeList(workflowInfo, nodeMap, executionOrder);
+                executeNodeList(workflowInfo, nodeMap, executionOrder);
 
-                // 发布工作流完成事件（由 Listener 驱动日志持久化）
+                // 发布工作流完成事件（由 Listener 同步完成日志持久化）
                 eventPublisher.publishEvent(new WorkflowCompleted(workflowStartTime));
-                log.debug("工作流执行完成");
-
-                return result;
+                return ThreadLocalManager.getWorkflowLog().getId();
             } catch (Throwable e) {
                 log.error("工作流执行异常，尝试保存已执行的节点日志", e);
-                // 发布工作流失效事件（由 Listener 驱动错误日志持久化）
+                // 发布工作流失效事件（由 Listener 同步完成错误日志持久化）
                 eventPublisher.publishEvent(new WorkflowFailed(workflowStartTime, e));
                 throw new CompletionException(e instanceof Exception ? e : new RuntimeException(e));
             } finally {
