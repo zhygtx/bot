@@ -35,6 +35,11 @@ public interface WorkflowLogMapper {
     List<Map<String, Object>> selectStatsByWorkflowIds(@Param("workflowIds") List<String> workflowIds);
 
     /**
+     * 根据ID查询工作流日志
+     */
+    WorkflowLog selectById(Long id);
+
+    /**
      * 获取插入后的自增ID
      */
     Long getLastInsertId();

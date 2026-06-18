@@ -2,10 +2,7 @@ package com.example.demo.controller;
 
 import com.example.demo.pojo.entity.Result;
 import com.example.demo.service.WorkflowLogService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * 工作流日志控制器
@@ -64,5 +61,15 @@ public class WorkflowLogController {
     @GetMapping("/findBigText")
     public Result<?> findBigText(String key) {
         return Result.success(null, workflowLogService.findBigText(key));
+    }
+
+    /**
+     * 根据ID查询工作流日志
+     * @param id 工作流日志ID
+     * @return 工作流日志
+     */
+    @GetMapping("{id}")
+    public Result<?> getWorkflowLogById(@PathVariable("id") Long id) {
+        return Result.success(null, workflowLogService.findWorkflowLogById(id));
     }
 }

@@ -69,4 +69,9 @@ public class WorkflowLogServiceImpl implements WorkflowLogService {
     public String findBigText(String key) {
         return bigTextMapper.selectByKey(key);
     }
+
+    @Override
+    public WorkflowLog findWorkflowLogById(Long workflowLogId) {
+        return workflowLogMapper.selectById(workflowLogId);
+    }
 }

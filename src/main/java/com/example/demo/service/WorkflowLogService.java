@@ -19,4 +19,11 @@ public interface WorkflowLogService {
     List<NodeLog> findNodeLogs(Long workflowLogId);
 
     String findBigText(String key);
+
+    /**
+     * 根据工作流日志ID获取工作流日志
+     * @param workflowLogId 工作流日志ID
+     * @return 工作流日志
+     */
+    WorkflowLog findWorkflowLogById(Long workflowLogId);
 }

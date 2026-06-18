@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 /**
  * 工作流日志类
  */
@@ -68,4 +70,9 @@ public class WorkflowLog {
      * 工作流是否报错
      */
     private Boolean isError;
+
+    /**
+     * 工作流节点日志列表
+     */
+    private List<NodeLog> nodeLogs;
 }
