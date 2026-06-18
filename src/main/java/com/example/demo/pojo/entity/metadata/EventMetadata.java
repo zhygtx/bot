@@ -1,4 +1,4 @@
-package com.example.demo.metadata;
+package com.example.demo.pojo.entity.metadata;
 
 import lombok.Builder;
 import lombok.Data;

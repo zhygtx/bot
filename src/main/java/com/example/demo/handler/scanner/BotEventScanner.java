@@ -1,9 +1,9 @@
-package com.example.demo.scanner;
+package com.example.demo.handler.scanner;
 
 import com.example.demo.annotation.BotEvent;
 import com.example.demo.annotation.EventParam;
-import com.example.demo.metadata.EventMetadata;
-import com.example.demo.metadata.FieldMetadata;
+import com.example.demo.pojo.entity.metadata.EventMetadata;
+import com.example.demo.pojo.entity.metadata.FieldMetadata;
 import com.mikuac.shiro.annotation.common.Shiro;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;

@@ -1,10 +1,10 @@
 package com.example.demo.controller;
 
-import com.example.demo.metadata.ActionMetadata;
-import com.example.demo.metadata.EventMetadata;
+import com.example.demo.pojo.entity.metadata.ActionMetadata;
+import com.example.demo.pojo.entity.metadata.EventMetadata;
 import com.example.demo.pojo.entity.Result;
-import com.example.demo.scanner.BotEventScanner;
-import com.example.demo.scanner.BotActionScanner;
+import com.example.demo.handler.scanner.BotEventScanner;
+import com.example.demo.handler.scanner.BotActionScanner;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

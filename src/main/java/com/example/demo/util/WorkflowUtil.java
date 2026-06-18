@@ -1,18 +1,14 @@
 package com.example.demo.util;
 
 import com.example.demo.api.BotActionService;
-import com.example.demo.pojo.entity.log.BigText;
-import com.example.demo.pojo.entity.log.NodeLog;
-import com.example.demo.pojo.entity.log.WorkflowLog;
+import com.example.demo.event.record.*;
 import com.example.demo.pojo.entity.plugin.MethodClassInfo;
 import com.example.demo.pojo.entity.plugin.MethodInfo;
 import com.example.demo.pojo.entity.plugin.ParameterInfo;
 import com.example.demo.pojo.entity.plugin.PluginVersion;
 import com.example.demo.pojo.entity.workflow.*;
-import com.example.demo.scanner.BotActionScanner;
-import com.example.demo.service.WorkflowLogService;
+import com.example.demo.handler.scanner.BotActionScanner;
 import com.example.demo.service.WorkflowService;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
@@ -20,12 +16,11 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -68,8 +63,8 @@ public class WorkflowUtil {
     /** 并发限流信号量，控制同时执行的工作流数量 */
     private final Semaphore workflowSemaphore;
 
-    /** 工作流日志服务，用于保存工作流执行日志 */
-    private final WorkflowLogService workflowLogService;
+    /** Spring 事件发布器，用于发布工作流执行事件 */
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * 构造函数
@@ -78,17 +73,19 @@ public class WorkflowUtil {
      * @param workflowService 工作流服务
      * @param workflowExecutor 工作流执行线程池
      * @param workflowSemaphore 并发限流信号量
+     * @param eventPublisher 事件发布器
      */
     public WorkflowUtil(ApplicationContext applicationContext, BotActionScanner botActionScanner,
                         @Lazy WorkflowService workflowService,
                         @Qualifier("workflowExecutor") ExecutorService workflowExecutor,
-                        @Qualifier("workflowSemaphore") Semaphore workflowSemaphore, WorkflowLogService workflowLogService) {
+                        @Qualifier("workflowSemaphore") Semaphore workflowSemaphore,
+                        ApplicationEventPublisher eventPublisher) {
         this.applicationContext = applicationContext;
         this.botActionScanner = botActionScanner;
         this.workflowService = workflowService;
         this.workflowExecutor = workflowExecutor;
         this.workflowSemaphore = workflowSemaphore;
-        this.workflowLogService = workflowLogService;
+        this.eventPublisher = eventPublisher;
     }
 
     /**
@@ -224,53 +221,24 @@ public class WorkflowUtil {
             try {
                 setupExecutionContext(workflowInfo, key, object);
                 Map<String, Node> nodeMap = graph.getNodeMap();
-                
-                // 创建工作流日志（在异步线程中创建，避免ThreadLocal问题）
-                WorkflowLog workflowLog = WorkflowLog.builder()
-                        .workflowId(workflowInfo.getId())
-                        .userId(workflowInfo.getUserId())
-                        .expectedNodeCount(workflowInfo.getNodes().size())
-                        .startTime(workflowStartTime)
-                        .initialContext(object != null ? mapper.writeValueAsString(object) : null)
-                        .workflowName(workflowInfo.getName())
-                        .isError(false)
-                        .build();
-                ThreadLocalManager.setWorkflowLog(workflowLog);
-                
-                List<String> executionOrder = topologicalSort(nodeMap);
 
-                // 使用线程池执行节点列表
+                // 发布工作流开始事件（由 WorkflowLogListener 驱动日志创建）
+                eventPublisher.publishEvent(new WorkflowStarted(
+                        workflowInfo.getId(), workflowInfo.getUserId(), workflowInfo.getName(),
+                        workflowInfo.getNodes().size(), object, workflowStartTime));
+
+                List<String> executionOrder = topologicalSort(nodeMap);
                 JsonNode result = executeNodeList(workflowInfo, nodeMap, executionOrder);
-                
-                // 更新执行时间和实际节点数
-                workflowLog.setExecutionTime(System.currentTimeMillis() - workflowStartTime);
-                workflowLog.setActualNodeCount(ThreadLocalManager.getNodeLogList().size());
-                
-                // 保存日志（在同一异步线程中保存）
-                workflowLogService.add(workflowLog, ThreadLocalManager.getNodeLogList(), getBigTextList());
-                log.debug("工作流日志保存完成");
-                
+
+                // 发布工作流完成事件（由 Listener 驱动日志持久化）
+                eventPublisher.publishEvent(new WorkflowCompleted(workflowStartTime));
+                log.debug("工作流执行完成");
+
                 return result;
             } catch (Throwable e) {
                 log.error("工作流执行异常，尝试保存已执行的节点日志", e);
-                // 即使发生异常，也要保存已执行的节点日志
-                try {
-                    WorkflowLog workflowLog = ThreadLocalManager.getWorkflowLog();
-                    if (workflowLog != null) {
-                        workflowLog.setExecutionTime(System.currentTimeMillis() - workflowStartTime);
-                        workflowLog.setActualNodeCount(ThreadLocalManager.getNodeLogList().size());
-                        workflowLog.setIsError(true);
-                        
-                        // 将完整堆栈保存为 bigText，key 写入 errorLog
-                        String errorKey = saveErrorAsBigText(workflowInfo.getId(), e);
-                        workflowLog.setErrorLog(errorKey);
-                        
-                        workflowLogService.add(workflowLog, ThreadLocalManager.getNodeLogList(), getBigTextList());
-                        log.debug("异常情况下工作流日志保存完成");
-                    }
-                } catch (Exception saveEx) {
-                    log.error("保存工作流日志失败", saveEx);
-                }
+                // 发布工作流失效事件（由 Listener 驱动错误日志持久化）
+                eventPublisher.publishEvent(new WorkflowFailed(workflowStartTime, e));
                 throw new CompletionException(e instanceof Exception ? e : new RuntimeException(e));
             } finally {
                 ThreadLocalManager.clear();
@@ -380,6 +348,7 @@ public class WorkflowUtil {
             // 如果当前节点被标记为跳过，则跳过执行
             if (skippedNodes.contains(currentNodeId)) {
                 log.debug("跳过节点 {}（因条件分支终止）", currentNodeId);
+                eventPublisher.publishEvent(new NodeExecutionSkipped(currentNodeId, "条件分支终止"));
                 continue;
             }
 
@@ -390,48 +359,34 @@ public class WorkflowUtil {
 
             String methodName = resolveNodeMethodName(currentNode);
             String methodDescription = resolveNodeMethodDescription(currentNode);
-            
-            NodeLog nodeLog = NodeLog.builder()
-                    .nodeId(currentNodeId)
-                    .methodId(currentNode.getMethodId())
-                    .order(processedCount)
-                    .methodName(methodName)
-                    .methodDescription(methodDescription)
-                    .isError(false)
-                    .build();
-            ThreadLocalManager.addNodeLog(nodeLog);
-            
+
+            // 发布节点开始执行事件（由 Listener 驱动 NodeLog 创建）
+            eventPublisher.publishEvent(new NodeExecutionStarted(
+                    currentNodeId, currentNode.getMethodId(), processedCount,
+                    methodName, methodDescription));
+
             ExecutionResult executionResult;
             try {
                 executionResult = executeSingleNode(currentNode);
             } catch (Throwable e) {
-                // 节点执行失败，将完整堆栈保存为 bigText，key 作为节点输出
                 log.error("节点 {} 执行失败", currentNodeId, e);
-                
-                String errorKey = saveErrorAsBigText(currentNodeId, e);
-                nodeLog.setOutput(errorKey);
-                nodeLog.setIsError(true);
-                nodeLog.setExecutionTime(System.currentTimeMillis() - startTime.getTime());
-                ThreadLocalManager.addNodeLog(nodeLog);
-                
-                // 同步标记工作流日志为错误
-                WorkflowLog wfLog = ThreadLocalManager.getWorkflowLog();
-                if (wfLog != null) {
-                    wfLog.setIsError(true);
-                }
-                
-                // 更新工作流禁用原因（仅保留简要信息）
+
+                // 发布节点执行失败事件（由 Listener 驱动错误日志记录）
+                long elapsedMs = System.currentTimeMillis() - startTime.getTime();
+                eventPublisher.publishEvent(new NodeExecutionFailed(currentNodeId, elapsedMs, e));
+
+                // 更新工作流禁用原因（业务逻辑，保留）
                 String errorMsg = String.format("节点 %s 执行失败：%s", currentNodeId, e.getMessage());
                 workflowService.editDisableReason(workflowInfo.getId(), errorMsg);
-                
+
                 // 节点执行失败后，终止工作流执行
                 log.debug("节点执行失败，终止工作流执行");
                 return mapper.createObjectNode();
             }
 
-            // 记录节点执行时间（成功执行时）
-            nodeLog.setExecutionTime(System.currentTimeMillis() - startTime.getTime());
-            ThreadLocalManager.addNodeLog(nodeLog);
+            // 发布节点执行完成事件（由 Listener 驱动执行耗时记录）
+            long elapsedMs = System.currentTimeMillis() - startTime.getTime();
+            eventPublisher.publishEvent(new NodeExecutionCompleted(currentNodeId, elapsedMs));
 
             // 处理 END：立即结束整个工作流
             if (!executionResult.continueExecution() && executionResult.result() == null) {
@@ -501,14 +456,14 @@ public class WorkflowUtil {
      */
     private ExecutionResult executeBotEventNode(Node node) {
         log.debug("执行 BOT 事件节点：{}", node.getId());
-        NodeLog nodeLog = ThreadLocalManager.getNodeLog(node.getId());
 
         Object resultData;
+        Map<String, Object> inputParams = new HashMap<>();
+
         if ("scheduledEvent".equals(node.getEventType())) {
             resultData = new Object();
             ThreadLocalManager.getExecutionContext().put(node.getId(), resultData);
-            nodeLog.setInput(node.getScheduledTime() + "秒");
-            nodeLog.setOutput(null);
+            inputParams.put("scheduledTime", node.getScheduledTime() + "秒");
             log.debug("定时节点执行完成");
         } else {
             Map<String, Object> context = ThreadLocalManager.getExecutionContext();
@@ -518,15 +473,11 @@ public class WorkflowUtil {
                 botEventData = new Object();
             }
             resultData = botEventData;
-
-            try {
-                nodeLog.setOutput(mapper.writeValueAsString(resultData));
-            } catch (JsonProcessingException e) {
-                nodeLog.setOutput(resultData.toString());
-            }
-
             context.put(node.getId(), resultData);
         }
+
+        // 发布节点输入输出事件（由 Listener 驱动 BigText 处理和日志持久化）
+        eventPublisher.publishEvent(new NodeInputOutputRecorded(node.getId(), inputParams, resultData));
 
         return checkNodeConditions(node, resultData);
     }
@@ -620,7 +571,6 @@ public class WorkflowUtil {
      * @param result 方法调用结果
      */
     private void recordMethodParameters(Node node, Object[] parameters, Object result) {
-        NodeLog nodeLog = ThreadLocalManager.getNodeLog(node.getId());
         List<String> parameterNames;
 
         if (node.getBotActionName() != null){
@@ -636,72 +586,20 @@ public class WorkflowUtil {
                             .sorted(Comparator.comparing(NodeDefaults::getParamIndex))
                             .map(NodeDefaults::getParamName) : Stream.empty()
             ).toList();
-        }else {
+        } else {
             List<ParameterInfo> parameterInfos = node.getMethodInfo().getParameters();
             parameterInfos.sort(Comparator.comparing(ParameterInfo::getOrder,
                     Comparator.nullsFirst(Comparator.naturalOrder())));
             parameterNames = new ArrayList<>(parameterInfos.stream().map(ParameterInfo::getName).toList());
         }
 
-
         Map<String, Object> methodParameters = new HashMap<>();
         for (int i = 0; i < parameters.length; i++) {
             methodParameters.put(parameterNames.get(i), parameters[i]);
         }
-        
-        String inputStr;
-        try {
-            inputStr = mapper.writeValueAsString(methodParameters);
-        } catch (JsonProcessingException e) {
-            inputStr = methodParameters.toString();
-        }
-        nodeLog.setInput(handleBigText(inputStr, node.getId()));
-        
-        String outputStr;
-        try {
-            outputStr = mapper.writeValueAsString(result);
-        } catch (JsonProcessingException e) {
-            outputStr = result.toString();
-        }
-        nodeLog.setOutput(handleBigText(outputStr, node.getId()));
-        
-        ThreadLocalManager.addNodeLog(nodeLog);
-    }
 
-    private String handleBigText(String data, String nodeId) {
-        if (data == null || data.length() <= ThreadLocalManager.BIG_TEXT_THRESHOLD) {
-            return data;
-        }
-        
-        String key = ThreadLocalManager.BIG_TEXT_PREFIX + nodeId + ":" + 
-                     System.currentTimeMillis() + ":" + 
-                     UUID.randomUUID().toString().substring(0, 8);
-        ThreadLocalManager.addBigText(key, data);
-        return key;
-    }
-
-    /**
-     * 将异常的完整堆栈信息保存为 bigText，返回 bigText 引用键
-     * @param nodeId 关联节点/工作流 ID
-     * @param e      异常对象
-     * @return bigText 引用键
-     */
-    private String saveErrorAsBigText(String nodeId, Throwable e) {
-        StringWriter sw = new StringWriter();
-        PrintWriter pw = new PrintWriter(sw);
-        e.printStackTrace(pw);
-        String stackTrace = sw.toString();
-        return handleBigText(stackTrace, nodeId);
-    }
-
-    private List<BigText> getBigTextList() {
-        Map<String, String> cache = ThreadLocalManager.getBigTextCache();
-        if (cache == null || cache.isEmpty()) {
-            return Collections.emptyList();
-        }
-        return cache.entrySet().stream()
-                .map(entry -> new BigText(entry.getKey(), entry.getValue()))
-                .toList();
+        // 发布节点输入输出事件（由 Listener 驱动 BigText 处理和日志持久化）
+        eventPublisher.publishEvent(new NodeInputOutputRecorded(node.getId(), methodParameters, result));
     }
 
     /**

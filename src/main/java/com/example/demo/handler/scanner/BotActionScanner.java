@@ -1,9 +1,9 @@
-package com.example.demo.scanner;
+package com.example.demo.handler.scanner;
 
 import com.example.demo.annotation.ActionParam;
 import com.example.demo.annotation.BotAction;
 import com.example.demo.api.BotActionService;
-import com.example.demo.metadata.ActionMetadata;
+import com.example.demo.pojo.entity.metadata.ActionMetadata;
 import com.example.demo.pojo.entity.plugin.ParameterInfo;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
