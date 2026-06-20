@@ -22,6 +22,7 @@ public interface WorkflowLogMapper {
      * 根据条件查询工作流日志
      */
     List<WorkflowLog> selectByCondition(@Param("userId") String userId,
+                                        @Param("workflowId") String workflowId,
                                         @Param("workflowName") String workflowName,
                                         @Param("startTime") Long startTime,
                                         @Param("endTime") Long endTime,

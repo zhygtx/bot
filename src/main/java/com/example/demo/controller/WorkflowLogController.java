@@ -20,6 +20,7 @@ public class WorkflowLogController {
     /**
      * 查询工作流日志
      * @param userId 用户ID
+     * @param workflowId 工作流ID（可选）
      * @param workflowName 工作流名称（可选）
      * @param startTime 开始时间（可选）
      * @param endTime 结束时间（可选）
@@ -32,6 +33,7 @@ public class WorkflowLogController {
      */
     @GetMapping("/findWorkflowLogs")
     public Result<?> findWorkflowLogs(String userId,
+                                      String workflowId,
                                       String workflowName,
                                       Long startTime,
                                       Long endTime,
@@ -40,7 +42,7 @@ public class WorkflowLogController {
                                       String status,
                                       @RequestParam(required = false,defaultValue = "1") Integer pageNum,
                                       @RequestParam(required = false,defaultValue = "10") Integer pageSize) {
-        return Result.success(null,workflowLogService.findWorkflowLogs(userId, workflowName, startTime, endTime, sortField, sortOrder, status, pageNum, pageSize));
+        return Result.success(null,workflowLogService.findWorkflowLogs(userId, workflowId, workflowName, startTime, endTime, sortField, sortOrder, status, pageNum, pageSize));
     }
 
     /**

@@ -52,9 +52,9 @@ public class WorkflowLogServiceImpl implements WorkflowLogService {
      * 根据条件查询工作流日志
      */
     @Override
-    public PageInfo<WorkflowLog> findWorkflowLogs(String userId, String workflowName, Long startTime, Long endTime, String sortField, String sortOrder, String status, int pageNum, int pageSize) {
+    public PageInfo<WorkflowLog> findWorkflowLogs(String userId, String workflowId, String workflowName, Long startTime, Long endTime, String sortField, String sortOrder, String status, int pageNum, int pageSize) {
         PageHelper.startPage(pageNum, pageSize);
-        return new PageInfo<>(workflowLogMapper.selectByCondition(userId, workflowName, startTime, endTime, sortField, sortOrder, status));
+        return new PageInfo<>(workflowLogMapper.selectByCondition(userId, workflowId, workflowName, startTime, endTime, sortField, sortOrder, status));
     }
 
     /**

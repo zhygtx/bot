@@ -5,41 +5,44 @@
 
     <resultMap id="workflowLog" type="com.example.demo.pojo.entity.log.WorkflowLog">
         <id property="id" column="id"/>
-        <id property="workflowId" column="workflow_id"/>
-        <id property="userId" column="user_id"/>
-        <id property="expectedNodeCount" column="expected_node_count"/>
-        <id property="actualNodeCount" column="actual_node_count"/>
-        <id property="executionTime" column="execution_time"/>
-        <id property="startTime" column="start_time"/>
-        <id property="initialContext" column="initial_context"/>
-        <id property="workflowName" column="workflow_name"/>
-        <id property="errorLog" column="error_log"/>
-        <id property="isError" column="is_error"/>
+        <result property="workflowId" column="workflow_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="expectedNodeCount" column="expected_node_count"/>
+        <result property="actualNodeCount" column="actual_node_count"/>
+        <result property="executionTime" column="execution_time"/>
+        <result property="startTime" column="start_time"/>
+        <result property="initialContext" column="initial_context"/>
+        <result property="workflowName" column="workflow_name"/>
+        <result property="errorLog" column="error_log"/>
+        <result property="isError" column="is_error"/>
         <collection property="nodeLogs" ofType="com.example.demo.pojo.entity.log.NodeLog">
-            <id property="id" column="id"/>
-            <id property="workflowLogId" column="workflow_log_id"/>
-            <id property="nodeId" column="node_id"/>
-            <id property="methodId" column="method_id"/>
-            <id property="executionTime" column="execution_time"/>
-            <id property="order" column="order"/>
-            <id property="input" column="input"/>
-            <id property="output" column="output"/>
-            <id property="methodName" column="method_name"/>
-            <id property="methodDescription" column="method_description"/>
-            <id property="isError" column="is_error"/>
+            <id property="id" column="n_id"/>
+            <result property="workflowLogId" column="workflow_log_id"/>
+            <result property="nodeId" column="node_id"/>
+            <result property="methodId" column="method_id"/>
+            <result property="executionTime" column="n_execution_time"/>
+            <result property="order" column="order"/>
+            <result property="input" column="input"/>
+            <result property="output" column="output"/>
+            <result property="methodName" column="method_name"/>
+            <result property="methodDescription" column="method_description"/>
+            <result property="isError" column="n_is_error"/>
         </collection>
     </resultMap>
 
     <sql id="select">
         select w.id, w.workflow_id, w.user_id, w.expected_node_count, w.actual_node_count, w.execution_time, w.start_time, w.initial_context, w.workflow_name, w.error_log, w.is_error,
-               n.id, n.workflow_log_id, n.node_id, n.method_id, n.execution_time, n.order, n.input, n.output, n.method_name, n.method_description, n.is_error
+               n.id as n_id, n.workflow_log_id, n.node_id, n.method_id, n.execution_time as n_execution_time, n.order, n.input, n.output, n.method_name, n.method_description, n.is_error as n_is_error
         from workflow_log as w
-        left join node_log as n on w.id = n.workflow_log_id
+                 left join node_log as n on w.id = n.workflow_log_id
     </sql>
 
     <select id="selectByCondition" resultType="com.example.demo.pojo.entity.log.WorkflowLog">
         SELECT * FROM workflow_log
         WHERE user_id = #{userId}
+          <if test="workflowId != null and workflowId != ''">
+              AND workflow_id = #{workflowId}
+          </if>
         <if test="workflowName != null and workflowName != ''">
             AND workflow_name LIKE CONCAT('%', #{workflowName}, '%')
         </if>
@@ -94,7 +97,7 @@
         SELECT LAST_INSERT_ID()
     </select>
 
-    <select id="selectById" resultType="com.example.demo.pojo.entity.log.WorkflowLog">
+    <select id="selectById" resultMap="workflowLog">
         <include refid="select"/>
         WHERE w.id = #{id}
         order by n.id
