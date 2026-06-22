@@ -290,17 +290,48 @@ case "$1" in
 
         if is_running; then
             pid=$(get_pid)
+            echo_info "正在停止应用进程 (PID: $pid)..."
+            
             kill "$pid" &> /dev/null
+            if [ $? -ne 0 ]; then
+                echo_warning "发送终止信号失败，尝试强制终止..."
+                kill -9 "$pid" &> /dev/null
+            fi
+            
+            local wait_count=0
+            local max_wait=20
+            while is_running && [ $wait_count -lt $max_wait ]; do
+                sleep 0.5
+                wait_count=$((wait_count + 1))
+            done
+            
+            if is_running; then
+                echo_warning "优雅终止超时，尝试杀死进程组..."
+                kill -TERM -"$pid" &> /dev/null
+                sleep 1
+                
+                if is_running; then
+                    echo_info "执行强制杀死..."
+                    kill -9 "$pid" &> /dev/null
+                    kill -9 -"$pid" &> /dev/null
+                    sleep 0.5
+                fi
+            fi
+            
             rm -f "$PID_FILE"
-            echo_success "应用已成功停止 (PID: $pid)"
+            
+            if is_running; then
+                echo_error "应用停止失败，进程仍在运行 (PID: $pid)"
+            else
+                echo_success "应用已成功停止 (PID: $pid)"
+            fi
         else
             echo_warning "应用未运行"
         fi
 
         echo_separator
 
-        # 清理端口占用
-        echo_info "清理端口 $PORT 占用..."
+        echo_info "检查并清理端口 $PORT 占用..."
         kill_port_process $PORT
         echo_separator
         ;;

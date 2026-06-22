@@ -236,6 +236,20 @@ CREATE TABLE `plugin_data` (
     INDEX idx_data_index (`data_index`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='插件数据存储表';
 
+create table `workflow_canvas_view` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT '工作流画布视图ID（自增主键）',
+  `workflow_id` VARCHAR(36) NOT NULL COMMENT '工作流ID',
+  `user_id` VARCHAR(36) NOT NULL COMMENT '用户ID',
+  `offset_x` DOUBLE COMMENT '视图横向偏移（px）',
+  `offset_y` DOUBLE COMMENT '视图纵向偏移（px）',
+  `scale` DOUBLE COMMENT '缩放比例（0.3 ~ 2.0）',
+  FOREIGN KEY (`workflow_id`) REFERENCES `workflow_info` (`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='工作流画布视图表';
+
+
+# --------------------------------------------------------------------------------------------------------
+
 -- 工作流日志表
 CREATE TABLE `workflow_log` (
   `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT '工作流日志ID（自增主键）',

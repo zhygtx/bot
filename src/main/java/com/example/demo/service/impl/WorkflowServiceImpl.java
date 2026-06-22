@@ -33,8 +33,9 @@ public class WorkflowServiceImpl implements WorkflowService {
     private final DataMapMapper dataMapMapper;
     private final RedisWorkflowServiceImpl redisWorkflowServiceImpl;
     private final WorkflowLogMapper workflowLogMapper;
+    private final WorkflowCanvasViewMapper workflowCanvasViewMapper;
 
-    public WorkflowServiceImpl(WorkflowInfoMapper workflowInfoMapper, NodeDefaultsMapper nodeDefaultsMapper, NodeNextRelationMapper nodeNextRelationMapper, NodePreRelationMapper nodePreRelationMapper, NodeMapper nodeMapper, ConditionMapper conditionMapper, DataMapMapper dataMapMapper, WorkflowUtil workflowUtil, RedisWorkflowServiceImpl redisWorkflowServiceImpl, WorkflowLogMapper workflowLogMapper) {
+    public WorkflowServiceImpl(WorkflowInfoMapper workflowInfoMapper, NodeDefaultsMapper nodeDefaultsMapper, NodeNextRelationMapper nodeNextRelationMapper, NodePreRelationMapper nodePreRelationMapper, NodeMapper nodeMapper, ConditionMapper conditionMapper, DataMapMapper dataMapMapper, WorkflowUtil workflowUtil, RedisWorkflowServiceImpl redisWorkflowServiceImpl, WorkflowLogMapper workflowLogMapper, WorkflowCanvasViewMapper workflowCanvasViewMapper) {
         this.workflowInfoMapper = workflowInfoMapper;
         this.nodeDefaultsMapper = nodeDefaultsMapper;
         this.nodeNextRelationMapper = nodeNextRelationMapper;
@@ -45,6 +46,7 @@ public class WorkflowServiceImpl implements WorkflowService {
         this.workflowUtil = workflowUtil;
         this.redisWorkflowServiceImpl = redisWorkflowServiceImpl;
         this.workflowLogMapper = workflowLogMapper;
+        this.workflowCanvasViewMapper = workflowCanvasViewMapper;
     }
 
     /**
@@ -258,6 +260,10 @@ public class WorkflowServiceImpl implements WorkflowService {
      * @return 处理结果
      */
     private int insert(WorkflowInfo workflowInfo) {
+        WorkflowCanvasView workflowCanvasView = workflowInfo.getWorkflowCanvasView();
+        workflowCanvasView.setWorkflowId(workflowInfo.getId());
+        workflowCanvasView.setUserId(workflowInfo.getUserId());
+
         List<Node> nodes = workflowInfo.getNodes();
         Map<String,String> dataMapId = new HashMap<>();
         for (Node node : nodes){
@@ -318,12 +324,13 @@ public class WorkflowServiceImpl implements WorkflowService {
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
         int insertWorkflowInfo = workflowInfoMapper.insert(workflowInfo);
+        int insertWorkflowCanvasView = workflowCanvasViewMapper.insert(workflowCanvasView);
         int insertNodes = nodeMapper.insert(nodes);
         int insertNodeDefaults = nodeDefaults.isEmpty() ? 1 : nodeDefaultsMapper.insert(nodeDefaults);
         int insertDataMaps = dataMaps.isEmpty() ? 1 : dataMapMapper.insert(dataMaps);
         int insertConditions = conditions.isEmpty() ? 1 : conditionMapper.insert(conditions);
         int insertNodeNextRelation = nodeNextRelation.isEmpty() ? 1 : nodeNextRelationMapper.insert(nodeNextRelation);
         int insertNodePreRelation = nodePreRelation.isEmpty() ? 1 : nodePreRelationMapper.insert(nodePreRelation);
-        return (insertWorkflowInfo + insertNodes + insertNodeDefaults + insertDataMaps + insertConditions + insertNodeNextRelation + insertNodePreRelation) > 0 ? 1 : 0;
+        return (insertWorkflowInfo + insertWorkflowCanvasView + insertNodes + insertNodeDefaults + insertDataMaps + insertConditions + insertNodeNextRelation + insertNodePreRelation) > 0 ? 1 : 0;
     }
 }

@@ -15,6 +15,15 @@
         <result column="workflow_create_time" property="createTime"/>
         <result column="workflow_update_time" property="updateTime"/>
 
+        <!--工作流画布-->
+        <association property="workflowCanvasView" javaType="com.example.demo.pojo.entity.workflow.WorkflowCanvasView">
+            <result column="workflow_canvas_view_workflow_id" property="workflowId"/>
+            <result column="workflow_canvas_view_offset_x" property="offsetX"/>
+            <result column="workflow_canvas_view_offset_y" property="offsetY"/>
+            <result column="workflow_canvas_view_scale" property="scale"/>
+            <result column="workflow_canvas_view_user_id" property="userId"/>
+        </association>
+
         <!-- 工作流节点列表 -->
         <collection property="nodes" ofType="com.example.demo.pojo.entity.workflow.Node">
             <id column="node_id" property="id"/>
@@ -187,7 +196,6 @@
             </collection>
         </collection>
 
-
     </resultMap>
 
     <!-- WorkflowInfoDto 结果映射 -->
@@ -209,6 +217,11 @@
             w.id as workflow_id, w.user_id as workflow_user_id, w.author_name as workflow_author_name, w.name as workflow_name,
             w.enabled as workflow_enabled,w.available as workflow_available, w.disable_reason as workflow_disable_reason,
             w.create_time as workflow_create_time,w.update_time as workflow_update_time,
+
+            -- 工作流画布基本信息
+            wcv.workflow_id as workflow_canvas_view_workflow_id,
+            wcv.user_id as workflow_canvas_view_user_id, wcv.offset_x as workflow_canvas_view_offset_x,
+            wcv.offset_y as workflow_canvas_view_offset_y, wcv.scale as workflow_canvas_view_scale,
 
             -- 节点基本信息
             n.id as node_id, n.x as node_x, n.y as node_y, n.workflow_id as node_workflow_id,
@@ -285,7 +298,10 @@
 
         FROM workflow_info w
 
-                 -- 左连接节点表
+            -- 左连接工作流画布表
+                left join workflow_canvas_view wcv on w.id = wcv.workflow_id
+
+            -- 左连接节点表
                  LEFT JOIN node n ON w.id = n.workflow_id
 
             -- 左连接数据映射表

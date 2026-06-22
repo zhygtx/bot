@@ -49,11 +49,6 @@ public class WorkflowInfo {
     private String disableReason;
 
     /**
-     * 工作流节点列表
-     */
-    private List<Node> nodes;
-
-    /**
      * 工作流创建时间
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
@@ -64,4 +59,15 @@ public class WorkflowInfo {
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updateTime;
+
+
+    /**
+     * 工作流节点列表
+     */
+    private List<Node> nodes;
+
+    /**
+     * 工作流画布视图状态
+     */
+    private WorkflowCanvasView workflowCanvasView;
 }
