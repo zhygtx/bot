@@ -3,7 +3,6 @@ package com.example.demo.service.impl;
 import com.example.demo.mapper.DockerMapper;
 import com.example.demo.pojo.entity.Docker;
 import com.example.demo.pojo.entity.Result;
-import com.example.demo.pojo.entity.User;
 import com.example.demo.service.DockerService;
 import com.example.demo.service.UserService;
 import com.example.demo.util.DockerUtil;
@@ -34,22 +33,18 @@ public class DockerServiceImpl implements DockerService {
 
     /**
      * 创建容器并自动处理配置文件
-     * @param user 用户
+     * @param userId 用户
      * @param token token
      */
     @Override
-    public Result<?> createContainer(User user, String token){
+    public Result<?> createContainer(String userId, String token, Long botQQ){
 
         if (dockerMapper.isOverLimit()){
             return Result.error(400,"总容器数量超限");
         }
 
-        if (dockerMapper.selectByBotQQ(user.getBotQQ()) != null){
-            return Result.error(400,"存在您创建的正在运行的容器");
-        }
-
-        String containerName = "napcat_" + user.getBotQQ();
-        log.info("开始创建容器，用户: {}, 容器名称: {}, token: {}", user.getName(), containerName, token != null ? "***" : null);
+        String containerName = "napcat_" + botQQ;
+        log.info("开始创建容器，用户ID: {}, 容器名称: {}, token: {}", userId, containerName, token != null ? "***" : null);
         
         int hostPort;
         try {
@@ -66,8 +61,8 @@ public class DockerServiceImpl implements DockerService {
         Docker docker = new Docker();
         docker.setContainerId(containerId);
         docker.setName(containerName);
-        docker.setUserId(user.getId());
-        docker.setBotQQ(user.getBotQQ());
+        docker.setUserId(userId);
+        docker.setBotQQ(botQQ);
         docker.setPort(hostPort);
         docker.setToken(token);
         docker.setCreateTime(LocalDateTime.now());
@@ -99,23 +94,6 @@ public class DockerServiceImpl implements DockerService {
         String containerId = docker.getContainerId();
         dockerUtil.deleteContainer(containerId);
         dockerMapper.deleteByContainerId(containerId);
-    }
-
-    /**
-     * 删除容器
-     * @param user 用户
-     */
-    @Override
-    public void deleteContainer(User user){
-        Long botQQ = user.getBotQQ();
-        Docker docker = dockerMapper.selectByBotQQ(botQQ);
-        if (docker == null){
-            return;
-        }
-        String containerId = docker.getContainerId();
-        dockerUtil.deleteContainer(containerId);
-        dockerMapper.deleteByContainerId(containerId);
-        emailUtil.sendEmail(user.getEmail(), "容器删除通知", "您的容器已被清理，如非本人操作请联系管理员", false);
     }
 
     /**

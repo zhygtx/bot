@@ -20,7 +20,7 @@ public interface DockerMapper {
       * 判断docker数量是否超过限制
       * @return true:超过限制 false:未超过限制
      */
-    @Select("SELECT COUNT(*) > 5 FROM docker")
+    @Select("SELECT COUNT(*) > 3 FROM docker")
     Boolean isOverLimit();
 
     /**

@@ -1,11 +1,12 @@
 package com.example.demo.controller;
 
+import com.example.demo.pojo.entity.BotInfo;
 import com.example.demo.pojo.entity.Result;
 import com.example.demo.service.BotService;
 import com.example.demo.util.AuthUtil;
+import com.github.zhygtx.napcat.session.Bot;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/bot")
@@ -26,46 +27,43 @@ public class BotController {
      * @param botQQ 机器人QQ
      * @return 插入结果
      */
-    @RequestMapping("/insert")
+    @PostMapping
     public Result<?> insert(HttpServletRequest request, String name, Long botQQ) {
         String userId = authUtil.getCurrentUserId(request);
         return botService.insert(userId, name, botQQ);
     }
 
     /**
-     * 获取机器人信息
-     * @param request HTTP请求
-     * @return 机器人信息
-     */
-    @RequestMapping("/info")
-    public Result<?> info(HttpServletRequest request) {
-        String userId = authUtil.getCurrentUserId(request);
-        return Result.success(botService.select(userId));
-    }
-
-    /**
      * 删除机器人
-     * @param request HTTP请求
+     * @param botQQ HTTP请求
      * @return 删除结果
      */
-    @RequestMapping("/delete")
-    public Result<?> delete(HttpServletRequest request) {
-        String userId = authUtil.getCurrentUserId(request);
-        botService.delete(userId);
-        return Result.success();
+    @DeleteMapping
+    public Result<?> delete(Long botQQ) {
+        botService.delete(botQQ);
+        return Result.success(null,null);
     }
 
     /**
      * 更新机器人信息
-     * @param request HTTP请求
-     * @param name 机器人名称
-     * @param botQQ 机器人QQ
+     * @param botInfo bot实体类信息
      * @return 更新结果
      */
-    @RequestMapping("/update")
-    public Result<?> update(HttpServletRequest request, String name, Long botQQ) {
-        String userId = authUtil.getCurrentUserId(request);
-        botService.update(userId, name, botQQ);
+    @PostMapping
+    public Result<?> update(@RequestBody BotInfo botInfo) {
+        botService.update(BotInfo);
         return Result.success(null,null);
+    }
+
+
+    /**
+     * 获取机器人信息
+     * @param request HTTP请求
+     * @return 机器人信息
+     */
+    @GetMapping
+    public Result<?> info(HttpServletRequest request) {
+        String userId = authUtil.getCurrentUserId(request);
+        return Result.success(botService.select(userId));
     }
 }

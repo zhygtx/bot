@@ -1,143 +1,241 @@
 package com.example.demo.handler;
 
-import com.example.demo.annotation.BotEvent;
-import com.example.demo.annotation.EventParam;
-import com.mikuac.shiro.annotation.*;
-import com.mikuac.shiro.annotation.common.Shiro;
-import com.mikuac.shiro.core.Bot;
-import com.mikuac.shiro.core.BotMessageEventInterceptor;
-import com.mikuac.shiro.dto.event.message.GroupMessageEvent;
-import com.mikuac.shiro.dto.event.message.MessageEvent;
-import com.mikuac.shiro.dto.event.message.PrivateMessageEvent;
-import com.mikuac.shiro.dto.event.notice.GroupDecreaseNoticeEvent;
-import com.mikuac.shiro.dto.event.notice.GroupIncreaseNoticeEvent;
-import com.mikuac.shiro.dto.event.request.GroupAddRequestEvent;
-import lombok.SneakyThrows;
+
+import com.github.zhygtx.napcat.event.EventFilter;
+import com.github.zhygtx.napcat.event.OneBotEventListener;
+import com.github.zhygtx.napcat.event.message.*;
+import com.github.zhygtx.napcat.event.meta.HeartbeatMetaEvent;
+import com.github.zhygtx.napcat.event.meta.LifecycleConnectMetaEvent;
+import com.github.zhygtx.napcat.event.meta.LifecycleMetaEvent;
+import com.github.zhygtx.napcat.event.notice.*;
+import com.github.zhygtx.napcat.event.request.FriendRequestEvent;
+import com.github.zhygtx.napcat.event.request.GroupAddRequestEvent;
+import com.github.zhygtx.napcat.event.request.GroupInviteRequestEvent;
+import com.github.zhygtx.napcat.event.request.GroupRequestEvent;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
+import org.springframework.context.annotation.Bean;
 
+@SuppressWarnings("unused")
 @Slf4j
-@Component("demoEventHandler")
-@Shiro
-public class EventHandler implements BotMessageEventInterceptor {
+public class EventHandler implements OneBotEventListener {
 
-    private final BotCoreEvent botCoreEvent;
-    private final BotWorkflowHandler botWorkflowHandler;
-
-    public EventHandler(BotCoreEvent botCoreEvent, BotWorkflowHandler botWorkflowHandler) {
-        this.botCoreEvent = botCoreEvent;
-        this.botWorkflowHandler = botWorkflowHandler;
-    }
-
-    @SneakyThrows
-    @Override
-    public boolean preHandle(Bot bot, MessageEvent event) {
-        Long userId = event.getUserId();
-        if (botCoreEvent.getBotQqs().contains(userId)) {
-            log.debug("[{}]拦截到bot消息: , 发送消息的bot: {}", bot.getSelfId(), userId);
-            return false;
-        }
-        return true;
+    @Bean
+    public EventFilter botFilter(){
+        return ((botQQ, event) -> !(event instanceof MessageEvent && botQQ == ((MessageEvent) event).getUserId()) || event instanceof MessageSentEvent);
     }
 
     @Override
-    public void afterCompletion(Bot bot, MessageEvent event){}
-
-    @SneakyThrows
-    @GroupMessageHandler
-    @BotEvent(
-        name = "群消息",
-        description = "当 BOT 收到群消息时触发",
-        order = 1,
-        eventType = "GroupMessage",
-        entityName = "GroupMessageEvent"
-    )
-    @EventParam(name = "botId", description = "BOT的QQ号", order = 1, type = "Long")
-    @EventParam(name = "groupId", description = "群号", order = 2, type = "Long")
-    @EventParam(name = "userId", description = "发送者的 QQ 号", order = 3, type = "Long")
-    @EventParam(name = "message", description = "消息内容", order = 4, example = "你好")
-    @EventParam(name = "messageId", description = "消息ID", order = 5, type = "Long")
-    @EventParam(name = "isAt", description = "是否@了BOT", order = 6, type = "Boolean")
-    public void groupMessage(Bot bot, GroupMessageEvent event){
-        log.debug("[群消息][BOT:{}] 群号: {}, 发送者: {}, 消息内容: {}",
-                bot.getSelfId(), event.getGroupId(), event.getUserId(), event.getMessage());
-        botWorkflowHandler.handleBotEvent(bot.getSelfId(), "GroupMessage", event);
+    public void onLifecycle(Long botQQ, LifecycleMetaEvent event) {
+        OneBotEventListener.super.onLifecycle(botQQ, event);
     }
 
-    @SneakyThrows
-    @PrivateMessageHandler
-    @BotEvent(
-        name = "私聊消息",
-        description = "当 BOT 收到私聊消息时触发",
-        order = 2,
-        eventType = "PrivateMessage",
-        entityName = "PrivateMessageEvent"
-    )
-    @EventParam(name = "botId", description = "BOT 的 QQ 号", order = 1, type = "Long")
-    @EventParam(name = "userId", description = "发送者的 QQ 号", order = 2, type = "Long")
-    @EventParam(name = "message", description = "消息内容", order = 3, example = "你好")
-    @EventParam(name = "messageId", description = "消息ID", order = 4, type = "Long")
-    public void privateMessage(Bot bot, PrivateMessageEvent event){
-        log.debug("[私聊消息][BOT:{}] 发送者: {}, 消息内容: {}",
-                bot.getSelfId(), event.getUserId(), event.getMessage());
-        botWorkflowHandler.handleBotEvent(bot.getSelfId(), "PrivateMessage", event);
+    @Override
+    public void onFriendAdd(Long botQQ, FriendAddNoticeEvent event) {
+        OneBotEventListener.super.onFriendAdd(botQQ, event);
     }
 
-    @SneakyThrows
-    @GroupDecreaseHandler
-    @BotEvent(
-        name = "群成员减少",
-        description = "当有成员退出群时触发",
-        order = 3,
-        eventType = "GroupDecrease",
-        entityName = "GroupDecreaseNoticeEvent"
-    )
-    @EventParam(name = "botId", description = "BOT 的 QQ 号", order = 1, type = "Long")
-    @EventParam(name = "groupId", description = "群号", order = 2, type = "Long")
-    @EventParam(name = "userId", description = "被处理人ID（退群成员的 QQ 号）", order = 3, type = "Long")
-    @EventParam(name = "operatorId", description = "操作人ID（踢人者的 QQ 号）", order = 4, type = "Long")
-    public void groupDecreaseHandler(Bot bot, GroupDecreaseNoticeEvent event){
-        log.debug("[群成员减少][BOT:{}] 群号: {}, 处理人: {}, 被处理人: {}",
-                bot.getSelfId(), event.getGroupId(), event.getOperatorId(), event.getUserId());
-        botWorkflowHandler.handleBotEvent(bot.getSelfId(), "GroupDecrease", event);
+    @Override
+    public void onFriendRecall(Long botQQ, FriendRecallNoticeEvent event) {
+        OneBotEventListener.super.onFriendRecall(botQQ, event);
     }
 
-    @SneakyThrows
-    @GroupIncreaseHandler
-    @BotEvent(
-        name = "群成员增加",
-        description = "当有新成员加入群时触发",
-        order = 4,
-        eventType = "GroupIncrease",
-        entityName = "GroupIncreaseNoticeEvent"
-    )
-    @EventParam(name = "botId", description = "BOT 的 QQ 号", order = 1, type = "Long")
-    @EventParam(name = "groupId", description = "群号", order = 2, type = "Long")
-    @EventParam(name = "userId", description = "被处理人ID（新成员的 QQ 号）", order = 3, type = "Long")
-    @EventParam(name = "operatorId", description = "操作人ID（邀请人的 QQ 号）", order = 4, type = "Long")
-    public void groupIncreaseHandler(Bot bot, GroupIncreaseNoticeEvent event){
-        log.debug("[群成员增加][BOT:{}] 群号: {}, 处理人: {}, 被处理人: {}",
-                bot.getSelfId(), event.getGroupId(), event.getOperatorId(), event.getUserId());
-        botWorkflowHandler.handleBotEvent(bot.getSelfId(), "GroupIncrease", event);
+    @Override
+    public void onFriendRequest(Long botQQ, FriendRequestEvent event) {
+        OneBotEventListener.super.onFriendRequest(botQQ, event);
     }
 
-    @SneakyThrows
-    @GroupAddRequestHandler
-    @BotEvent(
-        name = "群加请求",
-        description = "当有人申请加群时触发",
-        order = 5,
-        eventType = "GroupAddRequest",
-        entityName = "GroupAddRequestEvent"
-    )
-    @EventParam(name = "botId", description = "BOT 的 QQ 号", order = 1, type = "Long")
-    @EventParam(name = "groupId", description = "群号", order = 2, type = "Long")
-    @EventParam(name = "userId", description = "申请人的 QQ 号", order = 3, type = "Long")
-    @EventParam(name = "invitorId", description = "邀请人ID", order = 4, type = "Long")
-    @EventParam(name = "comment", description = "加群请求消息", order = 5)
-    public void groupAddRequestHandler(Bot bot, GroupAddRequestEvent event){
-        log.debug("[群加请求][BOT:{}] 群号: {}, 申请人: {}, 邀请人: {}, 请求内容：{}",
-                bot.getSelfId(), event.getGroupId(), event.getUserId(), event.getInvitorId(),event.getComment());
-        botWorkflowHandler.handleBotEvent(bot.getSelfId(), "GroupAddRequest", event);
+    @Override
+    public void onGroupAddRequest(Long botQQ, GroupAddRequestEvent event) {
+        OneBotEventListener.super.onGroupAddRequest(botQQ, event);
+    }
+
+    @Override
+    public void onGroupAdmin(Long botQQ, GroupAdminNoticeEvent event) {
+        OneBotEventListener.super.onGroupAdmin(botQQ, event);
+    }
+
+    @Override
+    public void onGroupAdminSet(Long botQQ, GroupAdminSetNoticeEvent event) {
+        OneBotEventListener.super.onGroupAdminSet(botQQ, event);
+    }
+
+    @Override
+    public void onGroupAdminUnset(Long botQQ, GroupAdminUnsetNoticeEvent event) {
+        OneBotEventListener.super.onGroupAdminUnset(botQQ, event);
+    }
+
+    @Override
+    public void onGroupBan(Long botQQ, GroupBanNoticeEvent event) {
+        OneBotEventListener.super.onGroupBan(botQQ, event);
+    }
+
+    @Override
+    public void onGroupBanBan(Long botQQ, GroupBanBanNoticeEvent event) {
+        OneBotEventListener.super.onGroupBanBan(botQQ, event);
+    }
+
+    @Override
+    public void onGroupBanLiftBan(Long botQQ, GroupBanLiftBanNoticeEvent event) {
+        OneBotEventListener.super.onGroupBanLiftBan(botQQ, event);
+    }
+
+    @Override
+    public void onGroupCard(Long botQQ, GroupCardNoticeEvent event) {
+        OneBotEventListener.super.onGroupCard(botQQ, event);
+    }
+
+    @Override
+    public void onGroupDecrease(Long botQQ, GroupDecreaseNoticeEvent event) {
+        OneBotEventListener.super.onGroupDecrease(botQQ, event);
+    }
+
+    @Override
+    public void onGroupDecreaseKick(Long botQQ, GroupDecreaseKickNoticeEvent event) {
+        OneBotEventListener.super.onGroupDecreaseKick(botQQ, event);
+    }
+
+    @Override
+    public void onGroupDecreaseKickMe(Long botQQ, GroupDecreaseKickMeNoticeEvent event) {
+        OneBotEventListener.super.onGroupDecreaseKickMe(botQQ, event);
+    }
+
+    @Override
+    public void onGroupDecreaseLeave(Long botQQ, GroupDecreaseLeaveNoticeEvent event) {
+        OneBotEventListener.super.onGroupDecreaseLeave(botQQ, event);
+    }
+
+    @Override
+    public void onGroupEssence(Long botQQ, GroupEssenceNoticeEvent event) {
+        OneBotEventListener.super.onGroupEssence(botQQ, event);
+    }
+
+    @Override
+    public void onGroupEssenceAdd(Long botQQ, GroupEssenceAddNoticeEvent event) {
+        OneBotEventListener.super.onGroupEssenceAdd(botQQ, event);
+    }
+
+    @Override
+    public void onGroupIncrease(Long botQQ, GroupIncreaseNoticeEvent event) {
+        OneBotEventListener.super.onGroupIncrease(botQQ, event);
+    }
+
+    @Override
+    public void onGroupIncreaseApprove(Long botQQ, GroupIncreaseApproveNoticeEvent event) {
+        OneBotEventListener.super.onGroupIncreaseApprove(botQQ, event);
+    }
+
+    @Override
+    public void onGroupIncreaseInvite(Long botQQ, GroupIncreaseInviteNoticeEvent event) {
+        OneBotEventListener.super.onGroupIncreaseInvite(botQQ, event);
+    }
+
+    @Override
+    public void onGroupInviteRequest(Long botQQ, GroupInviteRequestEvent event) {
+        OneBotEventListener.super.onGroupInviteRequest(botQQ, event);
+    }
+
+    @Override
+    public void onGroupMessage(Long botQQ, GroupMessageEvent event) {
+        OneBotEventListener.super.onGroupMessage(botQQ, event);
+    }
+
+    @Override
+    public void onGroupMessageSent(Long botQQ, GroupMessageSentEvent event) {
+        OneBotEventListener.super.onGroupMessageSent(botQQ, event);
+    }
+
+    @Override
+    public void onGroupMsgEmojiLike(Long botQQ, GroupMsgEmojiLikeNoticeEvent event) {
+        OneBotEventListener.super.onGroupMsgEmojiLike(botQQ, event);
+    }
+
+    @Override
+    public void onGroupNormalMessage(Long botQQ, GroupNormalMessageEvent event) {
+        OneBotEventListener.super.onGroupNormalMessage(botQQ, event);
+    }
+
+    @Override
+    public void onGroupNormalMessageSent(Long botQQ, GroupNormalMessageSentEvent event) {
+        OneBotEventListener.super.onGroupNormalMessageSent(botQQ, event);
+    }
+
+    @Override
+    public void onGroupRecall(Long botQQ, GroupRecallNoticeEvent event) {
+        OneBotEventListener.super.onGroupRecall(botQQ, event);
+    }
+
+    @Override
+    public void onGroupRequest(Long botQQ, GroupRequestEvent event) {
+        OneBotEventListener.super.onGroupRequest(botQQ, event);
+    }
+
+    @Override
+    public void onGroupTitle(Long botQQ, TitleNoticeEvent event) {
+        OneBotEventListener.super.onGroupTitle(botQQ, event);
+    }
+
+    @Override
+    public void onGroupUpload(Long botQQ, GroupUploadNoticeEvent event) {
+        OneBotEventListener.super.onGroupUpload(botQQ, event);
+    }
+
+    @Override
+    public void onHeartbeat(Long botQQ, HeartbeatMetaEvent event) {
+        OneBotEventListener.super.onHeartbeat(botQQ, event);
+    }
+
+    @Override
+    public void onInputStatus(Long botQQ, InputStatusNoticeEvent event) {
+        OneBotEventListener.super.onInputStatus(botQQ, event);
+    }
+
+    @Override
+    public void onLifecycleConnect(Long botQQ, LifecycleConnectMetaEvent event) {
+        OneBotEventListener.super.onLifecycleConnect(botQQ, event);
+    }
+
+    @Override
+    public void onMessageSent(Long botQQ, MessageSentEvent event) {
+        OneBotEventListener.super.onMessageSent(botQQ, event);
+    }
+
+    @Override
+    public void onPoke(Long botQQ, PokeNoticeEvent event) {
+        OneBotEventListener.super.onPoke(botQQ, event);
+    }
+
+    @Override
+    public void onPrivateFriendMessage(Long botQQ, PrivateFriendMessageEvent event) {
+        OneBotEventListener.super.onPrivateFriendMessage(botQQ, event);
+    }
+
+    @Override
+    public void onPrivateFriendMessageSent(Long botQQ, PrivateFriendMessageSentEvent event) {
+        OneBotEventListener.super.onPrivateFriendMessageSent(botQQ, event);
+    }
+
+    @Override
+    public void onPrivateGroupMessage(Long botQQ, PrivateGroupMessageEvent event) {
+        OneBotEventListener.super.onPrivateGroupMessage(botQQ, event);
+    }
+
+    @Override
+    public void onPrivateGroupMessageSent(Long botQQ, PrivateGroupMessageSentEvent event) {
+        OneBotEventListener.super.onPrivateGroupMessageSent(botQQ, event);
+    }
+
+    @Override
+    public void onPrivateMessage(Long botQQ, PrivateMessageEvent event) {
+        OneBotEventListener.super.onPrivateMessage(botQQ, event);
+    }
+
+    @Override
+    public void onPrivateMessageSent(Long botQQ, PrivateMessageSentEvent event) {
+        OneBotEventListener.super.onPrivateMessageSent(botQQ, event);
+    }
+
+    @Override
+    public void onProfileLike(Long botQQ, ProfileLikeNoticeEvent event) {
+        OneBotEventListener.super.onProfileLike(botQQ, event);
     }
 }

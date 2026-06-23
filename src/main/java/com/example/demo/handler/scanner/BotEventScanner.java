@@ -4,7 +4,6 @@ import com.example.demo.annotation.BotEvent;
 import com.example.demo.annotation.EventParam;
 import com.example.demo.pojo.entity.metadata.EventMetadata;
 import com.example.demo.pojo.entity.metadata.FieldMetadata;
-import com.mikuac.shiro.annotation.common.Shiro;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;

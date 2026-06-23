@@ -7,8 +7,7 @@ import com.example.demo.service.DockerService;
 import com.example.demo.service.UserService;
 import com.example.demo.util.AuthUtil;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/docker")
@@ -29,14 +28,10 @@ public class DockerController {
      * @param request HTTP请求
      * @param napcatToken 用户设置的令牌
      */
-    @RequestMapping("/create")
-    public Result<?> createContainer(HttpServletRequest request, String napcatToken) {
+    @PostMapping
+    public Result<?> createContainer(HttpServletRequest request, String napcatToken, Long botQQ) {
         String userId = authUtil.getCurrentUserId(request);
-        User user = userService.selectById(userId);
-        if (user.getBotQQ() == null){
-            return Result.error(400,"请先绑定BotQQ");
-        }
-        Result<?> result = dockerService.createContainer(user,napcatToken);
+        Result<?> result = dockerService.createContainer(userId,napcatToken,botQQ);
         if (!result.getCode().equals(0)){
             return result;
         }
@@ -47,7 +42,7 @@ public class DockerController {
      * 获取容器信息
      * @param request HTTP请求
      */
-    @RequestMapping("/info")
+    @GetMapping
     public Result<?> getContainerInfo(HttpServletRequest request) {
         String userId = authUtil.getCurrentUserId(request);
         Docker docker = dockerService.getByUserId(userId);
@@ -58,10 +53,8 @@ public class DockerController {
      * 删除容器
      * @param request HTTP请求
      */
-    @RequestMapping("/delete")
-    public Result<String> deleteContainer(HttpServletRequest request) {
-        String userId = authUtil.getCurrentUserId(request);
-        User user = userService.selectById(userId);
+    @DeleteMapping
+    public Result<String> deleteContainer(Long botQQ) {
         dockerService.deleteContainer(user);
         return Result.success();
     }

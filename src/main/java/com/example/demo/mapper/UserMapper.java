@@ -73,25 +73,9 @@ public interface UserMapper {
     String selectEmailById(String id);
 
     /**
-     * 根据botQQ查询用户邮箱
-     * @param botQQ botQQ
-     * @return 用户邮箱
-     */
-    @Select("SELECT email FROM user WHERE bot_qq = #{botQQ}")
-    String selectEmailByBotQQ(Long botQQ);
-
-    /**
      * 更新用户邮箱
      * @param user 用户信息
      */
     @Update("update user set email= #{email} where account= #{account}")
     void updateEmail(User user);
-
-    /**
-     * 更新BotQQ
-     * @param id 用户ID
-     * @param botQQ botQQ
-     */
-    @Update("update user set bot_qq= #{botQQ} where id= #{id}")
-    void updateBotQQ(String id, Long botQQ);
 }

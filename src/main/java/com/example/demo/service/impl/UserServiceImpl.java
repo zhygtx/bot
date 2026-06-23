@@ -135,14 +135,4 @@ public class UserServiceImpl implements UserService {
     public String selectEmail(String id) {
         return userMapper.selectEmailById(id);
     }
-
-    /**
-     * 根据botQQ查询邮箱
-     * @param botQQ botQQ
-     * @return 邮箱
-     */
-    @Override
-    public String selectEmail(Long botQQ) {
-        return userMapper.selectEmailByBotQQ(botQQ);
-    }
 }

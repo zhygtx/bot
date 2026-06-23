@@ -73,11 +73,4 @@ public interface UserService {
      * @return 邮箱
      */
     String selectEmail(String id);
-
-    /**
-     * 获取用户邮箱
-     * @param botQQ 机器人QQ
-     * @return 邮箱
-     */
-    String selectEmail(Long botQQ);
 }

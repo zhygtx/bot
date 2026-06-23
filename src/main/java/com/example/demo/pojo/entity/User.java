@@ -47,12 +47,6 @@ public class User {
     private String email;
 
     /**
-     * 用户所拥有的机器人的ID(用户不得从此处修改，此处仅为便捷查询,具体修改去BotInfo表)
-     */
-    @JsonProperty("botQQ")
-    private Long botQQ;
-
-    /**
      * 用户权限(给予管理员时手动填写，默认空时为普通用户)
      */
     private String userRole;

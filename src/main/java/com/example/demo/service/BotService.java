@@ -3,18 +3,13 @@ package com.example.demo.service;
 import com.example.demo.pojo.entity.BotInfo;
 import com.example.demo.pojo.entity.Result;
 
-import java.util.Set;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 机器人服务接口
  */
 public interface BotService {
-
-    /**
-     * 获取所有机器人QQ
-     * @return 机器人QQ列表
-     */
-    Set<Long> getAllBotQQs();
 
     /**
      * 更新机器人在线状态
@@ -32,17 +27,15 @@ public interface BotService {
 
     /**
      * 删除机器人
-     * @param userId 用户ID
+     * @param botQQ 用户ID
      */
-    void delete(String userId);
+    void delete(Long botQQ);
 
     /**
      * 更新机器人
-     * @param userId 用户ID
-     * @param name 机器人名称
-     * @param botQQ 机器QQ
+     * @param botInfo bot实体类信息
      */
-    void update(String userId, String name, Long botQQ);
+    void update(BotInfo botInfo);
 
     /**
      * 获取机器人信息
@@ -50,4 +43,17 @@ public interface BotService {
      * @return 机器人信息
      */
     BotInfo select(String userId);
+
+    /**
+     * 获取机器人关联邮箱
+     * @param botQQ botQQ号
+     * @return 机器人关联的邮箱
+     */
+    String selectEmail(Long botQQ);
+
+    /**
+     * 获取所有机器人的路径与token
+     * @return 所有机器人的路径与token
+     */
+    List<Map<String , String >> selectPathSuffix();
 }

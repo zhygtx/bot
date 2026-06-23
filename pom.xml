@@ -115,20 +115,6 @@
             <artifactId>spring-boot-starter-data-redis</artifactId>
         </dependency>
 
-        <!-- Mikuac Shiro 是一个QQ机器人开发框架 -->
-        <dependency>
-            <groupId>com.mikuac</groupId>
-            <artifactId>shiro</artifactId>
-            <version>2.5.0</version>
-        </dependency>
-
-        <!-- OpenCC4J 是简繁体中文转换工具 -->
-        <dependency>
-            <groupId>com.github.houbb</groupId>
-            <artifactId>opencc4j</artifactId>
-            <version>1.7.1</version>
-        </dependency>
-
         <!-- Jackson JSR310 Module 为Java 8 时间日期API提供序列化/反序列化支持 -->
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
@@ -169,6 +155,7 @@
             <version>3.3.0</version>
         </dependency>
 
+        <!-- Docker Java 3.3.0 集成Docker API，用于与Docker交互 -->
         <dependency>
             <groupId>com.github.docker-java</groupId>
             <artifactId>docker-java</artifactId>
@@ -203,10 +190,18 @@
             <artifactId>spring-boot-starter-thymeleaf</artifactId>
         </dependency>
 
+        <!-- GeneralBot API 依赖 - 提供了与GeneralBot交互的API -->
         <dependency>
             <groupId>com.github.zhygtx</groupId>
             <artifactId>generalbot-api</artifactId>
             <version>0.3.2</version>
+        </dependency>
+
+        <!-- Napcat 依赖 - 提供了与Napcat交互的API -->
+        <dependency>
+            <groupId>com.github.zhygtx</groupId>
+            <artifactId>napcat-spring-boot-starter</artifactId>
+            <version>0.0.3</version>
         </dependency>
 
     </dependencies>

@@ -1,14 +1,15 @@
 package com.example.demo.service.impl;
 
 import com.example.demo.mapper.BotMapper;
-import com.example.demo.mapper.UserMapper;
 import com.example.demo.pojo.entity.BotInfo;
 import com.example.demo.pojo.entity.Result;
 import com.example.demo.service.BotService;
+import com.github.zhygtx.napcat.auth.BotRegistrar;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Set;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -17,21 +18,12 @@ import java.util.UUID;
 @Service
 public class BotServiceImpl implements BotService {
 
+    private final BotRegistrar botRegistrar;
     private final BotMapper botMapper;
-    private final UserMapper userMapper;
 
-    public BotServiceImpl(BotMapper botMapper, UserMapper userMapper) {
+    public BotServiceImpl(BotMapper botMapper, BotRegistrar botRegistrar) {
         this.botMapper = botMapper;
-        this.userMapper = userMapper;
-    }
-
-    /**
-     * 获取所有机器人QQ
-     * @return 机器人QQ列表
-     */
-    @Override
-    public Set<Long> getAllBotQQs() {
-        return botMapper.getAllBotQQs();
+        this.botRegistrar = botRegistrar;
     }
 
     /**
@@ -61,36 +53,35 @@ public class BotServiceImpl implements BotService {
         bot.setBotQQ(botQQ);
         bot.setName(name);
         bot.setUserId(userId);
-        userMapper.updateBotQQ(userId, botQQ);
+        bot.setPathSuffix(botQQ.toString());
+        bot.setToken(UUID.randomUUID().toString());
         botMapper.insert(bot);
+        botRegistrar.register(botQQ.toString(),UUID.randomUUID().toString());
         return Result.success();
     }
 
     /**
      * 删除机器人
-      * @param userId 用户ID
+      * @param botQQ 用户ID
      */
     @Override
     @Transactional
-    public void delete(String userId){
-        userMapper.updateBotQQ(userId, null);
-        botMapper.delete(userId);
+    public void delete(Long botQQ){
+        botMapper.delete(botQQ);
+        botRegistrar.unregister(botQQ.toString());
     }
 
     /**
      * 更新机器人信息
-     * @param userId 用户ID
-     * @param name 机器人名称
-     * @param botQQ 机器人QQ
+     * @param botInfo bot实体类信息
      */
     @Override
     @Transactional
-    public void update(String userId, String name, Long botQQ){
-        BotInfo bot = botMapper.selectByUserId(userId);
-        bot.setName(name);
-        bot.setBotQQ(botQQ);
-        botMapper.update(bot);
-        userMapper.updateBotQQ(userId, botQQ);
+    public void update(BotInfo botInfo){
+        botMapper.update(botInfo);
+        if (botInfo.getPathSuffix() != null){
+            botRegistrar.updateToken(botInfo.getPathSuffix(),botInfo.getToken());
+        }
     }
 
     /**
@@ -101,6 +92,27 @@ public class BotServiceImpl implements BotService {
     @Override
     public BotInfo select(String userId) {
         return botMapper.selectByUserId(userId);
+    }
+
+    /**
+     * 获取机器人关联邮箱
+     *
+     * @param botQQ botQQ号
+     * @return 机器人关联的邮箱
+     */
+    @Override
+    public String selectEmail(Long botQQ) {
+        return botMapper.selectEmail(botQQ);
+    }
+
+    /**
+     * 获取所有机器人的路径与token
+     *
+     * @return 所有机器人的路径与token
+     */
+    @Override
+    public List<Map<String, String>> selectPathSuffix() {
+        return botMapper.selectPathSuffix();
     }
 
 }

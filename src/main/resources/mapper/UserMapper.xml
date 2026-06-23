@@ -8,7 +8,6 @@
         <set>
             <if test="name != null">name=#{name},</if>
             <if test="QQ != null">qq=#{QQ},</if>
-            <if test="botQQ != null">bot_qq=#{botQQ},</if>
         </set>
         where id = #{id}
     </update>

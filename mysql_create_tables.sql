@@ -6,13 +6,11 @@ CREATE TABLE `user` (
 `pwd` VARCHAR(255) NOT NULL COMMENT '密码',
 `QQ` BIGINT COMMENT 'QQ 号',
 `email` VARCHAR(255) COMMENT '用户邮箱',
-`bot_qq` BIGINT COMMENT '用户所拥有的机器人的 ID',
 `user_role` VARCHAR(50) COMMENT '用户权限',
 `create_time` DATETIME NOT NULL COMMENT '创建时间',
 `update_time` DATETIME NOT NULL COMMENT '最后修改时间',
 INDEX `idx_account` (`account`),
-INDEX `idx_QQ` (`QQ`),
-INDEX `idx_botQQ` (`bot_qq`)
+INDEX `idx_QQ` (`QQ`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户信息表';
 
 -- 机器人信息表
@@ -21,6 +19,8 @@ CREATE TABLE `bot` (
 `name` VARCHAR(255) COMMENT '机器人名称',
 `bot_qq` BIGINT NOT NULL COMMENT '机器人 QQ',
 `user_id` VARCHAR(36) NOT NULL COMMENT '机器人所有者 ID',
+`token` VARCHAR(255) COMMENT '机器人Token',
+`path_suffix` VARCHAR(255) COMMENT '机器人路径后缀',
 `is_online` TINYINT(1) DEFAULT 0 NOT NULL COMMENT '机器人是否在线',
 FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE,
 INDEX `idx_bot_qq` (`bot_qq`),

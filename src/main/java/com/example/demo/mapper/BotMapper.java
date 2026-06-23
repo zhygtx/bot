@@ -3,17 +3,11 @@ package com.example.demo.mapper;
 import com.example.demo.pojo.entity.BotInfo;
 import org.apache.ibatis.annotations.*;
 
-import java.util.Set;
+import java.util.List;
+import java.util.Map;
 
 @Mapper
 public interface BotMapper {
-
-    /**
-     * 获取所有机器人QQ
-     * @return 机器人QQ列表
-     */
-    @Select("SELECT bot_qq FROM bot")
-    Set<Long> getAllBotQQs();
 
     /**
      * 更新机器人在线状态
@@ -27,22 +21,21 @@ public interface BotMapper {
      * 插入机器人
      * @param botInfo 机器人
      */
-    @Insert("INSERT INTO bot (id,bot_qq, name, user_id) " +
-            "VALUES (#{id},#{botQQ}, #{name}, #{userId})")
+    @Insert("INSERT INTO bot (id,bot_qq, name, user_id,token, path_suffix) " +
+            "VALUES (#{id},#{botQQ}, #{name}, #{userId},#{token}, #{pathSuffix})")
     void insert(BotInfo botInfo);
 
     /**
      * 删除机器人
-     * @param userId 用户ID
+     * @param botQQ botQQ
      */
-    @Delete("DELETE FROM bot WHERE user_id = #{userId}")
-    void delete(String userId);
+    @Delete("DELETE FROM bot WHERE bot_qq = #{botQQ}")
+    void delete(Long botQQ);
 
     /**
      * 更新机器人信息
      * @param botInfo 机器人
      */
-    @Update("UPDATE bot SET name = #{name}, bot_qq = #{botQQ},is_online = false WHERE id = #{id}")
     void update(BotInfo botInfo);
 
     /**
@@ -55,4 +48,11 @@ public interface BotMapper {
 
     @Select("SELECT EXISTS(SELECT * FROM bot WHERE bot_qq = #{botQQ})")
     boolean existsByBotQQ(Long botQQ);
+
+    @Select("select email from user where id = (select user_id from bot where bot_qq = #{botQQ})")
+    String selectEmail(Long botQQ);
+
+    @Select("select path_suffix , token from bot")
+    @MapKey("path_suffix")
+    List<Map<String,String>> selectPathSuffix();
 }

@@ -2,20 +2,17 @@ package com.example.demo.handler;
 
 import com.example.demo.service.BotService;
 import com.example.demo.service.DockerService;
-import com.example.demo.service.UserService;
 import com.example.demo.util.EmailUtil;
-import com.mikuac.shiro.core.Bot;
-import com.mikuac.shiro.core.BotContainer;
-import com.mikuac.shiro.core.CoreEvent;
-import jakarta.annotation.Resource;
+import com.github.zhygtx.napcat.auth.BotRegistrar;
+import com.github.zhygtx.napcat.event.BotEventListener;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Primary;
-import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
-import org.springframework.web.socket.WebSocketSession;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 自定义核心事件处理器，用于管理 Bot 的上线/下线以及在线状态缓存。
@@ -25,159 +22,61 @@ import java.util.Set;
 @Slf4j
 @Primary
 @Component
-public class BotCoreEvent extends CoreEvent {
+public class BotCoreEvent  implements BotEventListener {
 
-    // Bot 容器
-    @Resource
-    private BotContainer botContainer;
-
+    private final BotRegistrar botRegistrar;
     private final BotService botService;
     private final DockerService dockerService;
-    private final UserService userService;
     private final EmailUtil emailUtil;
 
-    public BotCoreEvent(BotService botService, DockerService dockerService, UserService userService, EmailUtil emailUtil) {
+    public BotCoreEvent(BotService botService, DockerService dockerService, EmailUtil emailUtil, BotRegistrar botRegistrar) {
         this.botService = botService;
         this.dockerService = dockerService;
-        this.userService = userService;
         this.emailUtil = emailUtil;
+        this.botRegistrar = botRegistrar;
     }
-
-    private final Set<Long> botsCache = new HashSet<>();
 
     /**
      * 处理 Bot 上线事件。
      * 当 Bot 与服务端成功连接时调用此方法。
-     * @param bot Bot 对象
+     * @param botQQ Bot 对象
      */
     @Override
-    public void online(Bot bot) {
-        // 1. 获取上线 Bot 的 QQ 号
-        long botQQ = bot.getSelfId();
-
-        // 2. 从 BotService 获取白名单
-        Set<Long> whitelistedBots = botService.getAllBotQQs();
-
-        // 3. 检查该 Bot 是否在白名单中
-        if (whitelistedBots.contains(botQQ)) {
-            // 4. 异步处理：延迟一段时间后再获取并缓存Bot信息
-
-            // 记录日志
-            log.info("[Bot 上线] QQ: {}, 已添加到在线缓存", botQQ);
-            botsCache.add(botQQ);
-            botService.updateOnline(botQQ, true);
-
-        } else {
-            log.warn("[Bot 上线拒绝] QQ: {} 不在白名单中", botQQ);
-        }
+    public void botOnline(Long botQQ) {
+        botService.updateOnline(botQQ, true);
     }
 
     /**
      * 处理 Bot 下线事件。
      * 当 Bot 与服务端断开连接时调用此方法。
-     * @param account 下线的 Bot 的 QQ 号
+     * @param botQQ 下线的 Bot 的 QQ 号
      */
     @Override
-    public void offline(long account) {
-        // 1. 从在线缓存中移除该 Bot 的信息
-        boolean removedBotData = botsCache.remove(account);
-
-        // 2. 记录日志
-        if (removedBotData) {
-            String email = userService.selectEmail(account);
-            if (email != null) {
-                emailUtil.sendEmail(email, "Bot下线通知" , "您的QQBot已下线，如非手动下线请检查账号状态或联系管理员" , false);
-            }
-            log.info("[Bot 下线] QQ: {}, 已从在线缓存移除", account);
-            botService.updateOnline(account, false);
-            dockerService.deleteContainer(account);
-        } else {
-            log.info("[Bot 下线] QQ: {}, 未在在线缓存中找到", account);
+    public void botOffline(Long botQQ) {
+        String email = botService.selectEmail(botQQ);
+        if (email != null) {
+            emailUtil.sendEmail(email, "Bot下线通知" , "您的QQBot已下线，如非手动下线请检查账号状态或联系管理员" , false);
         }
+        log.info("[Bot 下线] QQ: {}, 已从在线缓存移除", botQQ);
+        botService.updateOnline(botQQ, false);
+        dockerService.deleteContainer(botQQ);
     }
-
+    
     /**
-     * 处理 WebSocket 会话建立事件。
-     * 在 Bot 尝试连接时调用，可用于连接前的身份验证。
-     * @param session WebSocket 会话对象
-     * @return true 允许连接，false 拒绝连接
+     * 应用准备就绪事件处理方法。
+     * 当应用启动完成后调用此方法，注册所有 Bot。
      */
-    @Override
-    public boolean session(WebSocketSession session) {
-        // 1. 从 WebSocket 握手头中尝试获取 Bot 的 QQ 号
-        String botQQStr = session.getHandshakeHeaders().getFirst("x-self-id");
-
-        // 2. 检查是否能获取到 QQ 号
-        if (botQQStr != null) {
-            try {
-                // 3. 尝试解析 QQ 号
-                long botQQ = Long.parseLong(botQQStr);
-
-                // 4. 从 BotService 获取白名单
-                Set<Long> whitelistedBots = botService.getAllBotQQs();
-
-                // 5. 检查该 QQ 号是否在白名单中
-                if (whitelistedBots.contains(botQQ)) {
-                    // 6. 如果在白名单中，允许连接
-                    log.debug("[WebSocket 连接] QQ: {} 在白名单中，允许连接", botQQ);
-                    botService.updateOnline(botQQ, true);
-                    return true;
-                } else {
-                    // 7. 如果不在白名单中，拒绝连接
-                    log.warn("[WebSocket 连接拒绝] QQ: {} 不在白名单中", botQQ);
-                    return false;
-                }
-            } catch (NumberFormatException e) {
-                // 8. 如果 QQ 号格式无效，记录错误并拒绝连接
-                log.error("[WebSocket 连接拒绝] 无效的 Bot QQ 号格式: {}", botQQStr, e);
-                return false;
-            }
-        } else {
-            // 9. 如果握手头中没有 QQ 号，记录警告并拒绝连接
-            log.warn("[WebSocket 连接拒绝] 握手头中缺少 x-self-id");
-            return false;
-        }
-    }
-
-    /**
-     * 定时更新在线缓存。
-     */
-    @Scheduled(cron = "0 */5 * * * *")
-    public void updateBotsCache() {
-        log.debug("[Bot 缓存更新] 正在更新缓存...");
-        if (botContainer.robots.isEmpty()){
-            log.debug("[Bot 缓存更新] 无Bot在线");
+    @EventListener(ApplicationReadyEvent.class)
+    public void task(){
+        List<Map<String, String>> mapList = botService.selectPathSuffix();
+        if (mapList.isEmpty()){
             return;
         }
-
-        Set<Long> botQQs = new HashSet<>(botsCache);
-        for (Long botQQ : botQQs) {
-            try {
-                Bot bot = botContainer.robots.get(botQQ);
-                Boolean online = bot.getStatus().getData().getOnline();
-                if (!online) {
-                    botsCache.remove(botQQ);
-                    log.info("Bot[{}]意外离线", botQQ);
-                    String email = userService.selectEmail(botQQ);
-                    emailUtil.sendEmail(email, "Bot下线通知" , "您的QQBot异常离线，如非手动下线请检查账号状态或联系管理员" , false);
-                    log.info("[Bot 离线] QQ: {} 已从在线缓存移除", botQQ);
-                    botService.updateOnline(botQQ, false);
-                    dockerService.deleteContainer(botQQ);
-                }
-            } catch (Exception e) {
-                log.error("更新Bot {} 缓存失败", botQQ, e);
-            }
+        Map<String, String> map = mapList.get(0);
+        for (Map.Entry<String, String> entry : map.entrySet()) {
+            String pathSuffix = entry.getKey();
+            String token = entry.getValue();
+            botRegistrar.register(pathSuffix, token);
         }
-    }
-
-
-
-
-    /**
-     * 获取所有当前已连接的 Bot 的 QQ 号。
-     * @return 包含所有在线 Bot QQ 号的 Set 集合
-     */
-    public Set<Long> getBotQqs() {
-        return new HashSet<>(botsCache);
     }
 }
