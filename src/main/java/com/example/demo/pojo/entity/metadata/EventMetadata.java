@@ -31,6 +31,12 @@ public class EventMetadata {
      * 排序权重
      */
     private int order;
+
+    /** 分类名称列表 */
+    private List<String> categories;
+
+    /** 分类排序列表 */
+    private List<Integer> categoryOrders;
     
     /**
      * 实体类信息

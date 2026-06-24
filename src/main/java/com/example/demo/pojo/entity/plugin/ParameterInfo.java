@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -68,6 +69,20 @@ public class ParameterInfo {
      * 系统生成系统与用户均不可修改
      */
     private String type;
+
+    /**
+     * 参数是否允许为 null。
+     * 默认不允许，从前端 @ActionParam(nullable=...) 读取。
+     */
+    @Builder.Default
+    private boolean nullable = false;
+
+    /**
+     * 复杂类型参数平铺后的子字段列表
+     * 当 type 为自定义 POJO 时，将类中的字段平铺展示
+     */
+    @Builder.Default
+    private List<ParameterFieldInfo> children = null;
 
     /**
      * 校验参数类型是否合法

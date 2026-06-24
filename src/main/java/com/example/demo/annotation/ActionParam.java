@@ -15,9 +15,15 @@ public @interface ActionParam {
      * 参数描述
      */
     String description() default "";
-    
+
     /**
      * 排序权重（越小越靠前）
      */
     int order() default 0;
+
+    /**
+     * 参数是否允许为 null。
+     * 默认不允许，前端可据此提示用户。
+     */
+    boolean nullable() default false;
 }

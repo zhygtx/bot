@@ -4,7 +4,6 @@ import com.example.demo.pojo.entity.BotInfo;
 import com.example.demo.pojo.entity.Result;
 import com.example.demo.service.BotService;
 import com.example.demo.util.AuthUtil;
-import com.github.zhygtx.napcat.session.Bot;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.*;
 
@@ -49,9 +48,9 @@ public class BotController {
      * @param botInfo bot实体类信息
      * @return 更新结果
      */
-    @PostMapping
+    @PutMapping
     public Result<?> update(@RequestBody BotInfo botInfo) {
-        botService.update(BotInfo);
+        botService.update(botInfo);
         return Result.success(null,null);
     }
 

@@ -37,4 +37,13 @@ public class ActionMetadata {
      * 参数列表
      */
     private List<ParameterInfo> parameters;
+
+    /** 分类名称列表 */
+    private List<String> categories;
+
+    /** 分类排序列表 */
+    private List<Integer> categoryOrders;
+
+    /** 返回值元数据 */
+    private ActionReturnInfo returnInfo;
 }
