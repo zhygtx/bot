@@ -160,6 +160,12 @@
             <groupId>com.github.docker-java</groupId>
             <artifactId>docker-java</artifactId>
             <version>3.3.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-jdk14</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
 
@@ -201,7 +207,7 @@
         <dependency>
             <groupId>com.github.zhygtx</groupId>
             <artifactId>napcat-spring-boot-starter</artifactId>
-            <version>0.0.7</version>
+            <version>0.0.6</version>
         </dependency>
 
     </dependencies>

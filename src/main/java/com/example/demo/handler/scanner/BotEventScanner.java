@@ -3,8 +3,6 @@ package com.example.demo.handler.scanner;
 import com.example.demo.annotation.BotEvent;
 import com.example.demo.pojo.entity.metadata.EventMetadata;
 import com.example.demo.pojo.entity.metadata.FieldMetadata;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import com.github.zhygtx.napcat.event.BaseEvent;
 import com.github.zhygtx.napcat.event.OneBotEventListener;
 import jakarta.annotation.PostConstruct;
@@ -103,9 +101,6 @@ public class BotEventScanner {
 
             eventMetadataList.sort(Comparator.comparingInt(EventMetadata::getOrder));
             log.info("BOT事件扫描完成，共扫描到 {} 个事件", eventMetadataList.size());
-
-            ObjectMapper mapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
-            System.out.println(mapper.writeValueAsString(eventMetadataList));
 
         } catch (Exception e) {
             log.error("扫描BOT事件失败", e);

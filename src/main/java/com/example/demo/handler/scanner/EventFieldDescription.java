@@ -245,435 +245,248 @@ public final class EventFieldDescription {
         //  API 响应数据类
         // ================================================================
         // AiCharactersData
-        put("AiCharactersData.avatarUrl", "角色头像 URL");
-        put("AiCharactersData.characterId", "角色 ID");
-        put("AiCharactersData.characterName", "角色名称");
-        put("AiCharactersData.characterType", "角色类型");
+        put("AiCharactersData.characters", "角色列表");
+        put("AiCharactersData.type", "角色类型");
 
-        // AiRecordData
-        put("AiRecordData.record", "AI 语音内容（JSON 字符串或 base64）");
+        // AiCharactersItemData
+        put("AiCharactersItemData.characterId", "角色ID");
+        put("AiCharactersItemData.characterName", "角色名称");
+        put("AiCharactersItemData.previewUrl", "预览URL");
 
-        // ArkShareData
-        put("ArkShareData.ark", "Ark JSON 内容");
-
-        // CanSendData
-        put("CanSendData.yes", "是否可以发送");
-
-        // ClientKeyData
-        put("ClientKeyData.clientKey", "ClientKey 字符串");
-
-        // CollectionListData
-        put("CollectionListData.collectionList", "收藏列表");
-        put("CollectionListData.hasMore", "是否还有更多");
-        put("CollectionListData.nextStartPos", "下一页起始位置");
+        // ClientkeyData
+        put("ClientkeyData.clientkey", "客户端Key");
 
         // CookiesData
-        put("CookiesData.bkn", "bkn（CSRF Token 衍生值）");
-        put("CookiesData.cookies", "Cookies 字符串");
-
-        // CreateCollectionData
-        put("CreateCollectionData.collectionId", "收藏 ID");
-        put("CreateCollectionData.createTime", "创建时间");
-        put("CreateCollectionData.errMsg", "错误信息");
-        put("CreateCollectionData.result", "结果码（0 表示成功）");
+        put("CookiesData.bkn", "CSRF Token");
+        put("CookiesData.cookies", "Cookies");
 
         // CredentialsData
-        put("CredentialsData.cookies", "Cookies 字符串");
-        put("CredentialsData.csrfToken", "CSRF Token");
+        put("CredentialsData.cookies", "Cookies");
+        put("CredentialsData.token", "CSRF Token");
 
         // CsrfTokenData
-        put("CsrfTokenData.token", "token 值");
+        put("CsrfTokenData.token", "CSRF Token");
 
-        // CustomFaceData
-        put("CustomFaceData.emojiId", "表情 ID");
-        put("CustomFaceData.emojiName", "表情名称");
-        put("CustomFaceData.filePath", "表情文件路径");
-        put("CustomFaceData.height", "表情高度");
-        put("CustomFaceData.isAnimation", "是否为动态表情");
-        put("CustomFaceData.packageId", "表情包 ID");
-        put("CustomFaceData.width", "表情宽度");
+        // DownloadFileData
+        put("DownloadFileData.file", "文件路径");
 
-        // CustomFaceDetailData
-        put("CustomFaceDetailData.emojiDesc", "表情描述");
-        put("CustomFaceDetailData.emojiId", "表情 ID");
-        put("CustomFaceDetailData.emojiName", "表情名称");
-        put("CustomFaceDetailData.fileSize", "文件大小");
-        put("CustomFaceDetailData.height", "高度");
-        put("CustomFaceDetailData.isAnimation", "是否为动态表情");
-        put("CustomFaceDetailData.md5", "MD5");
-        put("CustomFaceDetailData.packageId", "表情包 ID");
-        put("CustomFaceDetailData.width", "宽度");
+        // EmojiLikeData
+        put("EmojiLikeData.cookie", "分页Cookie");
+        put("EmojiLikeData.emojiLikesList", "表情回应列表");
+        put("EmojiLikeData.errMsg", "错 误信息");
+        put("EmojiLikeData.isFirstPage", "是否第一页");
+        put("EmojiLikeData.isLastPage", "是否最后一页");
+        put("EmojiLikeData.result", "结果状态码");
 
-        // DoubtFriendAddRequestData
-        put("DoubtFriendAddRequestData.flag", "申请标识（flag）");
-        put("DoubtFriendAddRequestData.message", "申请消息");
-        put("DoubtFriendAddRequestData.requesterNick", "申请者昵称");
-        put("DoubtFriendAddRequestData.requesterUin", "申请者 QQ");
-        put("DoubtFriendAddRequestData.source", "申请来源描述");
-        put("DoubtFriendAddRequestData.time", "申请时间");
-
-        // EmojiLikeDetailData
-        put("EmojiLikeDetailData.cookie", "翻页 cookie");
-        put("EmojiLikeDetailData.emojiLikesList", "表情点赞列表");
-        put("EmojiLikeDetailData.errMsg", "错误信息");
-        put("EmojiLikeDetailData.isFirstPage", "是否为第一页");
-        put("EmojiLikeDetailData.isLastPage", "是否为最后一页");
-        put("EmojiLikeDetailData.result", "结果码");
+        // EmojiLikeItemData
+        put("EmojiLikeItemData.headUrl", "头像URL");
+        put("EmojiLikeItemData.nickName", "昵称");
+        put("EmojiLikeItemData.tinyId", "TinyID");
 
         // EmojiLikesData
-        put("EmojiLikesData.emojiLikeList", "表情点赞列表");
+        put("EmojiLikesData.emojiLikeList", "表情回应列表");
+
+        // EmojiLikesItemData
+        put("EmojiLikesItemData.nickName", "昵称?");
+        put("EmojiLikesItemData.userId", "点击者QQ号");
+
+        // En2zhData
+        put("En2zhData.words", "翻译结果列表");
 
         // EssenceMsgData
-        put("EssenceMsgData.content", "消息内容（原始 JSON）");
-        put("EssenceMsgData.operatorId", "操作者 QQ");
+        put("EssenceMsgData.content", "消息内容");
+        put("EssenceMsgData.messageId", "消息ID");
+        put("EssenceMsgData.msgRandom", "消息随机数");
+        put("EssenceMsgData.msgSeq", "消息序号");
+        put("EssenceMsgData.operatorId", "操作者QQ");
         put("EssenceMsgData.operatorNick", "操作者昵称");
         put("EssenceMsgData.operatorTime", "操作时间");
-        put("EssenceMsgData.senderId", "发送者 QQ");
+        put("EssenceMsgData.senderId", "发送者QQ");
         put("EssenceMsgData.senderNick", "发送者昵称");
-        put("EssenceMsgData.senderTime", "发送时间");
 
         // FileData
-        put("FileData.base64", "Base64 编码内容（可选）");
-        put("FileData.file", "文件路径");
-        put("FileData.fileName", "文件名（可选）");
-        put("FileData.fileSize", "文件大小（可选）");
-        put("FileData.url", "URL（可选）");
-
-        // FileDownloadData
-        put("FileDownloadData.file", "下载后的本地文件路径");
-
-        // FileUploadData
-        put("FileUploadData.fileId", "文件 ID");
-
-        // FileUrlData
-        put("FileUrlData.url", "文件下载 URL");
+        put("FileData.base64", "Base64编码");
+        put("FileData.file", "本地路径");
+        put("FileData.fileName", "文件名");
+        put("FileData.fileSize", "文件大小");
+        put("FileData.url", "下载URL");
 
         // FilesetIdData
         put("FilesetIdData.filesetId", "文件集 ID");
 
-        // FilesetInfoData
-        put("FilesetInfoData.createTime", "创建时间");
-        put("FilesetInfoData.creatorId", "创建者 QQ");
-        put("FilesetInfoData.creatorName", "创建者昵称");
-        put("FilesetInfoData.filesetId", "文件集 ID");
-        put("FilesetInfoData.name", "文件集名称");
-        put("FilesetInfoData.totalFileCount", "文件集内文件总数");
-        put("FilesetInfoData.totalFileSize", "文件集总大小（字节）");
-
-        // FlashTaskData
-        put("FlashTaskData.taskId", "任务 ID");
-
         // ForwardMsgData
-        put("ForwardMsgData.messages", "消息内容（数组形式的转发消息节点列表）");
+        put("ForwardMsgData.forwardId", "转发消息的 forward_id");
+        put("ForwardMsgData.messageId", "消息ID");
+        put("ForwardMsgData.resId", "转发消息的 res_id");
 
-        // FriendCategoryData
-        put("FriendCategoryData.buddyList", "该分组下的好友列表");
-        put("FriendCategoryData.categoryId", "分组 ID");
-        put("FriendCategoryData.categoryName", "分组名称");
-        put("FriendCategoryData.categorySortId", "分组排序");
+        // FriendsWithCategoryData
+        put("FriendsWithCategoryData.buddyList", "好友列表");
+        put("FriendsWithCategoryData.categoryId", "分组ID");
+        put("FriendsWithCategoryData.categoryMbCount", "分组内好友数量");
+        put("FriendsWithCategoryData.categoryName", "分组名称");
 
-        // FriendListData
-        put("FriendListData.age", "年龄");
-        put("FriendListData.birthdayDay", "出生日期");
-        put("FriendListData.birthdayMonth", "出生月份");
-        put("FriendListData.birthdayYear", "出生年份");
-        put("FriendListData.categoryId", "分组 ID");
-        put("FriendListData.categoryName", "分组名称");
-        put("FriendListData.email", "邮箱");
-        put("FriendListData.level", "等级");
-        put("FriendListData.loginDays", "登录天数");
-        put("FriendListData.nickname", "昵称");
-        put("FriendListData.phoneNum", "手机号");
-        put("FriendListData.qid", "QID");
-        put("FriendListData.remark", "备注");
-        put("FriendListData.sex", "性别");
-        put("FriendListData.userId", "QQ 号");
-
-        // GetMsgData
-        put("GetMsgData.emojiLikesList", "表情回应列表（可选）");
-        put("GetMsgData.font", "字体");
-        put("GetMsgData.groupId", "群号（仅群消息有）");
-        put("GetMsgData.message", "消息内容（支持 String 或 Array）");
-        put("GetMsgData.messageId", "消息 ID");
-        put("GetMsgData.messageSeq", "消息序号");
-        put("GetMsgData.messageType", "消息类型（private/group）");
-        put("GetMsgData.rawMessage", "原始消息内容");
-        put("GetMsgData.realId", "真实 ID");
-        put("GetMsgData.sender", "发送者信息（原始 JSON 节点，sender 结构不固定）");
-        put("GetMsgData.time", "发送时间戳");
-        put("GetMsgData.userId", "发送者 QQ 号");
-
-        // GroupAlbumMediaListData
-        put("GroupAlbumMediaListData.attachInfo", "翻页附加信息");
-        put("GroupAlbumMediaListData.hasMore", "是否还有更多");
-        put("GroupAlbumMediaListData.mediaList", "媒体列表");
+        // GroupAiRecordData
+        put("GroupAiRecordData.messageId", "消息ID");
 
         // GroupAtAllRemainData
-        put("GroupAtAllRemainData.canAtAll", "是否可以 @全体");
-        put("GroupAtAllRemainData.remainAtAllCountForGroup", "群内 @全体剩余次数");
-        put("GroupAtAllRemainData.remainAtAllCountForUin", "当前 Uin @全体剩余次数");
+        put("GroupAtAllRemainData.canAtAll", "是否可以艾特全体");
+        put("GroupAtAllRemainData.remainAtAllCountForGroup", "群艾特全体剩余次数");
+        put("GroupAtAllRemainData.remainAtAllCountForUin", "个人艾特全体剩余次数");
 
         // GroupDetailInfoData
-        put("GroupDetailInfoData.activeMemberCount", "群活跃度");
-        put("GroupDetailInfoData.addOption", "加群选项");
-        put("GroupDetailInfoData.createTime", "群创建时间");
-        put("GroupDetailInfoData.groupClass", "群分类");
-        put("GroupDetailInfoData.groupDesc", "群描述");
-        put("GroupDetailInfoData.groupFace", "群头像");
+        put("GroupDetailInfoData.groupAllShut", "全员禁言状态");
         put("GroupDetailInfoData.groupId", "群号");
-        put("GroupDetailInfoData.groupLevel", "群等级");
         put("GroupDetailInfoData.groupName", "群名称");
-        put("GroupDetailInfoData.maxMemberCount", "最大成员数");
-        put("GroupDetailInfoData.memberCount", "群成员数");
-        put("GroupDetailInfoData.memo", "群公告");
-        put("GroupDetailInfoData.ownerQq", "群主 QQ");
-        put("GroupDetailInfoData.robotAddOption", "是否允许群机器人加群");
-        put("GroupDetailInfoData.searchable", "是否可搜索");
-        put("GroupDetailInfoData.tags", "群标签");
+        put("GroupDetailInfoData.groupRemark", "群备注");
+        put("GroupDetailInfoData.maxMemberCount", "最大成员数量");
+        put("GroupDetailInfoData.memberCount", "成员数量");
+
+        // GroupFileData
+        put("GroupFileData.ok", "是否成功");
+
+        // GroupFileFolderData
+        put("GroupFileFolderData.groupItem", "群项信息");
+        put("GroupFileFolderData.result", "操作结果");
 
         // GroupFileSystemInfoData
         put("GroupFileSystemInfoData.fileCount", "文件总数");
-        put("GroupFileSystemInfoData.limitCount", "文件数量上限");
-        put("GroupFileSystemInfoData.totalSpace", "总空间（字节）");
-        put("GroupFileSystemInfoData.usedSpace", "已用空间（字节）");
+        put("GroupFileSystemInfoData.limitCount", "文件上限");
+        put("GroupFileSystemInfoData.totalSpace", "总空间");
+        put("GroupFileSystemInfoData.usedSpace", "已使用空间");
+
+        // GroupFileUrlData
+        put("GroupFileUrlData.url", "文件下载链接");
 
         // GroupHonorInfoData
-        put("GroupHonorInfoData.currentTalkative", "当前龙王信息");
-        put("GroupHonorInfoData.emotionList", "快乐源泉/表情榜单列表");
+        put("GroupHonorInfoData.currentTalkative", "当前龙王");
+        put("GroupHonorInfoData.emotionList", "快乐源泉列表");
         put("GroupHonorInfoData.groupId", "群号");
-        put("GroupHonorInfoData.honorList", "荣誉列表（保留兼容，与上述各榜单对应）");
-        put("GroupHonorInfoData.legendList", "传说榜单列表");
-        put("GroupHonorInfoData.performerList", "群聊之火/达人榜单列表");
-        put("GroupHonorInfoData.strongNewbieList", "新兴群友榜单列表");
-        put("GroupHonorInfoData.talkativeList", "龙王榜单列表");
+        put("GroupHonorInfoData.legendList", "群聊炽热列表");
+        put("GroupHonorInfoData.performerList", "群聊之火列表");
+        put("GroupHonorInfoData.strongNewbieList", "冒尖小春笋列表");
+        put("GroupHonorInfoData.talkativeList", "龙王列表");
 
         // GroupIgnoreAddRequestData
-        put("GroupIgnoreAddRequestData.actorNick", "操作者昵称");
-        put("GroupIgnoreAddRequestData.actorUin", "操作者 QQ");
-        put("GroupIgnoreAddRequestData.checked", "是否已检查");
+        put("GroupIgnoreAddRequestData.actor", "处理者QQ");
+        put("GroupIgnoreAddRequestData.checked", "是否已处理");
         put("GroupIgnoreAddRequestData.groupId", "群号");
-        put("GroupIgnoreAddRequestData.groupName", "群名");
-        put("GroupIgnoreAddRequestData.message", "请求消息");
-        put("GroupIgnoreAddRequestData.raw", "原始 JSON（保留未映射字段）");
-        put("GroupIgnoreAddRequestData.requestId", "请求 ID");
+        put("GroupIgnoreAddRequestData.groupName", "群名称");
+        put("GroupIgnoreAddRequestData.invitorNick", "邀请者昵称");
+        put("GroupIgnoreAddRequestData.invitorUin", "邀请者QQ");
+        put("GroupIgnoreAddRequestData.message", "验证信息");
+        put("GroupIgnoreAddRequestData.requestId", "请求ID");
         put("GroupIgnoreAddRequestData.requesterNick", "请求者昵称");
-        put("GroupIgnoreAddRequestData.requesterUin", "请求者 QQ");
-        put("GroupIgnoreAddRequestData.time", "请求时间");
 
         // GroupIgnoredNotifiesData
-        put("GroupIgnoredNotifiesData.invitedRequests", "被邀请入群请求列表");
-        put("GroupIgnoredNotifiesData.joinRequests", "加群请求列表");
+        put("GroupIgnoredNotifiesData.InvitedRequest", "邀请请求列表");
+        put("GroupIgnoredNotifiesData.invitedRequests", "邀请请求列表");
+        put("GroupIgnoredNotifiesData.joinRequests", "加入请求列表");
 
-        // GroupInfoData
-        put("GroupInfoData.groupAllShut", "是否全员禁言（0 表示未开启）");
-        put("GroupInfoData.groupId", "群号");
-        put("GroupInfoData.groupName", "群名称");
-        put("GroupInfoData.groupRemark", "群备注");
-        put("GroupInfoData.maxMemberCount", "最大成员人数");
-        put("GroupInfoData.memberCount", "成员人数");
-
-        // GroupInfoExData
-        put("GroupInfoExData.admins", "管理员列表");
-        put("GroupInfoExData.groupId", "群号");
-        put("GroupInfoExData.groupName", "群名称");
-        put("GroupInfoExData.groupRemark", "群备注");
-        put("GroupInfoExData.ownerQq", "群主 QQ");
-
-        // GroupMemberData
-        put("GroupMemberData.age", "年龄");
-        put("GroupMemberData.area", "地区");
-        put("GroupMemberData.card", "群名片");
-        put("GroupMemberData.cardChangeable", "是否允许修改名片");
-        put("GroupMemberData.groupId", "群号");
-        put("GroupMemberData.isRobot", "是否为机器人");
-        put("GroupMemberData.joinTime", "入群时间戳");
-        put("GroupMemberData.lastSentTime", "最后发言时间戳");
-        put("GroupMemberData.level", "等级");
-        put("GroupMemberData.nickname", "昵称");
-        put("GroupMemberData.qage", "Q 龄");
-        put("GroupMemberData.qqLevel", "QQ 等级");
-        put("GroupMemberData.role", "角色（owner/admin/member）");
-        put("GroupMemberData.sex", "性别");
-        put("GroupMemberData.shutUpTimestamp", "禁言截止时间戳");
-        put("GroupMemberData.title", "头衔");
-        put("GroupMemberData.titleExpireTime", "头衔过期时间");
-        put("GroupMemberData.unfriendly", "是否不良记录");
-        put("GroupMemberData.userId", "QQ 号");
+        // GroupMsgHistoryData
+        put("GroupMsgHistoryData.messages", "消息列表");
 
         // GroupNoticeData
-        put("GroupNoticeData.message", "公告消息（含 text 和 images）");
-        put("GroupNoticeData.noticeId", "公告 ID");
-        put("GroupNoticeData.pinned", "是否置顶");
+        put("GroupNoticeData.message", "公告内容");
+        put("GroupNoticeData.noticeId", "公告ID");
         put("GroupNoticeData.publishTime", "发布时间");
-        put("GroupNoticeData.senderId", "发送者 QQ");
+        put("GroupNoticeData.readNum", "阅读数");
+        put("GroupNoticeData.senderId", "发送者QQ");
+        put("GroupNoticeData.settings", "设置项");
+
+        // GroupNoticeMessageData
+        put("GroupNoticeMessageData.image", "图片列表");
+        put("GroupNoticeMessageData.images", "图片列表");
+        put("GroupNoticeMessageData.text", "文本内容");
 
         // GroupRootFilesData
-        put("GroupRootFilesData.busid", "busid");
-        put("GroupRootFilesData.createTime", "创建时间");
-        put("GroupRootFilesData.creatorNickname", "创建者昵称");
-        put("GroupRootFilesData.creatorUserId", "创建者 QQ");
-        put("GroupRootFilesData.deadTime", "过期时间");
-        put("GroupRootFilesData.downloadTimes", "下载次数");
-        put("GroupRootFilesData.fileId", "文件 ID");
-        put("GroupRootFilesData.fileName", "文件名");
-        put("GroupRootFilesData.fileSize", "文件大小");
         put("GroupRootFilesData.files", "文件列表");
-        put("GroupRootFilesData.folderId", "文件夹 ID");
-        put("GroupRootFilesData.folderName", "文件夹名");
         put("GroupRootFilesData.folders", "文件夹列表");
-        put("GroupRootFilesData.modifyTime", "修改时间");
-        put("GroupRootFilesData.totalFileCount", "文件夹内文件数");
-        put("GroupRootFilesData.uploadTime", "上传时间");
-        put("GroupRootFilesData.uploaderNickname", "上传者昵称");
-        put("GroupRootFilesData.uploaderUserId", "上传者 QQ");
-
-        // GroupShutMemberData
-        put("GroupShutMemberData.shutUpTime", "禁言到期时间戳");
-        put("GroupShutMemberData.userId", "QQ 号");
 
         // GroupSignedData
         put("GroupSignedData.nick", "打卡者昵称");
         put("GroupSignedData.rank", "打卡排名");
         put("GroupSignedData.time", "打卡时间");
-        put("GroupSignedData.userId", "打卡者 QQ");
-
-        // GroupSystemMsgData
-        put("GroupSystemMsgData.invitedRequests", "被邀请入群列表");
-        put("GroupSystemMsgData.joinRequests", "加群请求列表");
-
-        // GuildListData
-        put("GuildListData.guildDesc", "频道描述");
-        put("GuildListData.guildFace", "频道头像 URL");
-        put("GuildListData.guildId", "频道 ID");
-        put("GuildListData.guildName", "频道名称");
-        put("GuildListData.isJoined", "是否已加入");
-        put("GuildListData.maxMemberCount", "最大成员数");
-        put("GuildListData.memberCount", "频道成员数");
-        put("GuildListData.ownerId", "频道主 QQ");
-
-        // GuildServiceProfileData
-        put("GuildServiceProfileData.avatarUrl", "用户头像 URL");
-        put("GuildServiceProfileData.guildId", "频道 ID");
-        put("GuildServiceProfileData.joinTime", "加入时间");
-        put("GuildServiceProfileData.nickName", "用户昵称");
-        put("GuildServiceProfileData.role", "角色");
-
-        // HistoryMsgData
-        put("HistoryMsgData.messages", "消息列表");
-
-        // LoginInfoData
-        put("LoginInfoData.age", "年龄");
-        put("LoginInfoData.birthdayDay", "出生日期");
-        put("LoginInfoData.birthdayMonth", "出生月份");
-        put("LoginInfoData.birthdayYear", "出生年份");
-        put("LoginInfoData.categoryId", "分组 ID");
-        put("LoginInfoData.categoryName", "分组名称");
-        put("LoginInfoData.email", "邮箱");
-        put("LoginInfoData.level", "等级");
-        put("LoginInfoData.loginDays", "登录天数");
-        put("LoginInfoData.nickname", "昵称");
-        put("LoginInfoData.phoneNum", "手机号");
-        put("LoginInfoData.qid", "QID");
-        put("LoginInfoData.remark", "备注");
-        put("LoginInfoData.sex", "性别");
-        put("LoginInfoData.userId", "QQ 号");
+        put("GroupSignedData.userId", "打卡者QQ");
 
         // MiniAppArkData
-        put("MiniAppArkData.data", "Ark JSON 数据");
+        put("MiniAppArkData.data", "Ark数据");
 
-        // ModelShowData
-        put("ModelShowData.model", "机型名称");
-        put("ModelShowData.modelShow", "机型展示");
-
-        // OcrResultData
-        put("OcrResultData.language", "语言");
-        put("OcrResultData.texts", "OCR 识别文本列表");
-
-        // OnlineClientData
-        put("OnlineClientData.appId", "客户端 ID");
-        put("OnlineClientData.clientVersion", "客户端版本");
-        put("OnlineClientData.deviceKind", "设备类型");
-        put("OnlineClientData.deviceName", "设备名称");
-        put("OnlineClientData.platform", "客户端平台");
-
-        // OnlineFileMsgData
-        put("OnlineFileMsgData.fileId", "文件 ID");
-        put("OnlineFileMsgData.fileName", "文件名称");
-        put("OnlineFileMsgData.fileSize", "文件大小（字节）");
-        put("OnlineFileMsgData.isOnlineFile", "是否在线文件");
-        put("OnlineFileMsgData.senderUid", "发送者 QQ");
-
-        // PacketStatusData
-        put("PacketStatusData.enable", "发包是否可用");
-        put("PacketStatusData.interval", "发包速率限制（毫秒）");
+        // ModelShowVariantsData
+        put("ModelShowVariantsData.modelShow", "显示名称");
+        put("ModelShowVariantsData.needPay", "是否需要付费");
 
         // ProfileLikeData
-        put("ProfileLikeData.count", "赞的总数");
-        put("ProfileLikeData.list", "近期的点赞列表");
+        put("ProfileLikeData.time", "时间");
+        put("ProfileLikeData.uid", "用户UID");
+
+        // ProfileLikeFavoriteInfoData
+        put("ProfileLikeFavoriteInfoData.lastTime", "最后点赞时间");
+        put("ProfileLikeFavoriteInfoData.todayCount", "今日点赞数");
+        put("ProfileLikeFavoriteInfoData.totalCount", "总点赞数");
+        put("ProfileLikeFavoriteInfoData.userInfos", "点赞用户信息");
+
+        // ProfileLikeVoteInfoData
+        put("ProfileLikeVoteInfoData.lastVisitTime", "最后访问时间");
+        put("ProfileLikeVoteInfoData.newCount", "新增点赞数");
+        put("ProfileLikeVoteInfoData.newNearbyCount", "新增附近点赞数");
+        put("ProfileLikeVoteInfoData.totalCount", "总点赞数");
+        put("ProfileLikeVoteInfoData.userInfos", "点赞用户信息");
 
         // PttTextData
-        put("PttTextData.text", "语音转文字结果文本");
+        put("PttTextData.text", "得到的文本");
 
-        // QunAlbumListData
-        put("QunAlbumListData.albumList", "相册列表");
-        put("QunAlbumListData.attachInfo", "翻页附加信息");
-        put("QunAlbumListData.hasMore", "是否还有更多");
-
-        // RKeyData
-        put("RKeyData.rkey", "RKey 映射");
-
-        // RKeyServerData
-        put("RKeyServerData.servers", "服务器列表");
+        // QunAlbumData
+        put("QunAlbumData.albumList", "群相册列表");
+        put("QunAlbumData.attachInfo", "分页附加信息，传入下一次请求以获取更多数据");
+        put("QunAlbumData.hasMore", "是否有更多数据");
 
         // RecentContactData
         put("RecentContactData.chatType", "聊天类型");
         put("RecentContactData.lastestMsg", "最后一条消息");
-        put("RecentContactData.msgId", "消息 ID");
+        put("RecentContactData.msgId", "消息ID");
         put("RecentContactData.msgTime", "消息时间");
         put("RecentContactData.peerName", "对象名称");
-        put("RecentContactData.peerUin", "对象 QQ");
+        put("RecentContactData.peerUin", "对象QQ");
         put("RecentContactData.remark", "备注");
         put("RecentContactData.sendMemberName", "发送者群名片");
         put("RecentContactData.sendNickName", "发送者昵称");
 
-        // RobotUinRangeData
-        put("RobotUinRangeData.maxUin", "最大 Uin");
-        put("RobotUinRangeData.minUin", "最小 Uin");
+        // RecordData
+        put("RecordData.yes", "是否可以发送");
 
-        // SendMsgData
-        put("SendMsgData.forwardId", "转发消息的 forward_id（合并转发时可能有值）");
-        put("SendMsgData.messageId", "消息 ID");
-        put("SendMsgData.resId", "转发消息的 res_id（合并转发时可能有值）");
+        // RkeyData
+        put("RkeyData.createdAt", "创建时间");
+        put("RkeyData.rkey", "RKey");
+        put("RkeyData.ttl", "有效期");
+        put("RkeyData.type", "类型 (private/group)");
 
-        // ShareLinkData
-        put("ShareLinkData.content", "内容");
-        put("ShareLinkData.title", "标题");
-        put("ShareLinkData.url", "短链接");
+        // RkeyServerData
+        put("RkeyServerData.expiredTime", "过期时间");
+        put("RkeyServerData.groupRkey", "群聊 RKey");
+        put("RkeyServerData.name", "名称");
+        put("RkeyServerData.privateRkey", "私聊 RKey");
 
         // StatusData
         put("StatusData.good", "状态是否良好");
         put("StatusData.online", "是否在线");
-        put("StatusData.stat", "统计信息（具体结构不固定，用 JsonNode 承接）");
+        put("StatusData.stat", "统计信息");
 
         // StrangerInfoData
         put("StrangerInfoData.age", "年龄");
-        put("StrangerInfoData.isVip", "是否 VIP");
-        put("StrangerInfoData.isYearsVip", "是否年费 VIP");
+        put("StrangerInfoData.isVip", "是否VIP");
+        put("StrangerInfoData.isYearsVip", "是否年费VIP");
         put("StrangerInfoData.loginDays", "登录天数");
         put("StrangerInfoData.longNick", "个性签名");
         put("StrangerInfoData.nickname", "昵称");
         put("StrangerInfoData.qid", "QID");
-        put("StrangerInfoData.qqLevel", "QQ 等级");
+        put("StrangerInfoData.qqLevel", "QQ等级");
         put("StrangerInfoData.regTime", "注册时间");
         put("StrangerInfoData.remark", "备注");
         put("StrangerInfoData.sex", "性别");
         put("StrangerInfoData.status", "状态");
         put("StrangerInfoData.uid", "UID");
-        put("StrangerInfoData.userId", "用户 QQ");
-        put("StrangerInfoData.vipLevel", "VIP 等级");
-
-        // TranslateResultData
-        put("TranslateResultData.words", "翻译后的词汇列表");
+        put("StrangerInfoData.userId", "用户QQ");
+        put("StrangerInfoData.vipLevel", "VIP等级");
 
         // UnidirectionalFriendData
         put("UnidirectionalFriendData.age", "年龄");
@@ -682,8 +495,8 @@ public final class EventFieldDescription {
         put("UnidirectionalFriendData.uid", "用户UID");
         put("UnidirectionalFriendData.uin", "QQ号");
 
-        // UrlSafetyData
-        put("UrlSafetyData.level", "安全等级（0 安全，1 警告，2 风险，3 危险）");
+        // UrlSafelyData
+        put("UrlSafelyData.level", "安全等级 (1: 安全, 2: 未知, 3: 危险)");
 
         // UserStatusData
         put("UserStatusData.extStatus", "扩展状态");
@@ -705,13 +518,6 @@ public final class EventFieldDescription {
         put("ApiResponse.status", "状态：\"ok\" 或 \"failed\"");
         put("ApiResponse.stream", "流式响应类型（如 \"normal-action\"）");
         put("ApiResponse.wording", "提示");
-
-        // FileOperationResult
-        put("FileOperationResult.ok", "是否操作成功");
-
-        // GroupPortraitResult
-        put("GroupPortraitResult.errMsg", "错误信息");
-        put("GroupPortraitResult.result", "结果码（0 表示成功）");
 
         // === GENERATED END ===
     }
