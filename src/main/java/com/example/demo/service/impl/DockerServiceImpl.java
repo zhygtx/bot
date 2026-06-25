@@ -1,6 +1,8 @@
 package com.example.demo.service.impl;
 
+import com.example.demo.mapper.BotMapper;
 import com.example.demo.mapper.DockerMapper;
+import com.example.demo.pojo.entity.BotInfo;
 import com.example.demo.pojo.entity.Docker;
 import com.example.demo.pojo.entity.Result;
 import com.example.demo.service.DockerService;
@@ -23,24 +25,33 @@ public class DockerServiceImpl implements DockerService {
     private final DockerMapper dockerMapper;
     private final UserService userService;
     private final EmailUtil emailUtil;
+    private final BotMapper botMapper;
 
-    public DockerServiceImpl(DockerUtil dockerUtil, DockerMapper dockerMapper, UserService userService, EmailUtil emailUtil) {
+    public DockerServiceImpl(DockerUtil dockerUtil, DockerMapper dockerMapper, UserService userService, EmailUtil emailUtil, BotMapper botMapper) {
         this.dockerUtil = dockerUtil;
         this.dockerMapper = dockerMapper;
         this.userService = userService;
         this.emailUtil = emailUtil;
+        this.botMapper = botMapper;
     }
 
     /**
      * 创建容器并自动处理配置文件
      * @param userId 用户
-     * @param token token
+     * @param token WEBUI_TOKEN
+     * @param botQQ 机器人QQ
      */
     @Override
     public Result<?> createContainer(String userId, String token, Long botQQ){
 
         if (dockerMapper.isOverLimit()){
             return Result.error(400,"总容器数量超限");
+        }
+
+        // 查询 Bot 的鉴权 token 和路径后缀
+        BotInfo botInfo = botMapper.selectByBotQQ(botQQ);
+        if (botInfo == null) {
+            return Result.error(400, "请先注册机器人再创建容器");
         }
 
         String containerName = "napcat_" + botQQ;
@@ -55,7 +66,7 @@ public class DockerServiceImpl implements DockerService {
             throw new RuntimeException(e);
         }
         
-        String containerId = dockerUtil.createContainerWithAutoConfig(hostPort, containerName, token);
+        String containerId = dockerUtil.createContainerWithAutoConfig(hostPort, containerName, token, botInfo.getToken(), botInfo.getPathSuffix(), botQQ);
         log.info("容器创建成功，容器ID: {}", containerId);
 
         Docker docker = new Docker();

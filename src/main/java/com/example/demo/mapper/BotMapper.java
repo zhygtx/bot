@@ -49,6 +49,9 @@ public interface BotMapper {
     @Select("SELECT EXISTS(SELECT * FROM bot WHERE bot_qq = #{botQQ})")
     boolean existsByBotQQ(Long botQQ);
 
+    @Select("SELECT * FROM bot WHERE bot_qq = #{botQQ}")
+    BotInfo selectByBotQQ(Long botQQ);
+
     @Select("select email from user where id = (select user_id from bot where bot_qq = #{botQQ})")
     String selectEmail(Long botQQ);
 

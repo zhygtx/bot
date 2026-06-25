@@ -11,6 +11,7 @@ import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.httpclient5.ApacheDockerHttpClient;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayOutputStream;
@@ -29,6 +30,12 @@ import java.util.stream.Collectors;
 public class DockerUtil {
 
     private static final String IMAGE_NAME = "mlikiowa/napcat-docker:latest";
+
+    @Value("${server.port}")
+    private int serverPort;
+
+    @Value("${napcat.ws.server.url}")
+    private String wsUrl;
 
     // 创建 Docker 客户端实例
     private final DockerClient dockerClient;
@@ -56,10 +63,13 @@ public class DockerUtil {
      * 创建容器并自动处理配置文件
      * @param hostPort 主机端口
      * @param containerName 容器名
-     * @param token 环境变量中的token值
+     * @param token 环境变量中的WEBUI_TOKEN值
+     * @param botToken Bot鉴权token（用于onebot11.json中的token字段）
+     * @param pathSuffix Bot连接路径后缀（用于构造WS URL）
+     * @param botQQ 机器人QQ号（用于命名配置文件）
      * @return 创建的容器ID
      */
-    public String createContainerWithAutoConfig(int hostPort, String containerName, String token) {
+    public String createContainerWithAutoConfig(int hostPort, String containerName, String token, String botToken, String pathSuffix, Long botQQ) {
         log.info("开始创建容器，主机端口: {}, 容器名称: {}, token: {}", hostPort, containerName, token != null ? "***" : null);
 
         try {
@@ -79,21 +89,17 @@ public class DockerUtil {
             String programDir = System.getProperty("user.dir");
             log.info("获取程序运行目录: {}", programDir);
             String configDir = Paths.get(programDir, "config").toString();
-            File configFile = Paths.get(configDir, "onebot11.json").toFile();
+            File configFile = Paths.get(configDir, "onebot11_" + botQQ + ".json").toFile();
             log.info("配置文件路径: {}", configFile.getAbsolutePath());
 
             // 获取宿主IP
             String hostIp = getHostIpAddress();
             log.info("获取到宿主IP地址: {}", hostIp);
 
-            // 如果配置文件不存在，则创建它
-            if (!configFile.exists()) {
-                log.info("配置文件不存在，创建配置文件: {}", configFile.getAbsolutePath());
-                createOneBotConfigFile(configFile, hostIp);
-                log.info("配置文件创建完成: {}", configFile.getAbsolutePath());
-            } else {
-                log.info("配置文件已存在: {}", configFile.getAbsolutePath());
-            }
+            // 始终覆盖写入配置文件（确保使用最新的Bot配置）
+            log.info("写入配置文件: {}", configFile.getAbsolutePath());
+            createOneBotConfigFile(configFile, hostIp, botToken, pathSuffix);
+            log.info("配置文件写入完成: {}", configFile.getAbsolutePath());
 
             // 创建端口绑定 (宿主 hostPort -> 容器 6099)
             ExposedPort internalPort = ExposedPort.tcp(6099);
@@ -219,9 +225,11 @@ public class DockerUtil {
      * 创建 onebot11.json 配置文件
      * @param configFile 配置文件对象
      * @param hostIp 宿主IP地址
+     * @param botToken Bot鉴权token
+     * @param pathSuffix Bot连接路径后缀
      * @throws IOException 文件操作异常
      */
-    private void createOneBotConfigFile(File configFile, String hostIp) throws IOException {
+    private void createOneBotConfigFile(File configFile, String hostIp, String botToken, String pathSuffix) throws IOException {
         log.info("开始创建配置文件: {}", configFile.getAbsolutePath());
 
         // 创建父目录
@@ -236,19 +244,19 @@ public class DockerUtil {
             log.info("配置目录创建成功: {}", parentDir.getAbsolutePath());
         }
 
-        // 准备JSON内容，使用固定的8080端口和自动获取的宿主IP
+        // 准备JSON内容，使用动态端口、动态WS路径、动态token
         String jsonContent = "{\n" +
                 "  \"network\": {\n" +
                 "    \"websocketClients\": [\n" +
                 "      {\n" +
                 "        \"enable\": true,\n" +
                 "        \"name\": \"rws\",\n" +
-                "        \"url\": \"ws://" + hostIp + ":8080/ws/bot\",\n" +
+                "        \"url\": \"ws://" + hostIp + ":" + serverPort + wsUrl + "/" + pathSuffix + "\",\n" +
                 "        \"reportSelfMessage\": false,\n" +
                 "        \"messagePostFormat\": \"array\",\n" +
-                "        \"token\": \"\",\n" +
+                "        \"token\": \"" + (botToken == null ? "" : botToken) + "\",\n" +
                 "        \"info\": false,\n" +
-                "        \"heartInterval\": 0,\n" +
+                "        \"heartInterval\": 5000,\n" +
                 "        \"reconnectInterval\": 5000\n" +
                 "      }\n" +
                 "    ],\n" +
