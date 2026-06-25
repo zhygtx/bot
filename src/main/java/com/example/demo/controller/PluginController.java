@@ -2,10 +2,10 @@ package com.example.demo.controller;
 
 import com.example.demo.pojo.entity.Result;
 import com.example.demo.pojo.entity.plugin.PluginInfo;
+import com.example.demo.security.UserPrincipal;
 import com.example.demo.service.PluginService;
-import com.example.demo.util.AuthUtil;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -15,11 +15,9 @@ import org.springframework.web.multipart.MultipartFile;
 public class PluginController {
 
     private final PluginService pluginService;
-    private final AuthUtil authUtil;
 
-    public PluginController(PluginService pluginService, AuthUtil authUtil) {
+    public PluginController(PluginService pluginService) {
         this.pluginService = pluginService;
-        this.authUtil = authUtil;
     }
 
     /**
@@ -30,11 +28,11 @@ public class PluginController {
      * @return 添加结果
      */
     @PostMapping
-    public Result<?> add(HttpServletRequest request,
+    public Result<?> add(@AuthenticationPrincipal UserPrincipal user,
                          @RequestPart("pluginInfo") PluginInfo pluginInfo,
                          @RequestPart("file") MultipartFile file) {
-        String userId = authUtil.getCurrentUserId(request);
-        String userName = authUtil.getCurrentUserName(request);
+        String userId = user.userId();
+        String userName = user.name();
         pluginInfo.setAuthorName(userName);
         pluginInfo.setAuthorId(userId);
         return pluginService.add(pluginInfo, file);

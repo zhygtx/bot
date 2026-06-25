@@ -2,11 +2,11 @@ package com.example.demo.controller;
 
 import com.example.demo.pojo.entity.Result;
 import com.example.demo.pojo.entity.User;
+import com.example.demo.security.UserPrincipal;
 import com.example.demo.service.EmailService;
 import com.example.demo.service.UserService;
-import com.example.demo.util.AuthUtil;
 import com.example.demo.util.JWTUtil;
-import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -19,13 +19,11 @@ public class UserController {
     private final EmailService emailService;
     private final UserService userService;
     private final JWTUtil jwtUtil;
-    private final AuthUtil authUtil;
 
-    public UserController(UserService userService, EmailService emailService, JWTUtil jwtUtil, AuthUtil authUtil) {
+    public UserController(UserService userService, EmailService emailService, JWTUtil jwtUtil) {
         this.userService = userService;
         this.emailService = emailService;
         this.jwtUtil = jwtUtil;
-        this.authUtil = authUtil;
     }
 
     /**
@@ -75,8 +73,8 @@ public class UserController {
       * @param request HttpServletRequest对象
      */
     @GetMapping("/info")
-    public Result<User> getCurrentUserInfo(HttpServletRequest request) {
-        User user = userService.selectById(authUtil.getCurrentUserId(request));
+    public Result<User> getCurrentUserInfo(@AuthenticationPrincipal UserPrincipal principal) {
+        User user = userService.selectById(principal.userId());
         if (user == null) {
             return Result.error(400,"用户不存在");
         }
@@ -98,13 +96,12 @@ public class UserController {
      * @param newPwd 新密码
      */
     @PutMapping("/updatePwd")
-    public Result<String> updatePwd(HttpServletRequest request, String oldPwd, String newPwd) {
-        String account = authUtil.getCurrentUserAccount(request);
-        if (!userService.login(account, oldPwd)){
+    public Result<String> updatePwd(@AuthenticationPrincipal UserPrincipal principal, String oldPwd, String newPwd) {
+        if (!userService.login(principal.account(), oldPwd)){
             return Result.error(400,"旧密码错误");
         }
         User user = new User();
-        user.setId(authUtil.getCurrentUserId(request));
+        user.setId(principal.userId());
         user.setPwd(newPwd);
         userService.updatePwd(user);
         return Result.success();

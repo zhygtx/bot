@@ -2,10 +2,10 @@ package com.example.demo.controller;
 
 import com.example.demo.pojo.entity.Result;
 import com.example.demo.pojo.entity.workflow.WorkflowInfo;
+import com.example.demo.security.UserPrincipal;
 import com.example.demo.service.WorkflowService;
-import com.example.demo.util.AuthUtil;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -19,11 +19,9 @@ import java.util.UUID;
 public class WorkflowController {
 
     private final WorkflowService workflowService;
-    private final AuthUtil authUtil;
 
-    public WorkflowController(WorkflowService workflowService, AuthUtil authUtil) {
+    public WorkflowController(WorkflowService workflowService) {
         this.workflowService = workflowService;
-        this.authUtil = authUtil;
     }
 
     /**
@@ -33,9 +31,9 @@ public class WorkflowController {
      * @return 添加结果
      */
     @PostMapping
-    public Result<?> add(HttpServletRequest request, @RequestBody WorkflowInfo workflowInfo) {
-        String userId = authUtil.getCurrentUserId(request);
-        String authorName = authUtil.getCurrentUserName(request);
+    public Result<?> add(@AuthenticationPrincipal UserPrincipal user, @RequestBody WorkflowInfo workflowInfo) {
+        String userId = user.userId();
+        String authorName = user.name();
         workflowInfo.setId(UUID.randomUUID().toString());
         workflowInfo.setUserId(userId);
         workflowInfo.setAuthorName(authorName);
@@ -84,10 +82,10 @@ public class WorkflowController {
      * @return 工作流列表
      */
     @GetMapping("/findAll")
-    public Result<?> findByAuthorId(HttpServletRequest request,
+    public Result<?> findByAuthorId(@AuthenticationPrincipal UserPrincipal user,
             @RequestParam(required = false,defaultValue = "1") int pageNum,
             @RequestParam(required = false,defaultValue = "12") int pageSize) {
-        String userId = authUtil.getCurrentUserId(request);
+        String userId = user.userId();
         return Result.success(null,workflowService.findAll(userId,pageNum, pageSize));
     }
 

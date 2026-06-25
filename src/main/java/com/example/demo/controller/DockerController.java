@@ -2,9 +2,9 @@ package com.example.demo.controller;
 
 import com.example.demo.pojo.entity.Docker;
 import com.example.demo.pojo.entity.Result;
+import com.example.demo.security.UserPrincipal;
 import com.example.demo.service.DockerService;
-import com.example.demo.util.AuthUtil;
-import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -12,11 +12,9 @@ import org.springframework.web.bind.annotation.*;
 public class DockerController {
 
     private final DockerService dockerService;
-    private final AuthUtil authUtil;
 
-    public DockerController(DockerService dockerService, AuthUtil authUtil) {
+    public DockerController(DockerService dockerService) {
         this.dockerService = dockerService;
-        this.authUtil = authUtil;
     }
 
     /**
@@ -25,9 +23,8 @@ public class DockerController {
      * @param napcatToken 用户设置的令牌
      */
     @PostMapping
-    public Result<?> createContainer(HttpServletRequest request, String napcatToken, Long botQQ) {
-        String userId = authUtil.getCurrentUserId(request);
-        Result<?> result = dockerService.createContainer(userId,napcatToken,botQQ);
+    public Result<?> createContainer(@AuthenticationPrincipal UserPrincipal user, String napcatToken, Long botQQ) {
+        Result<?> result = dockerService.createContainer(user.userId(), napcatToken, botQQ);
         if (!result.getCode().equals(0)){
             return result;
         }
@@ -39,9 +36,8 @@ public class DockerController {
      * @param request HTTP请求
      */
     @GetMapping
-    public Result<?> getContainerInfo(HttpServletRequest request) {
-        String userId = authUtil.getCurrentUserId(request);
-        Docker docker = dockerService.getByUserId(userId);
+    public Result<?> getContainerInfo(@AuthenticationPrincipal UserPrincipal user) {
+        Docker docker = dockerService.getByUserId(user.userId());
         return Result.success(null, docker);
     }
 

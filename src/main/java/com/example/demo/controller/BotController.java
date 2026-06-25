@@ -2,10 +2,10 @@ package com.example.demo.controller;
 
 import com.example.demo.pojo.entity.BotInfo;
 import com.example.demo.pojo.entity.Result;
+import com.example.demo.security.UserPrincipal;
 import com.example.demo.service.BotService;
-import com.example.demo.util.AuthUtil;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.*;
 public class BotController {
 
     private final BotService botService;
-    private final AuthUtil authUtil;
 
     @Value("${napcat.ws.server.url}")
     private String path;
@@ -21,9 +20,8 @@ public class BotController {
     @Value("${app.ip}")
     private String ip;
 
-    public BotController(BotService botService, AuthUtil authUtil) {
+    public BotController(BotService botService) {
         this.botService = botService;
-        this.authUtil = authUtil;
     }
 
     /**
@@ -34,9 +32,8 @@ public class BotController {
      * @return 插入结果
      */
     @PostMapping
-    public Result<?> insert(HttpServletRequest request, String name, Long botQQ) {
-        String userId = authUtil.getCurrentUserId(request);
-        return botService.insert(userId, name, botQQ);
+    public Result<?> insert(@AuthenticationPrincipal UserPrincipal user, String name, Long botQQ) {
+        return botService.insert(user.userId(), name, botQQ);
     }
 
     /**
@@ -68,9 +65,8 @@ public class BotController {
      * @return 机器人信息
      */
     @GetMapping
-    public Result<?> info(HttpServletRequest request) {
-        String userId = authUtil.getCurrentUserId(request);
-        BotInfo botInfo = botService.select(userId);
+    public Result<?> info(@AuthenticationPrincipal UserPrincipal user) {
+        BotInfo botInfo = botService.select(user.userId());
         if ( botInfo != null){
             String pathSuffix = "ws://" + ip + path + "/" + botInfo.getPathSuffix();
             botInfo.setPathSuffix(pathSuffix);

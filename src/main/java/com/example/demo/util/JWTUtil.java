@@ -15,10 +15,10 @@ import java.util.concurrent.TimeUnit;
 @Component
 public class JWTUtil {
 
-    @Value("my-super-secret-jwt-key-change-in-production")
+    @Value("${jwt.secret:my-super-secret-jwt-key-change-in-production}")
     private String secret;
 
-    @Value("86400000") // 默认24小时
+    @Value("${jwt.expiration:86400000}") // 默认24小时
     private Long expiration;
 
     // 发行人
