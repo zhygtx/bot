@@ -56,8 +56,8 @@ public class BotServiceImpl implements BotService {
         bot.setPathSuffix(botQQ.toString());
         bot.setToken(UUID.randomUUID().toString());
         botMapper.insert(bot);
-        botRegistrar.register(botQQ.toString(),UUID.randomUUID().toString());
-        return Result.success();
+        botRegistrar.register(botQQ.toString(), bot.getToken());
+        return Result.success("添加成功",null);
     }
 
     /**

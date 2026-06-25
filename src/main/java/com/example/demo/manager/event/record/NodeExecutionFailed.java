@@ -1,4 +1,4 @@
-package com.example.demo.event.record;
+package com.example.demo.manager.event.record;
 
 /**
  * 节点执行失败事件

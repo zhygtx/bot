@@ -80,7 +80,7 @@ public class UserController {
         if (user == null) {
             return Result.error(400,"用户不存在");
         }
-        return Result.success(user);
+        return Result.success(null, user);
     }
 
     /**

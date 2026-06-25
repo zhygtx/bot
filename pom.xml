@@ -115,13 +115,6 @@
             <artifactId>spring-boot-starter-data-redis</artifactId>
         </dependency>
 
-        <!-- Jackson JSR310 Module 为Java 8 时间日期API提供序列化/反序列化支持 -->
-        <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-jsr310</artifactId>
-            <version>2.20.1</version>
-        </dependency>
-
         <!-- OGNL 是一个开放源代码的Java表达式语言 -->
         <dependency>
             <groupId>ognl</groupId>
@@ -139,13 +132,6 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-mail</artifactId>
-        </dependency>
-
-        <!-- Jackson Databind 集成Jackson JSON处理库，用于序列化和反序列化JSON数据 -->
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>2.15.2</version>
         </dependency>
 
         <!-- Docker Java 3.3.0 集成Docker API，用于与Docker交互 -->
@@ -207,7 +193,7 @@
         <dependency>
             <groupId>com.github.zhygtx</groupId>
             <artifactId>napcat-spring-boot-starter</artifactId>
-            <version>0.0.6</version>
+            <version>0.0.7</version>
         </dependency>
 
     </dependencies>

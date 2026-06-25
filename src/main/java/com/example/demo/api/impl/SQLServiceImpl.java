@@ -8,7 +8,7 @@ import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.demo.mapper.workflow.PluginDataMapper;
-import com.example.demo.util.ThreadLocalManager;
+import com.example.demo.manager.ThreadLocalManager;
 import com.github.zhygtx.pojo.PluginData;
 import com.github.zhygtx.service.SQLService;
 import org.springframework.stereotype.Service;

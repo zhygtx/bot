@@ -1,8 +1,9 @@
-package com.example.demo.util;
+package com.example.demo.manager;
 
 import com.example.demo.pojo.entity.workflow.WorkflowInfo;
 import com.example.demo.service.RedisWorkflowService;
 import com.example.demo.service.WorkflowService;
+import com.example.demo.util.WorkflowUtil;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;

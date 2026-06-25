@@ -1,4 +1,4 @@
-package com.example.demo.event.record;
+package com.example.demo.manager.event.record;
 
 /**
  * 节点因条件分支被跳过事件

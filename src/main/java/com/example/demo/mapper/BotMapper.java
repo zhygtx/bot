@@ -53,6 +53,5 @@ public interface BotMapper {
     String selectEmail(Long botQQ);
 
     @Select("select path_suffix , token from bot")
-    @MapKey("path_suffix")
     List<Map<String,String>> selectPathSuffix();
 }

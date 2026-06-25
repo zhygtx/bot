@@ -5,6 +5,7 @@ import com.example.demo.pojo.entity.Result;
 import com.example.demo.service.BotService;
 import com.example.demo.util.AuthUtil;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -13,6 +14,12 @@ public class BotController {
 
     private final BotService botService;
     private final AuthUtil authUtil;
+
+    @Value("${napcat.ws.server.url}")
+    private String path;
+
+    @Value("${app.ip}")
+    private String ip;
 
     public BotController(BotService botService, AuthUtil authUtil) {
         this.botService = botService;
@@ -40,7 +47,7 @@ public class BotController {
     @DeleteMapping
     public Result<?> delete(Long botQQ) {
         botService.delete(botQQ);
-        return Result.success(null,null);
+        return Result.success("删除成功", null);
     }
 
     /**
@@ -51,7 +58,7 @@ public class BotController {
     @PutMapping
     public Result<?> update(@RequestBody BotInfo botInfo) {
         botService.update(botInfo);
-        return Result.success(null,null);
+        return Result.success("更新成功",null);
     }
 
 
@@ -63,6 +70,11 @@ public class BotController {
     @GetMapping
     public Result<?> info(HttpServletRequest request) {
         String userId = authUtil.getCurrentUserId(request);
-        return Result.success(botService.select(userId));
+        BotInfo botInfo = botService.select(userId);
+        if ( botInfo != null){
+            String pathSuffix = "ws://" + ip + path + "/" + botInfo.getPathSuffix();
+            botInfo.setPathSuffix(pathSuffix);
+        }
+        return Result.success(null, botInfo);
     }
 }

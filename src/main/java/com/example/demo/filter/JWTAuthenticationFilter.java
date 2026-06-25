@@ -5,6 +5,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.lang.Nullable;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -17,6 +18,9 @@ import java.util.Collections;
 
 @Component
 public class JWTAuthenticationFilter extends OncePerRequestFilter {
+
+    @Value("${napcat.ws.server.url}")
+    private String path;
 
     private final JWTUtil jwtUtil;
 
@@ -42,7 +46,7 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
 
         // 排除不需要认证的接口
         String requestURI = request.getRequestURI();
-        if (requestURI.equals("/user/login") || requestURI.equals("/user/insertUser") || requestURI.startsWith("/email/") || requestURI.equals("/ws/bot")) {
+        if (requestURI.equals("/user/login") || requestURI.equals("/user/insertUser") || requestURI.startsWith("/email/") || requestURI.startsWith(path) || requestURI.startsWith("/static/")) {
             filterChain.doFilter(request, response);
             return;
         }

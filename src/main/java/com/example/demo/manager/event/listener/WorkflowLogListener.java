@@ -1,7 +1,7 @@
-package com.example.demo.event.listener;
+package com.example.demo.manager.event.listener;
 
-import com.example.demo.event.record.*;
 import com.example.demo.manager.WorkflowLogManager;
+import com.example.demo.manager.event.record.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;

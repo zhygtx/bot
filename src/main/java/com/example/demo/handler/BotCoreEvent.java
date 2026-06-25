@@ -69,14 +69,17 @@ public class BotCoreEvent  implements BotEventListener {
     @EventListener(ApplicationReadyEvent.class)
     public void task(){
         List<Map<String, String>> mapList = botService.selectPathSuffix();
+        log.debug("从数据库加载到 {} 个 Bot 注册信息", mapList.size());
         if (mapList.isEmpty()){
             return;
         }
-        Map<String, String> map = mapList.get(0);
-        for (Map.Entry<String, String> entry : map.entrySet()) {
-            String pathSuffix = entry.getKey();
-            String token = entry.getValue();
-            botRegistrar.register(pathSuffix, token);
+        for (Map<String, String> map : mapList) {
+            String pathSuffix = map.get("path_suffix");
+            String token = map.get("token");
+            if (pathSuffix != null) {
+                botRegistrar.register(pathSuffix, token);
+                log.debug("注册 Bot: pathSuffix={}, token={}", pathSuffix, token != null ? "***" : "null");
+            }
         }
     }
 }

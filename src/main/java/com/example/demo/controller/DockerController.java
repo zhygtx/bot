@@ -3,7 +3,6 @@ package com.example.demo.controller;
 import com.example.demo.pojo.entity.Docker;
 import com.example.demo.pojo.entity.Result;
 import com.example.demo.service.DockerService;
-import com.example.demo.service.UserService;
 import com.example.demo.util.AuthUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.*;
@@ -13,12 +12,10 @@ import org.springframework.web.bind.annotation.*;
 public class DockerController {
 
     private final DockerService dockerService;
-    private final UserService userService;
     private final AuthUtil authUtil;
 
-    public DockerController(DockerService dockerService, UserService userService, AuthUtil authUtil) {
+    public DockerController(DockerService dockerService, AuthUtil authUtil) {
         this.dockerService = dockerService;
-        this.userService = userService;
         this.authUtil = authUtil;
     }
 
@@ -45,12 +42,12 @@ public class DockerController {
     public Result<?> getContainerInfo(HttpServletRequest request) {
         String userId = authUtil.getCurrentUserId(request);
         Docker docker = dockerService.getByUserId(userId);
-        return Result.success(docker);
+        return Result.success(null, docker);
     }
 
     /**
      * 删除容器
-     * @param request HTTP请求
+     * @param botQQ botQQ号
      */
     @DeleteMapping
     public Result<String> deleteContainer(Long botQQ) {
