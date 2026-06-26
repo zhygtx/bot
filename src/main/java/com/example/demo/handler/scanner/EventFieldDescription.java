@@ -267,9 +267,6 @@ public final class EventFieldDescription {
         // CsrfTokenData
         put("CsrfTokenData.token", "CSRF Token");
 
-        // DownloadFileData
-        put("DownloadFileData.file", "文件路径");
-
         // EmojiLikeData
         put("EmojiLikeData.cookie", "分页Cookie");
         put("EmojiLikeData.emojiLikesList", "表情回应列表");
@@ -314,11 +311,6 @@ public final class EventFieldDescription {
         // FilesetIdData
         put("FilesetIdData.filesetId", "文件集 ID");
 
-        // ForwardMsgData
-        put("ForwardMsgData.forwardId", "转发消息的 forward_id");
-        put("ForwardMsgData.messageId", "消息ID");
-        put("ForwardMsgData.resId", "转发消息的 res_id");
-
         // FriendsWithCategoryData
         put("FriendsWithCategoryData.buddyList", "好友列表");
         put("FriendsWithCategoryData.categoryId", "分组ID");
@@ -342,7 +334,7 @@ public final class EventFieldDescription {
         put("GroupDetailInfoData.memberCount", "成员数量");
 
         // GroupFileData
-        put("GroupFileData.ok", "是否成功");
+        put("GroupFileData.fileId", "文件 ID");
 
         // GroupFileFolderData
         put("GroupFileFolderData.groupItem", "群项信息");
@@ -382,6 +374,11 @@ public final class EventFieldDescription {
         put("GroupIgnoredNotifiesData.invitedRequests", "邀请请求列表");
         put("GroupIgnoredNotifiesData.joinRequests", "加入请求列表");
 
+        // GroupMsgData
+        put("GroupMsgData.forwardId", "转发消息的 forward_id");
+        put("GroupMsgData.messageId", "消息ID");
+        put("GroupMsgData.resId", "转发消息的 res_id");
+
         // GroupMsgHistoryData
         put("GroupMsgHistoryData.messages", "消息列表");
 
@@ -414,6 +411,20 @@ public final class EventFieldDescription {
         // ModelShowVariantsData
         put("ModelShowVariantsData.modelShow", "显示名称");
         put("ModelShowVariantsData.needPay", "是否需要付费");
+
+        // MsgData
+        put("MsgData.emojiLikesList", "表情回应列表");
+        put("MsgData.font", "字体");
+        put("MsgData.groupId", "群号");
+        put("MsgData.message", "消息内容");
+        put("MsgData.messageId", "消息ID");
+        put("MsgData.messageSeq", "消息序号");
+        put("MsgData.messageType", "消息类型");
+        put("MsgData.rawMessage", "原始消息内容");
+        put("MsgData.realId", "真实ID");
+        put("MsgData.sender", "发送者");
+        put("MsgData.time", "发送时间");
+        put("MsgData.userId", "发送者QQ号");
 
         // ProfileLikeData
         put("ProfileLikeData.time", "时间");
