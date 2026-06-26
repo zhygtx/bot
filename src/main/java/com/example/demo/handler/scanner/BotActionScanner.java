@@ -95,7 +95,7 @@ public class BotActionScanner {
             ActionParam actionParam = param.getAnnotation(ActionParam.class);
 
             String description = actionParam != null ? actionParam.description() : "参数";
-            int order = actionParam != null ? actionParam.order() : i;
+            int order = i;
             boolean nullable = actionParam != null && actionParam.nullable();
             String typeName = FieldScanUtil.getSimpleTypeName(param.getType());
 
