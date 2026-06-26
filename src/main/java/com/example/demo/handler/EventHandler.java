@@ -19,6 +19,12 @@ import org.springframework.stereotype.Component;
 @Component
 public class EventHandler implements OneBotEventListener {
 
+    private final BotWorkflowHandler botWorkflowHandler;
+
+    public EventHandler(BotWorkflowHandler botWorkflowHandler) {
+        this.botWorkflowHandler = botWorkflowHandler;
+    }
+
     @Bean
     public EventFilter botFilter(){
         return ((botQQ, event) -> !(event instanceof MessageEvent && botQQ == ((MessageEvent) event).getUserId()) || event instanceof MessageSentEvent);
@@ -533,7 +539,7 @@ public class EventHandler implements OneBotEventListener {
     )
     @Override
     public void onPrivateFriendMessage(Long botQQ, PrivateFriendMessageEvent event) {
-        OneBotEventListener.super.onPrivateFriendMessage(botQQ, event);
+        botWorkflowHandler.handleBotEvent(botQQ, "privateFriendMessage", event);
     }
 
     /**
@@ -593,7 +599,7 @@ public class EventHandler implements OneBotEventListener {
     )
     @Override
     public void onPrivateMessage(Long botQQ, PrivateMessageEvent event) {
-        OneBotEventListener.super.onPrivateMessage(botQQ, event);
+        botWorkflowHandler.handleBotEvent(botQQ, "privateMessage", event);
     }
 
     /**

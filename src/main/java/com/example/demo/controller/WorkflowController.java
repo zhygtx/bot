@@ -38,7 +38,7 @@ public class WorkflowController {
         workflowInfo.setUserId(userId);
         workflowInfo.setAuthorName(authorName);
         int result = workflowService.add(workflowInfo);
-        return result > 0 ? Result.success("创建工作流成功", workflowService.findById(workflowInfo.getId())) : Result.error(500, "添加工作流失败");
+        return result > 0 ? Result.success("创建成功", workflowService.findById(workflowInfo.getId())) : Result.error(500, "添加工作流失败");
     }
 
     /**
@@ -49,7 +49,7 @@ public class WorkflowController {
     @DeleteMapping
     public Result<?> remove(String id) {
         int result = workflowService.remove(id);
-        return result > 0 ? Result.success(null, null) : Result.error(500, "删除工作流失败");
+        return result > 0 ? Result.success("删除成功", null) : Result.error(500, "删除工作流失败");
     }
 
     /**
@@ -60,7 +60,7 @@ public class WorkflowController {
     @PutMapping
     public Result<?> edit(@RequestBody WorkflowInfo workflowInfo) {
         int result = workflowService.edit(workflowInfo);
-        return result > 0 ? Result.success(null, workflowService.findById(workflowInfo.getId())) : Result.error(500, "修改工作流失败");
+        return result > 0 ? Result.success("修改成功", workflowService.findById(workflowInfo.getId())) : Result.error(500, "修改工作流失败");
     }
 
     /**

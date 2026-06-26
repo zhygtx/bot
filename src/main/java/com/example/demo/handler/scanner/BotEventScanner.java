@@ -171,11 +171,11 @@ public class BotEventScanner {
             for (Field field : clazz.getDeclaredFields()) {
                 if (FieldScanUtil.isScannableField(field)) continue;
 
-                String jsonName = FieldScanUtil.getJsonFieldName(field);
+                String javaFieldName = field.getName();
                 String desc = FieldScanUtil.resolveFieldDescription(clazz, field);
 
                 FieldMetadata fm = FieldMetadata.builder()
-                        .fieldName(jsonName)
+                        .fieldName(javaFieldName)
                         .fieldType(FieldScanUtil.getSimpleTypeName(field.getType()))
                         .description(desc)
                         .order(order++)
@@ -184,8 +184,8 @@ public class BotEventScanner {
                         .example("")
                         .build();
 
-                // 子类字段覆盖父类字段（按 JSON 名称去重）
-                fieldMap.put(jsonName, fm);
+                // 子类字段覆盖父类字段（按 Java 字段名去重）
+                fieldMap.put(javaFieldName, fm);
             }
         }
 
