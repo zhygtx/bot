@@ -38,13 +38,13 @@ public class BotActionServiceImpl implements BotActionService {
     }
 
     @Override
-    public GroupFileFolderData createGroupFileFolder(long botQQ, Long groupId, String folderName, String name) {
-        return napCat.createGroupFileFolder(botQQ, groupId, folderName, name).join().getData();
+    public GroupFileFolderData createGroupFileFolder(long botQQ, Long groupId, String folderName) {
+        return napCat.createGroupFileFolder(botQQ, groupId, folderName).join().getData();
     }
 
     @Override
-    public String deleteFriend(long botQQ, String friendId, Long userId, Boolean tempBlock, Boolean tempBothDel) {
-        return napCat.deleteFriend(botQQ, friendId, userId, tempBlock, tempBothDel).join().getData();
+    public String deleteFriend(long botQQ, Long userId) {
+        return napCat.deleteFriend(botQQ, userId).join().getData();
     }
 
     @Override
@@ -53,33 +53,28 @@ public class BotActionServiceImpl implements BotActionService {
     }
 
     @Override
-    public void deleteGroupFolder(long botQQ, Long groupId, String folderId, String folder) {
-        napCat.deleteGroupFolder(botQQ, groupId, folderId, folder).join();
+    public void deleteGroupFolder(long botQQ, Long groupId, String folderId) {
+        napCat.deleteGroupFolder(botQQ, groupId, folderId).join();
     }
 
     @Override
-    public FileRecordStreamData downloadFile(long botQQ, String url, String base64, String name, String headers) {
-        return napCat.downloadFile(botQQ, url, base64, name, headers).join().getData();
+    public FileRecordStreamData downloadFile(long botQQ, String url, String headers) {
+        return napCat.downloadFile(botQQ, url, headers).join().getData();
     }
 
     @Override
-    public FileRecordStreamData downloadFileImageStream(long botQQ, String file, String fileId, Integer chunkSize) {
-        return napCat.downloadFileImageStream(botQQ, file, fileId, chunkSize).join().getData();
+    public FileRecordStreamData downloadFileImageStream(long botQQ, String file) {
+        return napCat.downloadFileImageStream(botQQ, file).join().getData();
     }
 
     @Override
-    public FileRecordStreamData downloadFileRecordStream(
-            long botQQ,
-            String file,
-            String fileId,
-            Integer chunkSize,
-            String outFormat) {
-        return napCat.downloadFileRecordStream(botQQ, file, fileId, chunkSize, outFormat).join().getData();
+    public FileRecordStreamData downloadFileRecordStream(long botQQ, String file) {
+        return napCat.downloadFileRecordStream(botQQ, file).join().getData();
     }
 
     @Override
-    public FileStreamData downloadFileStream(long botQQ, String file, String fileId, Integer chunkSize) {
-        return napCat.downloadFileStream(botQQ, file, fileId, chunkSize).join().getData();
+    public FileStreamData downloadFileStream(long botQQ, String file) {
+        return napCat.downloadFileStream(botQQ, file).join().getData();
     }
 
     @Override
@@ -98,8 +93,8 @@ public class BotActionServiceImpl implements BotActionService {
     }
 
     @Override
-    public GroupMsgHistoryData getForwardMsg(long botQQ, String messageId, String id) {
-        return napCat.getForwardMsg(botQQ, messageId, id).join().getData();
+    public GroupMsgHistoryData getForwardMsg(long botQQ, String messageId) {
+        return napCat.getForwardMsg(botQQ, messageId).join().getData();
     }
 
     @Override
@@ -122,13 +117,8 @@ public class BotActionServiceImpl implements BotActionService {
     }
 
     @Override
-    public GroupRootFilesData getGroupFilesByFolder(
-            long botQQ,
-            Long groupId,
-            String folderId,
-            String folder,
-            Integer fileCount) {
-        return napCat.getGroupFilesByFolder(botQQ, groupId, folderId, folder, fileCount).join().getData();
+    public GroupRootFilesData getGroupFilesByFolder(long botQQ, Long groupId, String folderId, Integer fileCount) {
+        return napCat.getGroupFilesByFolder(botQQ, groupId, folderId, fileCount).join().getData();
     }
 
     @Override
@@ -201,19 +191,8 @@ public class BotActionServiceImpl implements BotActionService {
     }
 
     @Override
-    public GroupMsgData sendForwardMsg(
-            long botQQ,
-            String messageType,
-            Long userId,
-            Long groupId,
-            String message,
-            Boolean autoEscape,
-            String source,
-            List<JsonNode> news,
-            String summary,
-            String prompt,
-            Long timeout) {
-        return napCat.sendForwardMsg(botQQ, messageType, userId, groupId, message, autoEscape, source, news, summary, prompt, timeout).join().getData();
+    public GroupMsgData sendForwardMsg(long botQQ, Long groupId, String message) {
+        return napCat.sendForwardMsg(botQQ, groupId, message).join().getData();
     }
 
     @Override
@@ -222,19 +201,8 @@ public class BotActionServiceImpl implements BotActionService {
     }
 
     @Override
-    public GroupMsgData sendGroupForwardMsg(
-            long botQQ,
-            String messageType,
-            Long userId,
-            Long groupId,
-            String message,
-            Boolean autoEscape,
-            String source,
-            List<JsonNode> news,
-            String summary,
-            String prompt,
-            Long timeout) {
-        return napCat.sendGroupForwardMsg(botQQ, messageType, userId, groupId, message, autoEscape, source, news, summary, prompt, timeout).join().getData();
+    public GroupMsgData sendGroupForwardMsg(long botQQ, Long groupId, String message) {
+        return napCat.sendGroupForwardMsg(botQQ, groupId, message).join().getData();
     }
 
     @Override
@@ -252,19 +220,8 @@ public class BotActionServiceImpl implements BotActionService {
     }
 
     @Override
-    public GroupMsgData sendPrivateForwardMsg(
-            long botQQ,
-            String messageType,
-            Long userId,
-            Long groupId,
-            String message,
-            Boolean autoEscape,
-            String source,
-            List<JsonNode> news,
-            String summary,
-            String prompt,
-            Long timeout) {
-        return napCat.sendPrivateForwardMsg(botQQ, messageType, userId, groupId, message, autoEscape, source, news, summary, prompt, timeout).join().getData();
+    public GroupMsgData sendPrivateForwardMsg(long botQQ, Long userId, String message) {
+        return napCat.sendPrivateForwardMsg(botQQ, userId, message).join().getData();
     }
 
     @Override
@@ -293,8 +250,8 @@ public class BotActionServiceImpl implements BotActionService {
     }
 
     @Override
-    public void setQqProfile(long botQQ, String nickname, String personalNote, Long sex) {
-        napCat.setQqProfile(botQQ, nickname, personalNote, sex).join();
+    public void setQqProfile(long botQQ, String nickname, String personalNote) {
+        napCat.setQqProfile(botQQ, nickname, personalNote).join();
     }
 
     @Override
@@ -303,8 +260,8 @@ public class BotActionServiceImpl implements BotActionService {
     }
 
     @Override
-    public DownloadStreamData testDownloadStream(long botQQ, Boolean error) {
-        return napCat.testDownloadStream(botQQ, error).join().getData();
+    public DownloadStreamData testDownloadStream(long botQQ) {
+        return napCat.testDownloadStream(botQQ).join().getData();
     }
 
     @Override
@@ -320,25 +277,13 @@ public class BotActionServiceImpl implements BotActionService {
             Long chunkIndex,
             Long totalChunks,
             Integer fileSize,
-            String expectedSha256,
-            Boolean isComplete,
-            String filename,
-            Boolean reset,
-            Boolean verifyOnly,
             Long fileRetention) {
-        return napCat.uploadFileStream(botQQ, streamId, chunkData, chunkIndex, totalChunks, fileSize, expectedSha256, isComplete, filename, reset, verifyOnly, fileRetention).join().getData();
+        return napCat.uploadFileStream(botQQ, streamId, chunkData, chunkIndex, totalChunks, fileSize, fileRetention).join().getData();
     }
 
     @Override
-    public GroupFileData uploadGroupFile(
-            long botQQ,
-            Long groupId,
-            String file,
-            String name,
-            String folder,
-            String folderId,
-            Boolean uploadFile) {
-        return napCat.uploadGroupFile(botQQ, groupId, file, name, folder, folderId, uploadFile).join().getData();
+    public GroupFileData uploadGroupFile(long botQQ, Long groupId, String file, String name, Boolean uploadFile) {
+        return napCat.uploadGroupFile(botQQ, groupId, file, name, uploadFile).join().getData();
     }
 
     @Override
@@ -352,8 +297,8 @@ public class BotActionServiceImpl implements BotActionService {
     }
 
     @Override
-    public FlashTaskData createFlashTask(long botQQ, List<String> files, String name, String thumbPath) {
-        return napCat.createFlashTask(botQQ, files, name, thumbPath).join().getData();
+    public FlashTaskData createFlashTask(long botQQ, List<String> files, String name) {
+        return napCat.createFlashTask(botQQ, files, name).join().getData();
     }
 
     @Override
@@ -362,8 +307,8 @@ public class BotActionServiceImpl implements BotActionService {
     }
 
     @Override
-    public FileData getFile(long botQQ, String file, String fileId) {
-        return napCat.getFile(botQQ, file, fileId).join().getData();
+    public FileData getFile(long botQQ, String file) {
+        return napCat.getFile(botQQ, file).join().getData();
     }
 
     @Override
@@ -382,8 +327,8 @@ public class BotActionServiceImpl implements BotActionService {
     }
 
     @Override
-    public GroupFileUrlData getFlashFileUrl(long botQQ, String filesetId, String fileName, Long fileIndex) {
-        return napCat.getFlashFileUrl(botQQ, filesetId, fileName, fileIndex).join().getData();
+    public GroupFileUrlData getFlashFileUrl(long botQQ, String filesetId) {
+        return napCat.getFlashFileUrl(botQQ, filesetId).join().getData();
     }
 
     @Override
@@ -392,8 +337,8 @@ public class BotActionServiceImpl implements BotActionService {
     }
 
     @Override
-    public FileData getImage(long botQQ, String file, String fileId) {
-        return napCat.getImage(botQQ, file, fileId).join().getData();
+    public FileData getImage(long botQQ, String file) {
+        return napCat.getImage(botQQ, file).join().getData();
     }
 
     @Override
@@ -407,8 +352,8 @@ public class BotActionServiceImpl implements BotActionService {
     }
 
     @Override
-    public FileData getRecord(long botQQ, String file, String fileId, String outFormat) {
-        return napCat.getRecord(botQQ, file, fileId, outFormat).join().getData();
+    public FileData getRecord(long botQQ, String file, String outFormat) {
+        return napCat.getRecord(botQQ, file, outFormat).join().getData();
     }
 
     @Override
@@ -447,8 +392,8 @@ public class BotActionServiceImpl implements BotActionService {
     }
 
     @Override
-    public GroupAiRecordData sendFlashMsg(long botQQ, String filesetId, Long userId, Long groupId) {
-        return napCat.sendFlashMsg(botQQ, filesetId, userId, groupId).join().getData();
+    public GroupAiRecordData sendFlashMsg(long botQQ, String filesetId, Long userId) {
+        return napCat.sendFlashMsg(botQQ, filesetId, userId).join().getData();
     }
 
     @Override
@@ -457,8 +402,8 @@ public class BotActionServiceImpl implements BotActionService {
     }
 
     @Override
-    public void sendOnlineFolder(long botQQ, Long userId, String folderPath, String folderName) {
-        napCat.sendOnlineFolder(botQQ, userId, folderPath, folderName).join();
+    public void sendOnlineFolder(long botQQ, Long userId, String folderPath) {
+        napCat.sendOnlineFolder(botQQ, userId, folderPath).join();
     }
 
     @Override
@@ -527,8 +472,8 @@ public class BotActionServiceImpl implements BotActionService {
     }
 
     @Override
-    public void deleteEssenceMsg(long botQQ, Long messageId, String msgSeq, String msgRandom, Long groupId) {
-        napCat.deleteEssenceMsg(botQQ, messageId, msgSeq, msgRandom, groupId).join();
+    public void deleteEssenceMsg(long botQQ, Long messageId) {
+        napCat.deleteEssenceMsg(botQQ, messageId).join();
     }
 
     @Override
@@ -557,8 +502,8 @@ public class BotActionServiceImpl implements BotActionService {
     }
 
     @Override
-    public GroupAlbumMediaData getGroupAlbumMediaList(long botQQ, Long groupId, String albumId, String attachInfo) {
-        return napCat.getGroupAlbumMediaList(botQQ, groupId, albumId, attachInfo).join().getData();
+    public GroupAlbumMediaData getGroupAlbumMediaList(long botQQ, Long groupId, String albumId) {
+        return napCat.getGroupAlbumMediaList(botQQ, groupId, albumId).join().getData();
     }
 
     @Override
@@ -592,13 +537,13 @@ public class BotActionServiceImpl implements BotActionService {
     }
 
     @Override
-    public GroupMemberInfoData getGroupMemberInfo(long botQQ, Long groupId, Long userId, Boolean noCache) {
-        return napCat.getGroupMemberInfo(botQQ, groupId, userId, noCache).join().getData();
+    public GroupMemberInfoData getGroupMemberInfo(long botQQ, Long groupId, Long userId) {
+        return napCat.getGroupMemberInfo(botQQ, groupId, userId).join().getData();
     }
 
     @Override
-    public List<GroupMemberData> getGroupMemberList(long botQQ, Long groupId, Boolean noCache) {
-        return napCat.getGroupMemberList(botQQ, groupId, noCache).join().getData();
+    public List<GroupMemberData> getGroupMemberList(long botQQ, Long groupId) {
+        return napCat.getGroupMemberList(botQQ, groupId).join().getData();
     }
 
     @Override
@@ -622,19 +567,8 @@ public class BotActionServiceImpl implements BotActionService {
     }
 
     @Override
-    public GroupMsgData sendGroupMsg(
-            long botQQ,
-            String messageType,
-            Long userId,
-            Long groupId,
-            String message,
-            Boolean autoEscape,
-            String source,
-            List<JsonNode> news,
-            String summary,
-            String prompt,
-            Long timeout) {
-        return napCat.sendGroupMsg(botQQ, messageType, userId, groupId, message, autoEscape, source, news, summary, prompt, timeout).join().getData();
+    public GroupMsgData sendGroupMsg(long botQQ, Long groupId, String message) {
+        return napCat.sendGroupMsg(botQQ, groupId, message).join().getData();
     }
 
     @Override
@@ -648,13 +582,13 @@ public class BotActionServiceImpl implements BotActionService {
     }
 
     @Override
-    public void setGroupAddOption(long botQQ, Long groupId, Long addType, String groupQuestion, String groupAnswer) {
-        napCat.setGroupAddOption(botQQ, groupId, addType, groupQuestion, groupAnswer).join();
+    public void setGroupAddOption(long botQQ, Long groupId, Long addType) {
+        napCat.setGroupAddOption(botQQ, groupId, addType).join();
     }
 
     @Override
-    public void setGroupAddRequest(long botQQ, String flag, Boolean approve, String reason, Integer count) {
-        napCat.setGroupAddRequest(botQQ, flag, approve, reason, count).join();
+    public void setGroupAddRequest(long botQQ, String flag, Boolean approve) {
+        napCat.setGroupAddRequest(botQQ, flag, approve).join();
     }
 
     @Override
@@ -703,13 +637,13 @@ public class BotActionServiceImpl implements BotActionService {
     }
 
     @Override
-    public void setGroupRobotAddOption(long botQQ, Long groupId, Long robotMemberSwitch, Long robotMemberExamine) {
-        napCat.setGroupRobotAddOption(botQQ, groupId, robotMemberSwitch, robotMemberExamine).join();
+    public void setGroupRobotAddOption(long botQQ, Long groupId) {
+        napCat.setGroupRobotAddOption(botQQ, groupId).join();
     }
 
     @Override
-    public void setGroupSearch(long botQQ, Long groupId, Long noCodeFingerOpen, Long noFingerOpen) {
-        napCat.setGroupSearch(botQQ, groupId, noCodeFingerOpen, noFingerOpen).join();
+    public void setGroupSearch(long botQQ, Long groupId) {
+        napCat.setGroupSearch(botQQ, groupId).join();
     }
 
     @Override
@@ -738,13 +672,13 @@ public class BotActionServiceImpl implements BotActionService {
     }
 
     @Override
-    public ArksharepeerData arksharepeer(long botQQ, Long userId, Long groupId, String phoneNumber) {
-        return napCat.arksharepeer(botQQ, userId, groupId, phoneNumber).join().getData();
+    public ArksharepeerData arksharepeer(long botQQ, Long userId, String phoneNumber) {
+        return napCat.arksharepeer(botQQ, userId, phoneNumber).join().getData();
     }
 
     @Override
-    public void cancelGroupTodo(long botQQ, Long groupId, String messageId, String messageSeq) {
-        napCat.cancelGroupTodo(botQQ, groupId, messageId, messageSeq).join();
+    public void cancelGroupTodo(long botQQ, Long groupId, String messageId) {
+        napCat.cancelGroupTodo(botQQ, groupId, messageId).join();
     }
 
     @Override
@@ -759,8 +693,8 @@ public class BotActionServiceImpl implements BotActionService {
     }
 
     @Override
-    public void completeGroupTodo(long botQQ, Long groupId, String messageId, String messageSeq) {
-        napCat.completeGroupTodo(botQQ, groupId, messageId, messageSeq).join();
+    public void completeGroupTodo(long botQQ, Long groupId, String messageId) {
+        napCat.completeGroupTodo(botQQ, groupId, messageId).join();
     }
 
     @Override
@@ -785,29 +719,23 @@ public class BotActionServiceImpl implements BotActionService {
     }
 
     @Override
-    public void forwardFriendSingleMsg(long botQQ, Long messageId, Long groupId, Long userId) {
-        napCat.forwardFriendSingleMsg(botQQ, messageId, groupId, userId).join();
+    public void forwardFriendSingleMsg(long botQQ, Long messageId, Long groupId) {
+        napCat.forwardFriendSingleMsg(botQQ, messageId, groupId).join();
     }
 
     @Override
-    public void forwardGroupSingleMsg(long botQQ, Long messageId, Long groupId, Long userId) {
-        napCat.forwardGroupSingleMsg(botQQ, messageId, groupId, userId).join();
+    public void forwardGroupSingleMsg(long botQQ, Long messageId, Long groupId) {
+        napCat.forwardGroupSingleMsg(botQQ, messageId, groupId).join();
     }
 
     @Override
-    public void friendPoke(long botQQ, Long groupId, Long userId, String targetId) {
-        napCat.friendPoke(botQQ, groupId, userId, targetId).join();
+    public void friendPoke(long botQQ, Long userId) {
+        napCat.friendPoke(botQQ, userId).join();
     }
 
     @Override
-    public EmojiLikesData getEmojiLikes(
-            long botQQ,
-            Long groupId,
-            String messageId,
-            String emojiId,
-            String emojiType,
-            Integer count) {
-        return napCat.getEmojiLikes(botQQ, groupId, messageId, emojiId, emojiType, count).join().getData();
+    public EmojiLikesData getEmojiLikes(long botQQ, String messageId, String emojiId, Integer count) {
+        return napCat.getEmojiLikes(botQQ, messageId, emojiId, count).join().getData();
     }
 
     @Override
@@ -816,8 +744,8 @@ public class BotActionServiceImpl implements BotActionService {
     }
 
     @Override
-    public void groupPoke(long botQQ, Long groupId, Long userId, String targetId) {
-        napCat.groupPoke(botQQ, groupId, userId, targetId).join();
+    public void groupPoke(long botQQ, Long userId) {
+        napCat.groupPoke(botQQ, userId).join();
     }
 
     @Override
@@ -826,23 +754,23 @@ public class BotActionServiceImpl implements BotActionService {
     }
 
     @Override
-    public void markGroupMsgAsRead(long botQQ, Long userId, Long groupId, String messageId) {
-        napCat.markGroupMsgAsRead(botQQ, userId, groupId, messageId).join();
+    public void markGroupMsgAsRead(long botQQ, String messageId) {
+        napCat.markGroupMsgAsRead(botQQ, messageId).join();
     }
 
     @Override
-    public void markMsgAsRead(long botQQ, Long userId, Long groupId, String messageId) {
-        napCat.markMsgAsRead(botQQ, userId, groupId, messageId).join();
+    public void markMsgAsRead(long botQQ, String messageId) {
+        napCat.markMsgAsRead(botQQ, messageId).join();
     }
 
     @Override
-    public void markPrivateMsgAsRead(long botQQ, Long userId, Long groupId, String messageId) {
-        napCat.markPrivateMsgAsRead(botQQ, userId, groupId, messageId).join();
+    public void markPrivateMsgAsRead(long botQQ, String messageId) {
+        napCat.markPrivateMsgAsRead(botQQ, messageId).join();
     }
 
     @Override
-    public ArksharepeerData sendArkShare(long botQQ, Long userId, Long groupId, String phoneNumber) {
-        return napCat.sendArkShare(botQQ, userId, groupId, phoneNumber).join().getData();
+    public ArksharepeerData sendArkShare(long botQQ, Long userId, String phoneNumber) {
+        return napCat.sendArkShare(botQQ, userId, phoneNumber).join().getData();
     }
 
     @Override
@@ -851,45 +779,23 @@ public class BotActionServiceImpl implements BotActionService {
     }
 
     @Override
-    public GroupMsgData sendMsg(
-            long botQQ,
-            String messageType,
-            Long userId,
-            Long groupId,
-            String message,
-            Boolean autoEscape,
-            String source,
-            List<JsonNode> news,
-            String summary,
-            String prompt,
-            Long timeout) {
-        return napCat.sendMsg(botQQ, messageType, userId, groupId, message, autoEscape, source, news, summary, prompt, timeout).join().getData();
+    public GroupMsgData sendMsg(long botQQ, String messageType, Long groupId, String message) {
+        return napCat.sendMsg(botQQ, messageType, groupId, message).join().getData();
     }
 
     @Override
-    public void sendPoke(long botQQ, Long groupId, Long userId, String targetId) {
-        napCat.sendPoke(botQQ, groupId, userId, targetId).join();
+    public void sendPoke(long botQQ, Long userId) {
+        napCat.sendPoke(botQQ, userId).join();
     }
 
     @Override
-    public GroupMsgData sendPrivateMsg(
-            long botQQ,
-            String messageType,
-            Long userId,
-            Long groupId,
-            String message,
-            Boolean autoEscape,
-            String source,
-            List<JsonNode> news,
-            String summary,
-            String prompt,
-            Long timeout) {
-        return napCat.sendPrivateMsg(botQQ, messageType, userId, groupId, message, autoEscape, source, news, summary, prompt, timeout).join().getData();
+    public GroupMsgData sendPrivateMsg(long botQQ, Long userId, String message) {
+        return napCat.sendPrivateMsg(botQQ, userId, message).join().getData();
     }
 
     @Override
-    public void setGroupTodo(long botQQ, Long groupId, String messageId, String messageSeq) {
-        napCat.setGroupTodo(botQQ, groupId, messageId, messageSeq).join();
+    public void setGroupTodo(long botQQ, Long groupId, String messageId) {
+        napCat.setGroupTodo(botQQ, groupId, messageId).join();
     }
 
     @Override
@@ -898,17 +804,8 @@ public class BotActionServiceImpl implements BotActionService {
     }
 
     @Override
-    public void addCustomFace(
-            long botQQ,
-            String file,
-            String emojiId,
-            String packageId,
-            String fileName,
-            String fileSize,
-            String md5,
-            Boolean isMarkFace,
-            Boolean isOrigin) {
-        napCat.addCustomFace(botQQ, file, emojiId, packageId, fileName, fileSize, md5, isMarkFace, isOrigin).join();
+    public void addCustomFace(long botQQ, String file, Boolean isOrigin) {
+        napCat.addCustomFace(botQQ, file, isOrigin).join();
     }
 
     @Override
@@ -932,8 +829,8 @@ public class BotActionServiceImpl implements BotActionService {
     }
 
     @Override
-    public void deleteCustomFace(long botQQ, String resId, String id, List<String> ids, String md5) {
-        napCat.deleteCustomFace(botQQ, resId, id, ids, md5).join();
+    public void deleteCustomFace(long botQQ, String resId) {
+        napCat.deleteCustomFace(botQQ, resId).join();
     }
 
     @Override
