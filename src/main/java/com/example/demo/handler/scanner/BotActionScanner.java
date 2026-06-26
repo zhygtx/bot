@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.lang.reflect.ParameterizedType;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -198,6 +199,8 @@ public class BotActionScanner {
      * <ul>
      *   <li>{@code void} — 无返回值，忽略 returnDescription</li>
      *   <li>基本类型 / String — 包装为单个 "value" 字段，使用 returnDescription</li>
+     *   <li>集合类型 {@code List<T>/Set<T>/Collection<T>} — 尝试提取泛型参数 T，
+     *       简单 T 包装为 "value"，复杂 T 平铺其字段</li>
      *   <li>复杂 POJO — 平铺所有字段，returnDescription 作为整体描述兜底</li>
      * </ul>
      */
@@ -212,6 +215,41 @@ public class BotActionScanner {
                     .description("无返回值")
                     .fields(List.of())
                     .build();
+        }
+
+        // 集合类型 → 解析泛型参数
+        if (Collection.class.isAssignableFrom(returnType)) {
+            Class<?> elementType = resolveGenericElementType(method);
+            if (elementType != null) {
+                if (FieldScanUtil.isSimpleType(elementType)) {
+                    // List<String> / List<Long> → 简单类型
+                    String desc = !returnDesc.isEmpty() ? returnDesc : elementType.getSimpleName() + "列表";
+                    return ActionReturnInfo.builder()
+                            .type("List<" + elementType.getSimpleName() + ">")
+                            .description(desc)
+                            .fields(List.of(
+                                    ReturnFieldInfo.builder()
+                                            .name("value")
+                                            .type(elementType.getSimpleName())
+                                            .description(desc)
+                                            .fieldPath("value")
+                                            .inherited(false)
+                                            .order(0)
+                                            .build()
+                            ))
+                            .build();
+                } else {
+                    // List<AiCharactersData> → 使用元素类型扫描字段
+                    List<ReturnFieldInfo> fields = flattenReturnFields(elementType);
+                    String desc = !returnDesc.isEmpty() ? returnDesc : elementType.getSimpleName();
+                    return ActionReturnInfo.builder()
+                            .type(elementType.getSimpleName())
+                            .description(desc)
+                            .fields(fields)
+                            .build();
+                }
+            }
+            // 无法解析泛型，当作 Object
         }
 
         // 简单类型 → 包装为 "value"
@@ -241,6 +279,24 @@ public class BotActionScanner {
                 .description(desc)
                 .fields(fields)
                 .build();
+    }
+
+    /**
+     * 从方法的泛型返回类型中提取集合的元素类型。
+     * <p>
+     * 例如 {@code List<AiCharactersData>} 返回 {@code AiCharactersData.class}；
+     * 无法解析时返回 {@code null}。
+     */
+    private Class<?> resolveGenericElementType(Method method) {
+        java.lang.reflect.Type genericReturnType = method.getGenericReturnType();
+        if (genericReturnType instanceof ParameterizedType) {
+            ParameterizedType pt = (ParameterizedType) genericReturnType;
+            java.lang.reflect.Type[] typeArgs = pt.getActualTypeArguments();
+            if (typeArgs.length > 0 && typeArgs[0] instanceof Class) {
+                return (Class<?>) typeArgs[0];
+            }
+        }
+        return null;
     }
 
     /**

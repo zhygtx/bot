@@ -42,6 +42,9 @@ INDEX `idx_user_id` (`user_id`),
 INDEX `idx_bot_qq` (`bot_qq`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='容器信息表';
 
+
+# ----------------------------------------------------------------------------------------------------------------------
+
 -- 插件信息表
 CREATE TABLE `plugin_info` (
   `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '插件 id',
@@ -122,6 +125,7 @@ CREATE TABLE `parameter_info` (
   `method_id` VARCHAR(36) NOT NULL COMMENT '参数所属方法id',
   `name` VARCHAR(255) NOT NULL COMMENT '参数名',
   `type` VARCHAR(255) NOT NULL COMMENT '参数类型',
+  `nullable` TINYINT DEFAULT 0 COMMENT '是否可空',
   `order` INT NOT NULL COMMENT '参数顺序',
   FOREIGN KEY (`method_id`) REFERENCES `method_info` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='参数信息表';

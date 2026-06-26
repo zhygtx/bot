@@ -186,7 +186,7 @@
         <dependency>
             <groupId>com.github.zhygtx</groupId>
             <artifactId>generalbot-api</artifactId>
-            <version>0.3.2</version>
+            <version>0.3.3</version>
         </dependency>
 
         <!-- Napcat 依赖 - 提供了与Napcat交互的API -->

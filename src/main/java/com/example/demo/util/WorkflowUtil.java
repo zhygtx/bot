@@ -1132,6 +1132,7 @@ public class WorkflowUtil {
     /**
      * 为 null 参数填充默认值
      * 根据参数类型设置对应的默认值
+     * 若参数标记了 nullable=true，则保持 null 不填充（用户有意不传）
      * @param parameters 参数数组
      * @param methodInfo 方法信息
      */
@@ -1141,6 +1142,10 @@ public class WorkflowUtil {
             for (int i = 0; i < parameters.length && i < parametersList.size(); i++) {
                 if (parameters[i] == null) {
                     ParameterInfo paramInfo = parametersList.get(i);
+                    // 允许为空的参数保持 null，不填充默认值
+                    if (paramInfo.isNullable()) {
+                        continue;
+                    }
                     parameters[i] = getDefaultValueForType(paramInfo.getType());
                 }
             }

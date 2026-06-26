@@ -149,6 +149,7 @@
                     <result column="parameter_description" property="description"/>
                     <result column="parameter_method_id" property="methodId"/>
                     <result column="parameter_name" property="name"/>
+                    <result column="parameter_nullable" property="nullable"/>
                     <result column="parameter_type" property="type"/>
                 </collection>
             </association>
@@ -280,6 +281,7 @@
             -- 参数信息
             pinfo.id as parameter_id, pinfo.description as parameter_description,
             pinfo.method_id as parameter_method_id, pinfo.name as parameter_name,
+            pinfo.nullable as parameter_nullable,
             pinfo.type as parameter_type, pinfo.order as parameter_order,
             
             -- 实体类信息

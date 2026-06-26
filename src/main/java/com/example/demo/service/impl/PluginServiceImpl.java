@@ -165,6 +165,19 @@ public class PluginServiceImpl implements PluginService {
                 }
             }
 
+            // 校验基本类型参数不能标记为 nullable
+            for (ParameterInfo parameter : parameterInfoList) {
+                if (!parameter.isValidNullable()) {
+                    log.error("插件参数 nullable 配置不合法：{}", parameter.getInvalidNullableMessage());
+                    if (jarFile.exists()) {
+                        if (!jarFile.delete()){
+                            log.error("删除已存在文件失败：{}", jarFile.getAbsolutePath());
+                        }
+                    }
+                    return Result.error(400, parameter.getInvalidNullableMessage());
+                }
+            }
+
             pluginVersion.setEntityInfoList(entityInfoList);
             pluginVersion.setMethodClassInfoList(methodClassInfoList);
 

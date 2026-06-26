@@ -192,6 +192,7 @@ public class PluginUtil {
                                     params[i].getAnnotation(Param.class);
                                 if (paramAnnotation != null) {
                                     paramInfo.setDescription(paramAnnotation.description());
+                                    paramInfo.setNullable(paramAnnotation.nullable());
                                 }
 
                                 parameters.add(paramInfo);

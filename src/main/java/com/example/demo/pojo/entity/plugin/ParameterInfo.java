@@ -34,6 +34,11 @@ public class ParameterInfo {
         "java.util.Collection", "java.util.Queue", "java.util.ArrayDeque"
     );
 
+    // Java 基本数据类型集合（不能标记为 nullable=true）
+    private static final Set<String> PRIMITIVE_TYPES = Set.of(
+        "byte", "short", "int", "long", "float", "double", "char", "boolean"
+    );
+
     /**
      * 参数 id
      * 系统生成系统与用户均不可修改
@@ -110,6 +115,31 @@ public class ParameterInfo {
             return "";
         }
         return String.format("参数类型 '%s' 不支持，只允许基本数据类型、包装类、String、Object 和常用集合类型", this.type);
+    }
+
+    /**
+     * 校验 nullable 标记是否合法
+     * 基本数据类型（int、long 等）不能标记为 nullable=true，
+     * 因为 Java 基本类型在反射调用时不能接收 null 值
+     * @return 校验结果，true 表示合法，false 表示不合法
+     */
+    public boolean isValidNullable() {
+        if (!this.nullable) {
+            return true;
+        }
+        return !PRIMITIVE_TYPES.contains(this.type);
+    }
+
+    /**
+     * 获取 nullable 校验不通过的原因说明
+     * @return 原因说明信息
+     */
+    public String getInvalidNullableMessage() {
+        if (isValidNullable()) {
+            return "";
+        }
+        return String.format("参数 '%s' 是基本数据类型 '%s'，不能标记为可空（nullable=true），基本类型不支持 null 值",
+                this.name, this.type);
     }
 
 }
