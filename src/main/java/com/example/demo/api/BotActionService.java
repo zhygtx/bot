@@ -36,7 +36,7 @@ public interface BotActionService {
         categories = {"Go-CQHTTP"}
     )
     UrlSafelyData checkUrlSafely(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                 @ActionParam(description = "要检查的 URL") String url);
+                                 @ActionParam(description = "要检查的 URL", order = 1) String url);
 
     /**
      * 清理流式传输临时文件。
@@ -83,8 +83,8 @@ public interface BotActionService {
         categories = {"扩展接口"}
     )
     CollectionData createCollection(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                    @ActionParam(description = "原始数据") String rawData,
-                                    @ActionParam(description = "简要描述") String brief);
+                                    @ActionParam(description = "原始数据", order = 1) String rawData,
+                                    @ActionParam(description = "简要描述", order = 2) String brief);
 
     /**
      * 创建群文件目录。
@@ -112,9 +112,9 @@ public interface BotActionService {
         categories = {"Go-CQHTTP"}
     )
     GroupFileFolderData createGroupFileFolder(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                              @ActionParam(description = "群号") Long groupId,
-                                              @ActionParam(description = "文件夹名称", nullable = true) String folderName,
-                                              @ActionParam(description = "文件夹名称", nullable = true) String name);
+                                              @ActionParam(description = "群号", order = 1) Long groupId,
+                                              @ActionParam(description = "文件夹名称", order = 2, nullable = true) String folderName,
+                                              @ActionParam(description = "文件夹名称", order = 3, nullable = true) String name);
 
     /**
      * 删除好友。
@@ -144,10 +144,10 @@ public interface BotActionService {
         categories = {"Go-CQHTTP"}
     )
     String deleteFriend(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                        @ActionParam(description = "好友 QQ 号", nullable = true) String friendId,
-                        @ActionParam(description = "用户 QQ 号", nullable = true) Long userId,
-                        @ActionParam(description = "是否加入黑名单", nullable = true) Boolean tempBlock,
-                        @ActionParam(description = "是否双向删除", nullable = true) Boolean tempBothDel);
+                        @ActionParam(description = "好友 QQ 号", order = 1, nullable = true) String friendId,
+                        @ActionParam(description = "用户 QQ 号", order = 2, nullable = true) Long userId,
+                        @ActionParam(description = "是否加入黑名单", order = 3, nullable = true) Boolean tempBlock,
+                        @ActionParam(description = "是否双向删除", order = 4, nullable = true) Boolean tempBothDel);
 
     /**
      * 删除群文件。
@@ -173,8 +173,8 @@ public interface BotActionService {
         categories = {"Go-CQHTTP"}
     )
     void deleteGroupFile(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                         @ActionParam(description = "群号") Long groupId,
-                         @ActionParam(description = "文件ID") String fileId);
+                         @ActionParam(description = "群号", order = 1) Long groupId,
+                         @ActionParam(description = "文件ID", order = 2) String fileId);
 
     /**
      * 删除群文件目录。
@@ -202,9 +202,9 @@ public interface BotActionService {
         categories = {"Go-CQHTTP"}
     )
     void deleteGroupFolder(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                           @ActionParam(description = "群号") Long groupId,
-                           @ActionParam(description = "文件夹ID", nullable = true) String folderId,
-                           @ActionParam(description = "文件夹ID", nullable = true) String folder);
+                           @ActionParam(description = "群号", order = 1) Long groupId,
+                           @ActionParam(description = "文件夹ID", order = 2, nullable = true) String folderId,
+                           @ActionParam(description = "文件夹ID", order = 3, nullable = true) String folder);
 
     /**
      * 下载文件。
@@ -234,10 +234,10 @@ public interface BotActionService {
         categories = {"Go-CQHTTP"}
     )
     FileRecordStreamData downloadFile(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                      @ActionParam(description = "下载链接", nullable = true) String url,
-                                      @ActionParam(description = "base64数据", nullable = true) String base64,
-                                      @ActionParam(description = "文件名", nullable = true) String name,
-                                      @ActionParam(description = "请求头", nullable = true) String headers);
+                                      @ActionParam(description = "下载链接", order = 1, nullable = true) String url,
+                                      @ActionParam(description = "base64数据", order = 2, nullable = true) String base64,
+                                      @ActionParam(description = "文件名", order = 3, nullable = true) String name,
+                                      @ActionParam(description = "请求头", order = 4, nullable = true) String headers);
 
     /**
      * 下载图片文件流。
@@ -265,9 +265,9 @@ public interface BotActionService {
         categories = {"流式传输扩展"}
     )
     FileRecordStreamData downloadFileImageStream(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                                 @ActionParam(description = "文件路径或 URL", nullable = true) String file,
-                                                 @ActionParam(description = "文件 ID", nullable = true) String fileId,
-                                                 @ActionParam(description = "分块大小 (字节)（默认 65536）", nullable = true) Integer chunkSize);
+                                                 @ActionParam(description = "文件路径或 URL", order = 1, nullable = true) String file,
+                                                 @ActionParam(description = "文件 ID", order = 2, nullable = true) String fileId,
+                                                 @ActionParam(description = "分块大小 (字节)（默认 65536）", order = 3, nullable = true) Integer chunkSize);
 
     /**
      * 下载语音文件流。
@@ -297,10 +297,10 @@ public interface BotActionService {
         categories = {"流式传输扩展"}
     )
     FileRecordStreamData downloadFileRecordStream(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                                  @ActionParam(description = "文件路径或 URL", nullable = true) String file,
-                                                  @ActionParam(description = "文件 ID", nullable = true) String fileId,
-                                                  @ActionParam(description = "分块大小 (字节)（默认 65536）", nullable = true) Integer chunkSize,
-                                                  @ActionParam(description = "输出格式", nullable = true) String outFormat);
+                                                  @ActionParam(description = "文件路径或 URL", order = 1, nullable = true) String file,
+                                                  @ActionParam(description = "文件 ID", order = 2, nullable = true) String fileId,
+                                                  @ActionParam(description = "分块大小 (字节)（默认 65536）", order = 3, nullable = true) Integer chunkSize,
+                                                  @ActionParam(description = "输出格式", order = 4, nullable = true) String outFormat);
 
     /**
      * 下载文件流。
@@ -328,9 +328,9 @@ public interface BotActionService {
         categories = {"流式接口"}
     )
     FileStreamData downloadFileStream(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                      @ActionParam(description = "文件路径或 URL", nullable = true) String file,
-                                      @ActionParam(description = "文件 ID", nullable = true) String fileId,
-                                      @ActionParam(description = "分块大小 (字节)（默认 65536）", nullable = true) Integer chunkSize);
+                                      @ActionParam(description = "文件路径或 URL", order = 1, nullable = true) String file,
+                                      @ActionParam(description = "文件 ID", order = 2, nullable = true) String fileId,
+                                      @ActionParam(description = "分块大小 (字节)（默认 65536）", order = 3, nullable = true) Integer chunkSize);
 
     /**
      * 获取AI角色列表。
@@ -356,8 +356,8 @@ public interface BotActionService {
         categories = {"扩展接口"}
     )
     List<AiCharactersData> getAiCharacters(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                           @ActionParam(description = "群号") Long groupId,
-                                           @ActionParam(description = "聊天类型（默认 1）") Long chatType);
+                                           @ActionParam(description = "群号", order = 1) Long groupId,
+                                           @ActionParam(description = "聊天类型（默认 1）", order = 2) Long chatType);
 
     /**
      * 获取 AI 语音。
@@ -385,9 +385,9 @@ public interface BotActionService {
         categories = {"AI 扩展"}
     )
     String getAiRecord(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                       @ActionParam(description = "角色ID") String character,
-                       @ActionParam(description = "群号") Long groupId,
-                       @ActionParam(description = "语音文本内容") String text);
+                       @ActionParam(description = "角色ID", order = 1) String character,
+                       @ActionParam(description = "群号", order = 2) Long groupId,
+                       @ActionParam(description = "语音文本内容", order = 3) String text);
 
     /**
      * 获取ClientKey。
@@ -434,8 +434,8 @@ public interface BotActionService {
         categories = {"Go-CQHTTP"}
     )
     GroupMsgHistoryData getForwardMsg(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                      @ActionParam(description = "消息ID", nullable = true) String messageId,
-                                      @ActionParam(description = "消息ID", nullable = true) String id);
+                                      @ActionParam(description = "消息ID", order = 1, nullable = true) String messageId,
+                                      @ActionParam(description = "消息ID", order = 2, nullable = true) String id);
 
     /**
      * 获取好友历史消息。
@@ -473,14 +473,14 @@ public interface BotActionService {
         categories = {"Go-CQHTTP"}
     )
     GroupMsgHistoryData getFriendMsgHistory(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                            @ActionParam(description = "用户QQ") Long userId,
-                                            @ActionParam(description = "起始消息序号", nullable = true) String messageSeq,
-                                            @ActionParam(description = "获取消息数量（默认 20）") Integer count,
-                                            @ActionParam(description = "是否反向排序（默认 False）") Boolean reverseOrder,
-                                            @ActionParam(description = "是否禁用获取URL（默认 False）") Boolean disableGetUrl,
-                                            @ActionParam(description = "是否解析合并消息（默认 True）") Boolean parseMultMsg,
-                                            @ActionParam(description = "是否快速回复（默认 False）") Boolean quickReply,
-                                            @ActionParam(description = "是否反向排序(旧版本兼容)（默认 False）") Boolean reverseOrder2);
+                                            @ActionParam(description = "用户QQ", order = 1) Long userId,
+                                            @ActionParam(description = "起始消息序号", order = 2, nullable = true) String messageSeq,
+                                            @ActionParam(description = "获取消息数量（默认 20）", order = 3) Integer count,
+                                            @ActionParam(description = "是否反向排序（默认 False）", order = 4) Boolean reverseOrder,
+                                            @ActionParam(description = "是否禁用获取URL（默认 False）", order = 5) Boolean disableGetUrl,
+                                            @ActionParam(description = "是否解析合并消息（默认 True）", order = 6) Boolean parseMultMsg,
+                                            @ActionParam(description = "是否快速回复（默认 False）", order = 7) Boolean quickReply,
+                                            @ActionParam(description = "是否反向排序(旧版本兼容)（默认 False）", order = 8) Boolean reverseOrder2);
 
     /**
      * 获取群艾特全体剩余次数。
@@ -504,7 +504,7 @@ public interface BotActionService {
         categories = {"Go-CQHTTP"}
     )
     GroupAtAllRemainData getGroupAtAllRemain(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                             @ActionParam(description = "群号") Long groupId);
+                                             @ActionParam(description = "群号", order = 1) Long groupId);
 
     /**
      * 获取群文件夹文件列表。
@@ -534,10 +534,10 @@ public interface BotActionService {
         categories = {"Go-CQHTTP"}
     )
     GroupRootFilesData getGroupFilesByFolder(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                             @ActionParam(description = "群号") Long groupId,
-                                             @ActionParam(description = "文件夹ID", nullable = true) String folderId,
-                                             @ActionParam(description = "文件夹ID", nullable = true) String folder,
-                                             @ActionParam(description = "文件数量（默认 50）") Integer fileCount);
+                                             @ActionParam(description = "群号", order = 1) Long groupId,
+                                             @ActionParam(description = "文件夹ID", order = 2, nullable = true) String folderId,
+                                             @ActionParam(description = "文件夹ID", order = 3, nullable = true) String folder,
+                                             @ActionParam(description = "文件数量（默认 50）", order = 4) Integer fileCount);
 
     /**
      * 获取群文件系统信息。
@@ -561,7 +561,7 @@ public interface BotActionService {
         categories = {"Go-CQHTTP"}
     )
     GroupFileSystemInfoData getGroupFileSystemInfo(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                                   @ActionParam(description = "群号") Long groupId);
+                                                   @ActionParam(description = "群号", order = 1) Long groupId);
 
     /**
      * 获取群荣誉信息。
@@ -587,8 +587,8 @@ public interface BotActionService {
         categories = {"Go-CQHTTP"}
     )
     GroupHonorInfoData getGroupHonorInfo(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                         @ActionParam(description = "群号") Long groupId,
-                                         @ActionParam(description = "荣誉类型", nullable = true) String type);
+                                         @ActionParam(description = "群号", order = 1) Long groupId,
+                                         @ActionParam(description = "荣誉类型", order = 2, nullable = true) String type);
 
     /**
      * 获取群历史消息。
@@ -626,14 +626,14 @@ public interface BotActionService {
         categories = {"Go-CQHTTP"}
     )
     GroupMsgHistoryData getGroupMsgHistory(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                           @ActionParam(description = "群号") Long groupId,
-                                           @ActionParam(description = "起始消息序号", nullable = true) String messageSeq,
-                                           @ActionParam(description = "获取消息数量（默认 20）") Integer count,
-                                           @ActionParam(description = "是否反向排序（默认 False）") Boolean reverseOrder,
-                                           @ActionParam(description = "是否禁用获取URL（默认 False）") Boolean disableGetUrl,
-                                           @ActionParam(description = "是否解析合并消息（默认 True）") Boolean parseMultMsg,
-                                           @ActionParam(description = "是否快速回复（默认 False）") Boolean quickReply,
-                                           @ActionParam(description = "是否反向排序(旧版本兼容)（默认 False）") Boolean reverseOrder2);
+                                           @ActionParam(description = "群号", order = 1) Long groupId,
+                                           @ActionParam(description = "起始消息序号", order = 2, nullable = true) String messageSeq,
+                                           @ActionParam(description = "获取消息数量（默认 20）", order = 3) Integer count,
+                                           @ActionParam(description = "是否反向排序（默认 False）", order = 4) Boolean reverseOrder,
+                                           @ActionParam(description = "是否禁用获取URL（默认 False）", order = 5) Boolean disableGetUrl,
+                                           @ActionParam(description = "是否解析合并消息（默认 True）", order = 6) Boolean parseMultMsg,
+                                           @ActionParam(description = "是否快速回复（默认 False）", order = 7) Boolean quickReply,
+                                           @ActionParam(description = "是否反向排序(旧版本兼容)（默认 False）", order = 8) Boolean reverseOrder2);
 
     /**
      * 获取群根目录文件列表。
@@ -659,8 +659,8 @@ public interface BotActionService {
         categories = {"Go-CQHTTP"}
     )
     GroupRootFilesData getGroupRootFiles(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                         @ActionParam(description = "群号") Long groupId,
-                                         @ActionParam(description = "文件数量（默认 50）") Integer fileCount);
+                                         @ActionParam(description = "群号", order = 1) Long groupId,
+                                         @ActionParam(description = "文件数量（默认 50）", order = 2) Integer fileCount);
 
     /**
      * 获取频道列表。
@@ -726,7 +726,7 @@ public interface BotActionService {
         categories = {"Go-CQHTTP"}
     )
     List<ModelShowData> getModelShow(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                     @ActionParam(description = "模型名称", nullable = true) String model);
+                                     @ActionParam(description = "模型名称", order = 1, nullable = true) String model);
 
     /**
      * 获取在线客户端。
@@ -773,8 +773,8 @@ public interface BotActionService {
         categories = {"Go-CQHTTP"}
     )
     StrangerInfoData getStrangerInfo(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                     @ActionParam(description = "用户QQ") Long userId,
-                                     @ActionParam(description = "是否不使用缓存（默认 False）") Boolean noCache);
+                                     @ActionParam(description = "用户QQ", order = 1) Long userId,
+                                     @ActionParam(description = "是否不使用缓存（默认 False）", order = 2) Boolean noCache);
 
     /**
      * 处理快速操作。
@@ -800,8 +800,8 @@ public interface BotActionService {
         categories = {"Go-CQHTTP"}
     )
     void handleQuickOperationInternal(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                      @ActionParam(description = "事件上下文") JsonNode context,
-                                      @ActionParam(description = "快速操作内容") JsonNode operation);
+                                      @ActionParam(description = "事件上下文", order = 1) JsonNode context,
+                                      @ActionParam(description = "快速操作内容", order = 2) JsonNode operation);
 
     /**
      * 图片 OCR 识别。
@@ -825,7 +825,7 @@ public interface BotActionService {
         categories = {"扩展接口"}
     )
     ImageData ocrImage(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                       @ActionParam(description = "图片路径、URL或Base64") String image);
+                       @ActionParam(description = "图片路径、URL或Base64", order = 1) String image);
 
     /**
      * 图片 OCR 识别 (内部)。
@@ -849,7 +849,7 @@ public interface BotActionService {
         categories = {"扩展接口"}
     )
     ImageData ocrImageInternal(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                               @ActionParam(description = "图片路径、URL或Base64") String image);
+                               @ActionParam(description = "图片路径、URL或Base64", order = 1) String image);
 
     /**
      * 发送合并转发消息。
@@ -891,16 +891,16 @@ public interface BotActionService {
         categories = {"Go-CQHTTP"}
     )
     GroupMsgData sendForwardMsg(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                @ActionParam(description = "消息类型 (private/group)", nullable = true) String messageType,
-                                @ActionParam(description = "用户QQ", nullable = true) Long userId,
-                                @ActionParam(description = "群号", nullable = true) Long groupId,
-                                @ActionParam(description = "OneBot 11 消息混合类型") String message,
-                                @ActionParam(description = "是否作为纯文本发送", nullable = true) Boolean autoEscape,
-                                @ActionParam(description = "合并转发来源", nullable = true) String source,
-                                @ActionParam(description = "合并转发新闻", nullable = true) List<JsonNode> news,
-                                @ActionParam(description = "合并转发摘要", nullable = true) String summary,
-                                @ActionParam(description = "合并转发提示", nullable = true) String prompt,
-                                @ActionParam(description = "自定义发送超时(毫秒)，覆盖自动计算值", nullable = true) Long timeout);
+                                @ActionParam(description = "消息类型 (private/group)", order = 1, nullable = true) String messageType,
+                                @ActionParam(description = "用户QQ", order = 2, nullable = true) Long userId,
+                                @ActionParam(description = "群号", order = 3, nullable = true) Long groupId,
+                                @ActionParam(description = "OneBot 11 消息混合类型", order = 4) String message,
+                                @ActionParam(description = "是否作为纯文本发送", order = 5, nullable = true) Boolean autoEscape,
+                                @ActionParam(description = "合并转发来源", order = 6, nullable = true) String source,
+                                @ActionParam(description = "合并转发新闻", order = 7, nullable = true) List<JsonNode> news,
+                                @ActionParam(description = "合并转发摘要", order = 8, nullable = true) String summary,
+                                @ActionParam(description = "合并转发提示", order = 9, nullable = true) String prompt,
+                                @ActionParam(description = "自定义发送超时(毫秒)，覆盖自动计算值", order = 10, nullable = true) Long timeout);
 
     /**
      * 发送群 AI 语音。
@@ -928,9 +928,9 @@ public interface BotActionService {
         categories = {"AI 扩展"}
     )
     GroupAiRecordData sendGroupAiRecord(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                        @ActionParam(description = "角色ID") String character,
-                                        @ActionParam(description = "群号") Long groupId,
-                                        @ActionParam(description = "语音文本内容") String text);
+                                        @ActionParam(description = "角色ID", order = 1) String character,
+                                        @ActionParam(description = "群号", order = 2) Long groupId,
+                                        @ActionParam(description = "语音文本内容", order = 3) String text);
 
     /**
      * 发送群合并转发消息。
@@ -972,16 +972,16 @@ public interface BotActionService {
         categories = {"Go-CQHTTP"}
     )
     GroupMsgData sendGroupForwardMsg(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                     @ActionParam(description = "消息类型 (private/group)", nullable = true) String messageType,
-                                     @ActionParam(description = "用户QQ", nullable = true) Long userId,
-                                     @ActionParam(description = "群号", nullable = true) Long groupId,
-                                     @ActionParam(description = "OneBot 11 消息混合类型") String message,
-                                     @ActionParam(description = "是否作为纯文本发送", nullable = true) Boolean autoEscape,
-                                     @ActionParam(description = "合并转发来源", nullable = true) String source,
-                                     @ActionParam(description = "合并转发新闻", nullable = true) List<JsonNode> news,
-                                     @ActionParam(description = "合并转发摘要", nullable = true) String summary,
-                                     @ActionParam(description = "合并转发提示", nullable = true) String prompt,
-                                     @ActionParam(description = "自定义发送超时(毫秒)，覆盖自动计算值", nullable = true) Long timeout);
+                                     @ActionParam(description = "消息类型 (private/group)", order = 1, nullable = true) String messageType,
+                                     @ActionParam(description = "用户QQ", order = 2, nullable = true) Long userId,
+                                     @ActionParam(description = "群号", order = 3, nullable = true) Long groupId,
+                                     @ActionParam(description = "OneBot 11 消息混合类型", order = 4) String message,
+                                     @ActionParam(description = "是否作为纯文本发送", order = 5, nullable = true) Boolean autoEscape,
+                                     @ActionParam(description = "合并转发来源", order = 6, nullable = true) String source,
+                                     @ActionParam(description = "合并转发新闻", order = 7, nullable = true) List<JsonNode> news,
+                                     @ActionParam(description = "合并转发摘要", order = 8, nullable = true) String summary,
+                                     @ActionParam(description = "合并转发提示", order = 9, nullable = true) String prompt,
+                                     @ActionParam(description = "自定义发送超时(毫秒)，覆盖自动计算值", order = 10, nullable = true) Long timeout);
 
     /**
      * 发送群公告。
@@ -1019,14 +1019,14 @@ public interface BotActionService {
         categories = {"Go-CQHTTP"}
     )
     void sendGroupNotice(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                         @ActionParam(description = "群号") Long groupId,
-                         @ActionParam(description = "公告内容") String content,
-                         @ActionParam(description = "公告图片路径或 URL", nullable = true) String image,
-                         @ActionParam(description = "是否置顶 (0/1)（默认 0）") Long pinned,
-                         @ActionParam(description = "类型 (默认为 1)（默认 1）") Long type,
-                         @ActionParam(description = "是否需要确认 (0/1)（默认 1）") Long confirmRequired,
-                         @ActionParam(description = "是否显示修改群名片引导 (0/1)（默认 0）") Long isShowEditCard,
-                         @ActionParam(description = "弹窗类型 (默认为 0)（默认 0）") Long tipWindowType);
+                         @ActionParam(description = "群号", order = 1) Long groupId,
+                         @ActionParam(description = "公告内容", order = 2) String content,
+                         @ActionParam(description = "公告图片路径或 URL", order = 3, nullable = true) String image,
+                         @ActionParam(description = "是否置顶 (0/1)（默认 0）", order = 4) Long pinned,
+                         @ActionParam(description = "类型 (默认为 1)（默认 1）", order = 5) Long type,
+                         @ActionParam(description = "是否需要确认 (0/1)（默认 1）", order = 6) Long confirmRequired,
+                         @ActionParam(description = "是否显示修改群名片引导 (0/1)（默认 0）", order = 7) Long isShowEditCard,
+                         @ActionParam(description = "弹窗类型 (默认为 0)（默认 0）", order = 8) Long tipWindowType);
 
     /**
      * 发送私聊合并转发消息。
@@ -1068,16 +1068,16 @@ public interface BotActionService {
         categories = {"Go-CQHTTP"}
     )
     GroupMsgData sendPrivateForwardMsg(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                       @ActionParam(description = "消息类型 (private/group)", nullable = true) String messageType,
-                                       @ActionParam(description = "用户QQ", nullable = true) Long userId,
-                                       @ActionParam(description = "群号", nullable = true) Long groupId,
-                                       @ActionParam(description = "OneBot 11 消息混合类型") String message,
-                                       @ActionParam(description = "是否作为纯文本发送", nullable = true) Boolean autoEscape,
-                                       @ActionParam(description = "合并转发来源", nullable = true) String source,
-                                       @ActionParam(description = "合并转发新闻", nullable = true) List<JsonNode> news,
-                                       @ActionParam(description = "合并转发摘要", nullable = true) String summary,
-                                       @ActionParam(description = "合并转发提示", nullable = true) String prompt,
-                                       @ActionParam(description = "自定义发送超时(毫秒)，覆盖自动计算值", nullable = true) Long timeout);
+                                       @ActionParam(description = "消息类型 (private/group)", order = 1, nullable = true) String messageType,
+                                       @ActionParam(description = "用户QQ", order = 2, nullable = true) Long userId,
+                                       @ActionParam(description = "群号", order = 3, nullable = true) Long groupId,
+                                       @ActionParam(description = "OneBot 11 消息混合类型", order = 4) String message,
+                                       @ActionParam(description = "是否作为纯文本发送", order = 5, nullable = true) Boolean autoEscape,
+                                       @ActionParam(description = "合并转发来源", order = 6, nullable = true) String source,
+                                       @ActionParam(description = "合并转发新闻", order = 7, nullable = true) List<JsonNode> news,
+                                       @ActionParam(description = "合并转发摘要", order = 8, nullable = true) String summary,
+                                       @ActionParam(description = "合并转发提示", order = 9, nullable = true) String prompt,
+                                       @ActionParam(description = "自定义发送超时(毫秒)，覆盖自动计算值", order = 10, nullable = true) Long timeout);
 
     /**
      * 批量踢出群成员。
@@ -1105,9 +1105,9 @@ public interface BotActionService {
         categories = {"扩展接口"}
     )
     void setGroupKickMembers(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                             @ActionParam(description = "群号") Long groupId,
-                             @ActionParam(description = "QQ号列表") List<Long> userId,
-                             @ActionParam(description = "是否拒绝加群请求", nullable = true) Boolean rejectAddRequest);
+                             @ActionParam(description = "群号", order = 1) Long groupId,
+                             @ActionParam(description = "QQ号列表", order = 2) List<Long> userId,
+                             @ActionParam(description = "是否拒绝加群请求", order = 3, nullable = true) Boolean rejectAddRequest);
 
     /**
      * 设置群头像。
@@ -1133,8 +1133,8 @@ public interface BotActionService {
         categories = {"Go-CQHTTP"}
     )
     CollectionData setGroupPortrait(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                    @ActionParam(description = "头像文件路径或 URL") String file,
-                                    @ActionParam(description = "群号") Long groupId);
+                                    @ActionParam(description = "头像文件路径或 URL", order = 1) String file,
+                                    @ActionParam(description = "群号", order = 2) Long groupId);
 
     /**
      * 设置专属头衔。
@@ -1162,9 +1162,9 @@ public interface BotActionService {
         categories = {"扩展接口"}
     )
     void setGroupSpecialTitle(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                              @ActionParam(description = "群号") Long groupId,
-                              @ActionParam(description = "QQ号") Long userId,
-                              @ActionParam(description = "专属头衔（默认 ）") String specialTitle);
+                              @ActionParam(description = "群号", order = 1) Long groupId,
+                              @ActionParam(description = "QQ号", order = 2) Long userId,
+                              @ActionParam(description = "专属头衔（默认 ）", order = 3) String specialTitle);
 
     /**
      * 设置机型。
@@ -1209,7 +1209,7 @@ public interface BotActionService {
         categories = {"扩展接口"}
     )
     void setQqAvatar(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                     @ActionParam(description = "图片路径、URL或Base64") String file);
+                     @ActionParam(description = "图片路径、URL或Base64", order = 1) String file);
 
     /**
      * 设置QQ资料。
@@ -1237,9 +1237,9 @@ public interface BotActionService {
         categories = {"Go-CQHTTP"}
     )
     void setQqProfile(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                      @ActionParam(description = "昵称") String nickname,
-                      @ActionParam(description = "个性签名", nullable = true) String personalNote,
-                      @ActionParam(description = "性别 (0: 未知, 1: 男, 2: 女)", nullable = true) Long sex);
+                      @ActionParam(description = "昵称", order = 1) String nickname,
+                      @ActionParam(description = "个性签名", order = 2, nullable = true) String personalNote,
+                      @ActionParam(description = "性别 (0: 未知, 1: 男, 2: 女)", order = 3, nullable = true) Long sex);
 
     /**
      * 设置个性签名。
@@ -1263,7 +1263,7 @@ public interface BotActionService {
         categories = {"扩展接口"}
     )
     void setSelfLongnick(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                         @ActionParam(description = "签名内容") String longNick);
+                         @ActionParam(description = "签名内容", order = 1) String longNick);
 
     /**
      * 测试下载流。
@@ -1287,7 +1287,7 @@ public interface BotActionService {
         categories = {"流式传输扩展"}
     )
     DownloadStreamData testDownloadStream(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                          @ActionParam(description = "是否触发测试错误（默认 False）", nullable = true) Boolean error);
+                                          @ActionParam(description = "是否触发测试错误（默认 False）", order = 1, nullable = true) Boolean error);
 
     /**
      * 英文单词翻译。
@@ -1311,7 +1311,7 @@ public interface BotActionService {
         categories = {"扩展接口"}
     )
     En2zhData translateEn2zh(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                             @ActionParam(description = "待翻译单词列表") List<String> words);
+                             @ActionParam(description = "待翻译单词列表", order = 1) List<String> words);
 
     /**
      * 上传文件流。
@@ -1355,17 +1355,17 @@ public interface BotActionService {
         categories = {"流式接口"}
     )
     FileStreamData uploadFileStream(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                    @ActionParam(description = "流 ID") String streamId,
-                                    @ActionParam(description = "分块数据 (Base64)", nullable = true) String chunkData,
-                                    @ActionParam(description = "分块索引", nullable = true) Long chunkIndex,
-                                    @ActionParam(description = "总分块数", nullable = true) Long totalChunks,
-                                    @ActionParam(description = "文件总大小", nullable = true) Integer fileSize,
-                                    @ActionParam(description = "期望的 SHA256", nullable = true) String expectedSha256,
-                                    @ActionParam(description = "是否完成", nullable = true) Boolean isComplete,
-                                    @ActionParam(description = "文件名", nullable = true) String filename,
-                                    @ActionParam(description = "是否重置", nullable = true) Boolean reset,
-                                    @ActionParam(description = "是否仅验证", nullable = true) Boolean verifyOnly,
-                                    @ActionParam(description = "文件保留时间 (毫秒)（默认 300000）") Long fileRetention);
+                                    @ActionParam(description = "流 ID", order = 1) String streamId,
+                                    @ActionParam(description = "分块数据 (Base64)", order = 2, nullable = true) String chunkData,
+                                    @ActionParam(description = "分块索引", order = 3, nullable = true) Long chunkIndex,
+                                    @ActionParam(description = "总分块数", order = 4, nullable = true) Long totalChunks,
+                                    @ActionParam(description = "文件总大小", order = 5, nullable = true) Integer fileSize,
+                                    @ActionParam(description = "期望的 SHA256", order = 6, nullable = true) String expectedSha256,
+                                    @ActionParam(description = "是否完成", order = 7, nullable = true) Boolean isComplete,
+                                    @ActionParam(description = "文件名", order = 8, nullable = true) String filename,
+                                    @ActionParam(description = "是否重置", order = 9, nullable = true) Boolean reset,
+                                    @ActionParam(description = "是否仅验证", order = 10, nullable = true) Boolean verifyOnly,
+                                    @ActionParam(description = "文件保留时间 (毫秒)（默认 300000）", order = 11) Long fileRetention);
 
     /**
      * 上传群文件。
@@ -1399,12 +1399,12 @@ public interface BotActionService {
         categories = {"Go-CQHTTP"}
     )
     GroupFileData uploadGroupFile(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                  @ActionParam(description = "群号") Long groupId,
-                                  @ActionParam(description = "资源路径或URL") String file,
-                                  @ActionParam(description = "文件名") String name,
-                                  @ActionParam(description = "父目录 ID", nullable = true) String folder,
-                                  @ActionParam(description = "父目录 ID (兼容性字段)", nullable = true) String folderId,
-                                  @ActionParam(description = "是否执行上传（默认 True）") Boolean uploadFile);
+                                  @ActionParam(description = "群号", order = 1) Long groupId,
+                                  @ActionParam(description = "资源路径或URL", order = 2) String file,
+                                  @ActionParam(description = "文件名", order = 3) String name,
+                                  @ActionParam(description = "父目录 ID", order = 4, nullable = true) String folder,
+                                  @ActionParam(description = "父目录 ID (兼容性字段)", order = 5, nullable = true) String folderId,
+                                  @ActionParam(description = "是否执行上传（默认 True）", order = 6) Boolean uploadFile);
 
     /**
      * 上传私聊文件。
@@ -1434,10 +1434,10 @@ public interface BotActionService {
         categories = {"Go-CQHTTP"}
     )
     GroupFileData uploadPrivateFile(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                    @ActionParam(description = "用户 QQ") Long userId,
-                                    @ActionParam(description = "资源路径或URL") String file,
-                                    @ActionParam(description = "文件名") String name,
-                                    @ActionParam(description = "是否执行上传（默认 True）") Boolean uploadFile);
+                                    @ActionParam(description = "用户 QQ", order = 1) Long userId,
+                                    @ActionParam(description = "资源路径或URL", order = 2) String file,
+                                    @ActionParam(description = "文件名", order = 3) String name,
+                                    @ActionParam(description = "是否执行上传（默认 True）", order = 4) Boolean uploadFile);
 
     /**
      * 取消在线文件。
@@ -1463,8 +1463,8 @@ public interface BotActionService {
         categories = {"文件扩展"}
     )
     void cancelOnlineFile(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                          @ActionParam(description = "用户 QQ") Long userId,
-                          @ActionParam(description = "消息 ID") String msgId);
+                          @ActionParam(description = "用户 QQ", order = 1) Long userId,
+                          @ActionParam(description = "消息 ID", order = 2) String msgId);
 
     /**
      * 创建闪传任务。
@@ -1492,9 +1492,9 @@ public interface BotActionService {
         categories = {"文件扩展"}
     )
     FlashTaskData createFlashTask(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                  @ActionParam(description = "文件列表或单个文件路径") List<String> files,
-                                  @ActionParam(description = "任务名称", nullable = true) String name,
-                                  @ActionParam(description = "缩略图路径", nullable = true) String thumbPath);
+                                  @ActionParam(description = "文件列表或单个文件路径", order = 1) List<String> files,
+                                  @ActionParam(description = "任务名称", order = 2, nullable = true) String name,
+                                  @ActionParam(description = "缩略图路径", order = 3, nullable = true) String thumbPath);
 
     /**
      * 下载文件集。
@@ -1518,7 +1518,7 @@ public interface BotActionService {
         categories = {"文件扩展"}
     )
     void downloadFileset(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                         @ActionParam(description = "文件集 ID") String filesetId);
+                         @ActionParam(description = "文件集 ID", order = 1) String filesetId);
 
     /**
      * 获取文件。
@@ -1544,8 +1544,8 @@ public interface BotActionService {
         categories = {"文件接口"}
     )
     FileData getFile(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                     @ActionParam(description = "文件路径、URL或Base64", nullable = true) String file,
-                     @ActionParam(description = "文件ID", nullable = true) String fileId);
+                     @ActionParam(description = "文件路径、URL或Base64", order = 1, nullable = true) String file,
+                     @ActionParam(description = "文件ID", order = 2, nullable = true) String fileId);
 
     /**
      * 获取文件集 ID。
@@ -1569,7 +1569,7 @@ public interface BotActionService {
         categories = {"文件扩展"}
     )
     FilesetIdData getFilesetId(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                               @ActionParam(description = "分享码或分享链接") String shareCode);
+                               @ActionParam(description = "分享码或分享链接", order = 1) String shareCode);
 
     /**
      * 获取文件集信息。
@@ -1593,7 +1593,7 @@ public interface BotActionService {
         categories = {"文件扩展"}
     )
     FilesetInfoData getFilesetInfo(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                   @ActionParam(description = "文件集 ID") String filesetId);
+                                   @ActionParam(description = "文件集 ID", order = 1) String filesetId);
 
     /**
      * 获取闪传文件列表。
@@ -1617,7 +1617,7 @@ public interface BotActionService {
         categories = {"文件扩展"}
     )
     List<FlashFileData> getFlashFileList(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                         @ActionParam(description = "文件集 ID") String filesetId);
+                                         @ActionParam(description = "文件集 ID", order = 1) String filesetId);
 
     /**
      * 获取闪传文件链接。
@@ -1645,9 +1645,9 @@ public interface BotActionService {
         categories = {"文件扩展"}
     )
     GroupFileUrlData getFlashFileUrl(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                     @ActionParam(description = "文件集 ID") String filesetId,
-                                     @ActionParam(description = "文件名", nullable = true) String fileName,
-                                     @ActionParam(description = "文件索引", nullable = true) Long fileIndex);
+                                     @ActionParam(description = "文件集 ID", order = 1) String filesetId,
+                                     @ActionParam(description = "文件名", order = 2, nullable = true) String fileName,
+                                     @ActionParam(description = "文件索引", order = 3, nullable = true) Long fileIndex);
 
     /**
      * 获取群文件URL。
@@ -1673,8 +1673,8 @@ public interface BotActionService {
         categories = {"文件接口"}
     )
     GroupFileUrlData getGroupFileUrl(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                     @ActionParam(description = "群号") Long groupId,
-                                     @ActionParam(description = "文件ID") String fileId);
+                                     @ActionParam(description = "群号", order = 1) Long groupId,
+                                     @ActionParam(description = "文件ID", order = 2) String fileId);
 
     /**
      * 获取图片。
@@ -1700,8 +1700,8 @@ public interface BotActionService {
         categories = {"文件接口"}
     )
     FileData getImage(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                      @ActionParam(description = "文件路径、URL或Base64", nullable = true) String file,
-                      @ActionParam(description = "文件ID", nullable = true) String fileId);
+                      @ActionParam(description = "文件路径、URL或Base64", order = 1, nullable = true) String file,
+                      @ActionParam(description = "文件ID", order = 2, nullable = true) String fileId);
 
     /**
      * 获取在线文件消息。
@@ -1725,7 +1725,7 @@ public interface BotActionService {
         categories = {"文件扩展"}
     )
     void getOnlineFileMsg(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                          @ActionParam(description = "用户 QQ") Long userId);
+                          @ActionParam(description = "用户 QQ", order = 1) Long userId);
 
     /**
      * 获取私聊文件URL。
@@ -1749,7 +1749,7 @@ public interface BotActionService {
         categories = {"文件接口"}
     )
     GroupFileUrlData getPrivateFileUrl(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                       @ActionParam(description = "文件ID") String fileId);
+                                       @ActionParam(description = "文件ID", order = 1) String fileId);
 
     /**
      * 获取语音。
@@ -1777,9 +1777,9 @@ public interface BotActionService {
         categories = {"文件接口"}
     )
     FileData getRecord(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                       @ActionParam(description = "文件路径、URL或Base64", nullable = true) String file,
-                       @ActionParam(description = "文件ID", nullable = true) String fileId,
-                       @ActionParam(description = "输出格式") String outFormat);
+                       @ActionParam(description = "文件路径、URL或Base64", order = 1, nullable = true) String file,
+                       @ActionParam(description = "文件ID", order = 2, nullable = true) String fileId,
+                       @ActionParam(description = "输出格式", order = 3) String outFormat);
 
     /**
      * 获取文件分享链接。
@@ -1803,7 +1803,7 @@ public interface BotActionService {
         categories = {"文件扩展"}
     )
     void getShareLink(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                      @ActionParam(description = "文件集 ID") String filesetId);
+                      @ActionParam(description = "文件集 ID", order = 1) String filesetId);
 
     /**
      * 移动群文件。
@@ -1833,10 +1833,10 @@ public interface BotActionService {
         categories = {"文件扩展"}
     )
     GroupFileData moveGroupFile(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                @ActionParam(description = "群号") Long groupId,
-                                @ActionParam(description = "文件ID") String fileId,
-                                @ActionParam(description = "当前父目录") String currentParentDirectory,
-                                @ActionParam(description = "目标父目录") String targetParentDirectory);
+                                @ActionParam(description = "群号", order = 1) Long groupId,
+                                @ActionParam(description = "文件ID", order = 2) String fileId,
+                                @ActionParam(description = "当前父目录", order = 3) String currentParentDirectory,
+                                @ActionParam(description = "目标父目录", order = 4) String targetParentDirectory);
 
     /**
      * 接收在线文件。
@@ -1864,9 +1864,9 @@ public interface BotActionService {
         categories = {"文件扩展"}
     )
     void receiveOnlineFile(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                           @ActionParam(description = "用户 QQ") Long userId,
-                           @ActionParam(description = "消息 ID") String msgId,
-                           @ActionParam(description = "元素 ID") String elementId);
+                           @ActionParam(description = "用户 QQ", order = 1) Long userId,
+                           @ActionParam(description = "消息 ID", order = 2) String msgId,
+                           @ActionParam(description = "元素 ID", order = 3) String elementId);
 
     /**
      * 拒绝在线文件。
@@ -1894,9 +1894,9 @@ public interface BotActionService {
         categories = {"文件扩展"}
     )
     void refuseOnlineFile(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                          @ActionParam(description = "用户 QQ") Long userId,
-                          @ActionParam(description = "消息 ID") String msgId,
-                          @ActionParam(description = "元素 ID") String elementId);
+                          @ActionParam(description = "用户 QQ", order = 1) Long userId,
+                          @ActionParam(description = "消息 ID", order = 2) String msgId,
+                          @ActionParam(description = "元素 ID", order = 3) String elementId);
 
     /**
      * 重命名群文件。
@@ -1926,10 +1926,10 @@ public interface BotActionService {
         categories = {"文件扩展"}
     )
     GroupFileData renameGroupFile(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                  @ActionParam(description = "群号") Long groupId,
-                                  @ActionParam(description = "文件ID") String fileId,
-                                  @ActionParam(description = "当前父目录") String currentParentDirectory,
-                                  @ActionParam(description = "新文件名") String newName);
+                                  @ActionParam(description = "群号", order = 1) Long groupId,
+                                  @ActionParam(description = "文件ID", order = 2) String fileId,
+                                  @ActionParam(description = "当前父目录", order = 3) String currentParentDirectory,
+                                  @ActionParam(description = "新文件名", order = 4) String newName);
 
     /**
      * 发送闪传消息。
@@ -1957,9 +1957,9 @@ public interface BotActionService {
         categories = {"文件扩展"}
     )
     GroupAiRecordData sendFlashMsg(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                   @ActionParam(description = "文件集 ID") String filesetId,
-                                   @ActionParam(description = "用户 QQ", nullable = true) Long userId,
-                                   @ActionParam(description = "群号", nullable = true) Long groupId);
+                                   @ActionParam(description = "文件集 ID", order = 1) String filesetId,
+                                   @ActionParam(description = "用户 QQ", order = 2, nullable = true) Long userId,
+                                   @ActionParam(description = "群号", order = 3, nullable = true) Long groupId);
 
     /**
      * 发送在线文件。
@@ -1987,9 +1987,9 @@ public interface BotActionService {
         categories = {"文件扩展"}
     )
     void sendOnlineFile(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                        @ActionParam(description = "用户 QQ") Long userId,
-                        @ActionParam(description = "本地文件路径") String filePath,
-                        @ActionParam(description = "文件名 (可选)", nullable = true) String fileName);
+                        @ActionParam(description = "用户 QQ", order = 1) Long userId,
+                        @ActionParam(description = "本地文件路径", order = 2) String filePath,
+                        @ActionParam(description = "文件名 (可选)", order = 3, nullable = true) String fileName);
 
     /**
      * 发送在线文件夹。
@@ -2017,9 +2017,9 @@ public interface BotActionService {
         categories = {"文件扩展"}
     )
     void sendOnlineFolder(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                          @ActionParam(description = "用户 QQ") Long userId,
-                          @ActionParam(description = "本地文件夹路径") String folderPath,
-                          @ActionParam(description = "文件夹名称 (可选)", nullable = true) String folderName);
+                          @ActionParam(description = "用户 QQ", order = 1) Long userId,
+                          @ActionParam(description = "本地文件夹路径", order = 2) String folderPath,
+                          @ActionParam(description = "文件夹名称 (可选)", order = 3, nullable = true) String folderName);
 
     /**
      * 传输群文件。
@@ -2045,8 +2045,8 @@ public interface BotActionService {
         categories = {"文件扩展"}
     )
     GroupFileData transGroupFile(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                 @ActionParam(description = "群号") Long groupId,
-                                 @ActionParam(description = "文件ID") String fileId);
+                                 @ActionParam(description = "群号", order = 1) Long groupId,
+                                 @ActionParam(description = "文件ID", order = 2) String fileId);
 
     /**
      * 获取 Cookies。
@@ -2070,7 +2070,7 @@ public interface BotActionService {
         categories = {"用户接口"}
     )
     CookiesData getCookies(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                           @ActionParam(description = "需要获取 cookies 的域名") String domain);
+                           @ActionParam(description = "需要获取 cookies 的域名", order = 1) String domain);
 
     /**
      * 获取好友列表。
@@ -2094,7 +2094,7 @@ public interface BotActionService {
         categories = {"用户接口"}
     )
     List<String> getFriendList(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                               @ActionParam(description = "是否不使用缓存", nullable = true) Boolean noCache);
+                               @ActionParam(description = "是否不使用缓存", order = 1, nullable = true) Boolean noCache);
 
     /**
      * 获取带分组的好友列表。
@@ -2143,9 +2143,9 @@ public interface BotActionService {
         categories = {"用户扩展"}
     )
     ProfileLikeData getProfileLike(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                   @ActionParam(description = "QQ号", nullable = true) Long userId,
-                                   @ActionParam(description = "起始位置（默认 0）") Long start,
-                                   @ActionParam(description = "获取数量（默认 10）") Integer count);
+                                   @ActionParam(description = "QQ号", order = 1, nullable = true) Long userId,
+                                   @ActionParam(description = "起始位置（默认 0）", order = 2) Long start,
+                                   @ActionParam(description = "获取数量（默认 10）", order = 3) Integer count);
 
     /**
      * 获取最近会话。
@@ -2169,7 +2169,7 @@ public interface BotActionService {
         categories = {"用户接口"}
     )
     List<RecentContactData> getRecentContact(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                             @ActionParam(description = "获取的数量（默认 10）") Integer count);
+                                             @ActionParam(description = "获取的数量（默认 10）", order = 1) Integer count);
 
     /**
      * 获取单向好友列表。
@@ -2214,8 +2214,8 @@ public interface BotActionService {
         categories = {"用户接口"}
     )
     void sendLike(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                  @ActionParam(description = "对方 QQ 号") Long userId,
-                  @ActionParam(description = "点赞次数（默认 1）") Long times);
+                  @ActionParam(description = "对方 QQ 号", order = 1) Long userId,
+                  @ActionParam(description = "点赞次数（默认 1）", order = 2) Long times);
 
     /**
      * 设置自定义在线状态。
@@ -2243,9 +2243,9 @@ public interface BotActionService {
         categories = {"用户扩展"}
     )
     String setDiyOnlineStatus(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                              @ActionParam(description = "图标ID") Long faceId,
-                              @ActionParam(description = "图标类型（默认 1）") Long faceType,
-                              @ActionParam(description = "状态文字内容（默认  ）") String wording);
+                              @ActionParam(description = "图标ID", order = 1) Long faceId,
+                              @ActionParam(description = "图标类型（默认 1）", order = 2) Long faceType,
+                              @ActionParam(description = "状态文字内容（默认  ）", order = 3) String wording);
 
     /**
      * 处理加好友请求。
@@ -2273,9 +2273,9 @@ public interface BotActionService {
         categories = {"用户接口"}
     )
     void setFriendAddRequest(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                             @ActionParam(description = "加好友请求的 flag (需从上报中获取)") String flag,
-                             @ActionParam(description = "是否同意请求", nullable = true) String approve,
-                             @ActionParam(description = "添加后的好友备注", nullable = true) String remark);
+                             @ActionParam(description = "加好友请求的 flag (需从上报中获取)", order = 1) String flag,
+                             @ActionParam(description = "是否同意请求", order = 2, nullable = true) String approve,
+                             @ActionParam(description = "添加后的好友备注", order = 3, nullable = true) String remark);
 
     /**
      * 设置好友备注。
@@ -2299,8 +2299,8 @@ public interface BotActionService {
         categories = {"用户接口"}
     )
     void setFriendRemark(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                         @ActionParam(description = "对方 QQ 号") Long userId,
-                         @ActionParam(description = "备注内容") String remark);
+                         @ActionParam(description = "对方 QQ 号", order = 1) Long userId,
+                         @ActionParam(description = "备注内容", order = 2) String remark);
 
     /**
      * 取消点赞群相册媒体。
@@ -2330,10 +2330,10 @@ public interface BotActionService {
         categories = {"群组扩展"}
     )
     DelGroupAlbumMediaData cancelGroupAlbumMediaLike(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                                     @ActionParam(description = "群号") Long groupId,
-                                                     @ActionParam(description = "相册ID") String albumId,
-                                                     @ActionParam(description = "batch_id") String batchId,
-                                                     @ActionParam(description = "lloc，若对整个上传操作则不填", nullable = true) String lloc);
+                                                     @ActionParam(description = "群号", order = 1) Long groupId,
+                                                     @ActionParam(description = "相册ID", order = 2) String albumId,
+                                                     @ActionParam(description = "batch_id", order = 3) String batchId,
+                                                     @ActionParam(description = "lloc，若对整个上传操作则不填", order = 4, nullable = true) String lloc);
 
     /**
      * 移出精华消息。
@@ -2363,10 +2363,10 @@ public interface BotActionService {
         categories = {"群组接口"}
     )
     void deleteEssenceMsg(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                          @ActionParam(description = "消息ID", nullable = true) Long messageId,
-                          @ActionParam(description = "消息序号", nullable = true) String msgSeq,
-                          @ActionParam(description = "消息随机数", nullable = true) String msgRandom,
-                          @ActionParam(description = "群号", nullable = true) Long groupId);
+                          @ActionParam(description = "消息ID", order = 1, nullable = true) Long messageId,
+                          @ActionParam(description = "消息序号", order = 2, nullable = true) String msgSeq,
+                          @ActionParam(description = "消息随机数", order = 3, nullable = true) String msgRandom,
+                          @ActionParam(description = "群号", order = 4, nullable = true) Long groupId);
 
     /**
      * 删除群相册媒体。
@@ -2394,9 +2394,9 @@ public interface BotActionService {
         categories = {"群组扩展"}
     )
     DelGroupAlbumMediaData delGroupAlbumMedia(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                              @ActionParam(description = "群号") Long groupId,
-                                              @ActionParam(description = "相册ID") String albumId,
-                                              @ActionParam(description = "媒体ID (lloc)") String lloc);
+                                              @ActionParam(description = "群号", order = 1) Long groupId,
+                                              @ActionParam(description = "相册ID", order = 2) String albumId,
+                                              @ActionParam(description = "媒体ID (lloc)", order = 3) String lloc);
 
     /**
      * 删除群公告。
@@ -2422,8 +2422,8 @@ public interface BotActionService {
         categories = {"群组接口"}
     )
     void delGroupNotice(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                        @ActionParam(description = "群号") Long groupId,
-                        @ActionParam(description = "公告ID") String noticeId);
+                        @ActionParam(description = "群号", order = 1) Long groupId,
+                        @ActionParam(description = "公告ID", order = 2) String noticeId);
 
     /**
      * 发表群相册评论。
@@ -2453,10 +2453,10 @@ public interface BotActionService {
         categories = {"群组扩展"}
     )
     DelGroupAlbumMediaData doGroupAlbumComment(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                               @ActionParam(description = "群号") Long groupId,
-                                               @ActionParam(description = "相册 ID") String albumId,
-                                               @ActionParam(description = "图片 ID") String lloc,
-                                               @ActionParam(description = "评论内容") String content);
+                                               @ActionParam(description = "群号", order = 1) Long groupId,
+                                               @ActionParam(description = "相册 ID", order = 2) String albumId,
+                                               @ActionParam(description = "图片 ID", order = 3) String lloc,
+                                               @ActionParam(description = "评论内容", order = 4) String content);
 
     /**
      * 获取群精华消息。
@@ -2480,7 +2480,7 @@ public interface BotActionService {
         categories = {"群组接口"}
     )
     List<EssenceMsgData> getEssenceMsgList(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                           @ActionParam(description = "群号") Long groupId);
+                                           @ActionParam(description = "群号", order = 1) Long groupId);
 
     /**
      * 获取群相册媒体列表。
@@ -2508,9 +2508,9 @@ public interface BotActionService {
         categories = {"群组扩展"}
     )
     GroupAlbumMediaData getGroupAlbumMediaList(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                               @ActionParam(description = "群号") Long groupId,
-                                               @ActionParam(description = "相册ID") String albumId,
-                                               @ActionParam(description = "附加信息（用于分页）（默认 ）", nullable = true) String attachInfo);
+                                               @ActionParam(description = "群号", order = 1) Long groupId,
+                                               @ActionParam(description = "相册ID", order = 2) String albumId,
+                                               @ActionParam(description = "附加信息（用于分页）（默认 ）", order = 3, nullable = true) String attachInfo);
 
     /**
      * 获取群详细信息。
@@ -2534,7 +2534,7 @@ public interface BotActionService {
         categories = {"群组接口"}
     )
     GroupDetailInfoData getGroupDetailInfo(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                           @ActionParam(description = "群号") Long groupId);
+                                           @ActionParam(description = "群号", order = 1) Long groupId);
 
     /**
      * 获取群被忽略的加群请求。
@@ -2600,7 +2600,7 @@ public interface BotActionService {
         categories = {"群组接口"}
     )
     GroupInfoData getGroupInfo(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                               @ActionParam(description = "群号") Long groupId);
+                               @ActionParam(description = "群号", order = 1) Long groupId);
 
     /**
      * 获取群详细信息 (扩展)。
@@ -2624,7 +2624,7 @@ public interface BotActionService {
         categories = {"群组扩展"}
     )
     void getGroupInfoEx(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                        @ActionParam(description = "群号") Long groupId);
+                        @ActionParam(description = "群号", order = 1) Long groupId);
 
     /**
      * 获取群列表。
@@ -2648,7 +2648,7 @@ public interface BotActionService {
         categories = {"群组接口"}
     )
     List<String> getGroupList(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                              @ActionParam(description = "是否不使用缓存", nullable = true) Boolean noCache);
+                              @ActionParam(description = "是否不使用缓存", order = 1, nullable = true) Boolean noCache);
 
     /**
      * 获取群成员信息。
@@ -2676,9 +2676,9 @@ public interface BotActionService {
         categories = {"群组接口"}
     )
     GroupMemberInfoData getGroupMemberInfo(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                           @ActionParam(description = "群号") Long groupId,
-                                           @ActionParam(description = "QQ号") Long userId,
-                                           @ActionParam(description = "是否不使用缓存", nullable = true) Boolean noCache);
+                                           @ActionParam(description = "群号", order = 1) Long groupId,
+                                           @ActionParam(description = "QQ号", order = 2) Long userId,
+                                           @ActionParam(description = "是否不使用缓存", order = 3, nullable = true) Boolean noCache);
 
     /**
      * 获取群成员列表。
@@ -2704,8 +2704,8 @@ public interface BotActionService {
         categories = {"群组接口"}
     )
     List<GroupMemberData> getGroupMemberList(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                             @ActionParam(description = "群号") Long groupId,
-                                             @ActionParam(description = "是否不使用缓存", nullable = true) Boolean noCache);
+                                             @ActionParam(description = "群号", order = 1) Long groupId,
+                                             @ActionParam(description = "是否不使用缓存", order = 2, nullable = true) Boolean noCache);
 
     /**
      * 获取群公告。
@@ -2729,7 +2729,7 @@ public interface BotActionService {
         categories = {"群组接口"}
     )
     List<GroupNoticeData> getGroupNotice(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                         @ActionParam(description = "群号") Long groupId);
+                                         @ActionParam(description = "群号", order = 1) Long groupId);
 
     /**
      * 获取群禁言列表。
@@ -2753,7 +2753,7 @@ public interface BotActionService {
         categories = {"群组接口"}
     )
     List<GroupShutData> getGroupShutList(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                         @ActionParam(description = "群号") Long groupId);
+                                         @ActionParam(description = "群号", order = 1) Long groupId);
 
     /**
      * 获取群组今日打卡列表。
@@ -2777,7 +2777,7 @@ public interface BotActionService {
         categories = {"群组扩展"}
     )
     List<GroupSignedData> getGroupSignedList(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                             @ActionParam(description = "群号") Long groupId);
+                                             @ActionParam(description = "群号", order = 1) Long groupId);
 
     /**
      * 获取群相册列表。
@@ -2803,8 +2803,8 @@ public interface BotActionService {
         categories = {"群组扩展"}
     )
     QunAlbumData getQunAlbumList(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                 @ActionParam(description = "群号") Long groupId,
-                                 @ActionParam(description = "附加信息（用于分页，从上一次返回结果中获取）（默认 ）", nullable = true) String attachInfo);
+                                 @ActionParam(description = "群号", order = 1) Long groupId,
+                                 @ActionParam(description = "附加信息（用于分页，从上一次返回结果中获取）（默认 ）", order = 2, nullable = true) String attachInfo);
 
     /**
      * 发送群消息。
@@ -2846,16 +2846,16 @@ public interface BotActionService {
         categories = {"群组接口"}
     )
     GroupMsgData sendGroupMsg(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                              @ActionParam(description = "消息类型 (private/group)", nullable = true) String messageType,
-                              @ActionParam(description = "用户QQ", nullable = true) Long userId,
-                              @ActionParam(description = "群号", nullable = true) Long groupId,
-                              @ActionParam(description = "OneBot 11 消息混合类型") String message,
-                              @ActionParam(description = "是否作为纯文本发送", nullable = true) Boolean autoEscape,
-                              @ActionParam(description = "合并转发来源", nullable = true) String source,
-                              @ActionParam(description = "合并转发新闻", nullable = true) List<JsonNode> news,
-                              @ActionParam(description = "合并转发摘要", nullable = true) String summary,
-                              @ActionParam(description = "合并转发提示", nullable = true) String prompt,
-                              @ActionParam(description = "自定义发送超时(毫秒)，覆盖自动计算值", nullable = true) Long timeout);
+                              @ActionParam(description = "消息类型 (private/group)", order = 1, nullable = true) String messageType,
+                              @ActionParam(description = "用户QQ", order = 2, nullable = true) Long userId,
+                              @ActionParam(description = "群号", order = 3, nullable = true) Long groupId,
+                              @ActionParam(description = "OneBot 11 消息混合类型", order = 4) String message,
+                              @ActionParam(description = "是否作为纯文本发送", order = 5, nullable = true) Boolean autoEscape,
+                              @ActionParam(description = "合并转发来源", order = 6, nullable = true) String source,
+                              @ActionParam(description = "合并转发新闻", order = 7, nullable = true) List<JsonNode> news,
+                              @ActionParam(description = "合并转发摘要", order = 8, nullable = true) String summary,
+                              @ActionParam(description = "合并转发提示", order = 9, nullable = true) String prompt,
+                              @ActionParam(description = "自定义发送超时(毫秒)，覆盖自动计算值", order = 10, nullable = true) Long timeout);
 
     /**
      * 群打卡。
@@ -2879,7 +2879,7 @@ public interface BotActionService {
         categories = {"群组扩展"}
     )
     void sendGroupSign(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                       @ActionParam(description = "群号") Long groupId);
+                       @ActionParam(description = "群号", order = 1) Long groupId);
 
     /**
      * 设置精华消息。
@@ -2903,7 +2903,7 @@ public interface BotActionService {
         categories = {"群组接口"}
     )
     void setEssenceMsg(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                       @ActionParam(description = "消息ID") Long messageId);
+                       @ActionParam(description = "消息ID", order = 1) Long messageId);
 
     /**
      * 设置群加群选项。
@@ -2933,10 +2933,10 @@ public interface BotActionService {
         categories = {"群组扩展"}
     )
     void setGroupAddOption(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                           @ActionParam(description = "群号") Long groupId,
-                           @ActionParam(description = "加群方式") Long addType,
-                           @ActionParam(description = "加群问题", nullable = true) String groupQuestion,
-                           @ActionParam(description = "加群答案", nullable = true) String groupAnswer);
+                           @ActionParam(description = "群号", order = 1) Long groupId,
+                           @ActionParam(description = "加群方式", order = 2) Long addType,
+                           @ActionParam(description = "加群问题", order = 3, nullable = true) String groupQuestion,
+                           @ActionParam(description = "加群答案", order = 4, nullable = true) String groupAnswer);
 
     /**
      * 处理加群请求。
@@ -2966,10 +2966,10 @@ public interface BotActionService {
         categories = {"群组接口"}
     )
     void setGroupAddRequest(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                            @ActionParam(description = "请求flag") String flag,
-                            @ActionParam(description = "是否同意", nullable = true) Boolean approve,
-                            @ActionParam(description = "拒绝理由", nullable = true) String reason,
-                            @ActionParam(description = "搜索通知数量（默认 100）", nullable = true) Integer count);
+                            @ActionParam(description = "请求flag", order = 1) String flag,
+                            @ActionParam(description = "是否同意", order = 2, nullable = true) Boolean approve,
+                            @ActionParam(description = "拒绝理由", order = 3, nullable = true) String reason,
+                            @ActionParam(description = "搜索通知数量（默认 100）", order = 4, nullable = true) Integer count);
 
     /**
      * 设置群管理员。
@@ -2997,9 +2997,9 @@ public interface BotActionService {
         categories = {"群组接口"}
     )
     void setGroupAdmin(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                       @ActionParam(description = "群号") Long groupId,
-                       @ActionParam(description = "用户QQ") Long userId,
-                       @ActionParam(description = "是否设置为管理员", nullable = true) Boolean enable);
+                       @ActionParam(description = "群号", order = 1) Long groupId,
+                       @ActionParam(description = "用户QQ", order = 2) Long userId,
+                       @ActionParam(description = "是否设置为管理员", order = 3, nullable = true) Boolean enable);
 
     /**
      * 点赞群相册媒体。
@@ -3029,10 +3029,10 @@ public interface BotActionService {
         categories = {"群组扩展"}
     )
     DelGroupAlbumMediaData setGroupAlbumMediaLike(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                                  @ActionParam(description = "群号") Long groupId,
-                                                  @ActionParam(description = "相册ID") String albumId,
-                                                  @ActionParam(description = "batch_id") String batchId,
-                                                  @ActionParam(description = "lloc，若对整个上传操作则不填", nullable = true) String lloc);
+                                                  @ActionParam(description = "群号", order = 1) Long groupId,
+                                                  @ActionParam(description = "相册ID", order = 2) String albumId,
+                                                  @ActionParam(description = "batch_id", order = 3) String batchId,
+                                                  @ActionParam(description = "lloc，若对整个上传操作则不填", order = 4, nullable = true) String lloc);
 
     /**
      * 群组禁言。
@@ -3060,9 +3060,9 @@ public interface BotActionService {
         categories = {"群组接口"}
     )
     void setGroupBan(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                     @ActionParam(description = "群号") Long groupId,
-                     @ActionParam(description = "用户QQ") Long userId,
-                     @ActionParam(description = "禁言时长(秒)（默认 0）") Long duration);
+                     @ActionParam(description = "群号", order = 1) Long groupId,
+                     @ActionParam(description = "用户QQ", order = 2) Long userId,
+                     @ActionParam(description = "禁言时长(秒)（默认 0）", order = 3) Long duration);
 
     /**
      * 设置群名片。
@@ -3090,9 +3090,9 @@ public interface BotActionService {
         categories = {"群组接口"}
     )
     void setGroupCard(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                      @ActionParam(description = "群号") Long groupId,
-                      @ActionParam(description = "用户QQ") Long userId,
-                      @ActionParam(description = "群名片", nullable = true) String card);
+                      @ActionParam(description = "群号", order = 1) Long groupId,
+                      @ActionParam(description = "用户QQ", order = 2) Long userId,
+                      @ActionParam(description = "群名片", order = 3, nullable = true) String card);
 
     /**
      * 群组踢人。
@@ -3120,9 +3120,9 @@ public interface BotActionService {
         categories = {"群组接口"}
     )
     void setGroupKick(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                      @ActionParam(description = "群号") Long groupId,
-                      @ActionParam(description = "用户QQ") Long userId,
-                      @ActionParam(description = "是否拒绝加群请求", nullable = true) Boolean rejectAddRequest);
+                      @ActionParam(description = "群号", order = 1) Long groupId,
+                      @ActionParam(description = "用户QQ", order = 2) Long userId,
+                      @ActionParam(description = "是否拒绝加群请求", order = 3, nullable = true) Boolean rejectAddRequest);
 
     /**
      * 退出群组。
@@ -3148,8 +3148,8 @@ public interface BotActionService {
         categories = {"群组接口"}
     )
     void setGroupLeave(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                       @ActionParam(description = "群号") Long groupId,
-                       @ActionParam(description = "是否解散", nullable = true) Boolean isDismiss);
+                       @ActionParam(description = "群号", order = 1) Long groupId,
+                       @ActionParam(description = "是否解散", order = 2, nullable = true) Boolean isDismiss);
 
     /**
      * 设置群名称。
@@ -3175,8 +3175,8 @@ public interface BotActionService {
         categories = {"群组接口"}
     )
     void setGroupName(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                      @ActionParam(description = "群号") Long groupId,
-                      @ActionParam(description = "群名称") String groupName);
+                      @ActionParam(description = "群号", order = 1) Long groupId,
+                      @ActionParam(description = "群名称", order = 2) String groupName);
 
     /**
      * 设置群备注。
@@ -3202,8 +3202,8 @@ public interface BotActionService {
         categories = {"群组扩展"}
     )
     void setGroupRemark(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                        @ActionParam(description = "群号") Long groupId,
-                        @ActionParam(description = "备注") String remark);
+                        @ActionParam(description = "群号", order = 1) Long groupId,
+                        @ActionParam(description = "备注", order = 2) String remark);
 
     /**
      * 设置群机器人加群选项。
@@ -3231,9 +3231,9 @@ public interface BotActionService {
         categories = {"群组扩展"}
     )
     void setGroupRobotAddOption(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                @ActionParam(description = "群号") Long groupId,
-                                @ActionParam(description = "机器人成员开关", nullable = true) Long robotMemberSwitch,
-                                @ActionParam(description = "机器人成员审核", nullable = true) Long robotMemberExamine);
+                                @ActionParam(description = "群号", order = 1) Long groupId,
+                                @ActionParam(description = "机器人成员开关", order = 2, nullable = true) Long robotMemberSwitch,
+                                @ActionParam(description = "机器人成员审核", order = 3, nullable = true) Long robotMemberExamine);
 
     /**
      * 设置群搜索选项。
@@ -3261,9 +3261,9 @@ public interface BotActionService {
         categories = {"群组扩展"}
     )
     void setGroupSearch(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                        @ActionParam(description = "群号") Long groupId,
-                        @ActionParam(description = "未知", nullable = true) Long noCodeFingerOpen,
-                        @ActionParam(description = "未知", nullable = true) Long noFingerOpen);
+                        @ActionParam(description = "群号", order = 1) Long groupId,
+                        @ActionParam(description = "未知", order = 2, nullable = true) Long noCodeFingerOpen,
+                        @ActionParam(description = "未知", order = 3, nullable = true) Long noFingerOpen);
 
     /**
      * 群打卡。
@@ -3287,7 +3287,7 @@ public interface BotActionService {
         categories = {"群组扩展"}
     )
     void setGroupSign(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                      @ActionParam(description = "群号") Long groupId);
+                      @ActionParam(description = "群号", order = 1) Long groupId);
 
     /**
      * 全员禁言。
@@ -3313,8 +3313,8 @@ public interface BotActionService {
         categories = {"群组接口"}
     )
     void setGroupWholeBan(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                          @ActionParam(description = "群号") Long groupId,
-                          @ActionParam(description = "是否开启全员禁言", nullable = true) Boolean enable);
+                          @ActionParam(description = "群号", order = 1) Long groupId,
+                          @ActionParam(description = "是否开启全员禁言", order = 2, nullable = true) Boolean enable);
 
     /**
      * 上传图片到群相册。
@@ -3344,10 +3344,10 @@ public interface BotActionService {
         categories = {"群组扩展"}
     )
     ImageToQunAlbumData uploadImageToQunAlbum(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                              @ActionParam(description = "群号") Long groupId,
-                                              @ActionParam(description = "相册ID") String albumId,
-                                              @ActionParam(description = "相册名称") String albumName,
-                                              @ActionParam(description = "图片路径、URL或Base64") String file);
+                                              @ActionParam(description = "群号", order = 1) Long groupId,
+                                              @ActionParam(description = "相册ID", order = 2) String albumId,
+                                              @ActionParam(description = "相册名称", order = 3) String albumName,
+                                              @ActionParam(description = "图片路径、URL或Base64", order = 4) String file);
 
     /**
      * 分享群 (Ark)。
@@ -3371,7 +3371,7 @@ public interface BotActionService {
         categories = {"消息扩展"}
     )
     String arksharegroup(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                         @ActionParam(description = "群号") Long groupId);
+                         @ActionParam(description = "群号", order = 1) Long groupId);
 
     /**
      * 分享用户 (Ark)。
@@ -3399,9 +3399,9 @@ public interface BotActionService {
         categories = {"消息扩展"}
     )
     ArksharepeerData arksharepeer(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                  @ActionParam(description = "QQ号", nullable = true) Long userId,
-                                  @ActionParam(description = "群号", nullable = true) Long groupId,
-                                  @ActionParam(description = "手机号（默认 ）") String phoneNumber);
+                                  @ActionParam(description = "QQ号", order = 1, nullable = true) Long userId,
+                                  @ActionParam(description = "群号", order = 2, nullable = true) Long groupId,
+                                  @ActionParam(description = "手机号（默认 ）", order = 3) String phoneNumber);
 
     /**
      * 取消群待办。
@@ -3429,9 +3429,9 @@ public interface BotActionService {
         categories = {"核心接口"}
     )
     void cancelGroupTodo(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                         @ActionParam(description = "群号") Long groupId,
-                         @ActionParam(description = "消息ID", nullable = true) String messageId,
-                         @ActionParam(description = "消息Seq (可选)", nullable = true) String messageSeq);
+                         @ActionParam(description = "群号", order = 1) Long groupId,
+                         @ActionParam(description = "消息ID", order = 2, nullable = true) String messageId,
+                         @ActionParam(description = "消息Seq (可选)", order = 3, nullable = true) String messageSeq);
 
     /**
      * 点击内联键盘按钮。
@@ -3463,11 +3463,11 @@ public interface BotActionService {
         categories = {"消息扩展"}
     )
     void clickInlineKeyboardButton(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                   @ActionParam(description = "群号") Long groupId,
-                                   @ActionParam(description = "机器人AppID") String botAppid,
-                                   @ActionParam(description = "按钮ID（默认 ）") String buttonId,
-                                   @ActionParam(description = "回调数据（默认 ）") String callbackData,
-                                   @ActionParam(description = "消息序列号（默认 10086）") String msgSeq);
+                                   @ActionParam(description = "群号", order = 1) Long groupId,
+                                   @ActionParam(description = "机器人AppID", order = 2) String botAppid,
+                                   @ActionParam(description = "按钮ID（默认 ）", order = 3) String buttonId,
+                                   @ActionParam(description = "回调数据（默认 ）", order = 4) String callbackData,
+                                   @ActionParam(description = "消息序列号（默认 10086）", order = 5) String msgSeq);
 
     /**
      * 完成群待办。
@@ -3495,9 +3495,9 @@ public interface BotActionService {
         categories = {"核心接口"}
     )
     void completeGroupTodo(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                           @ActionParam(description = "群号") Long groupId,
-                           @ActionParam(description = "消息ID", nullable = true) String messageId,
-                           @ActionParam(description = "消息Seq (可选)", nullable = true) String messageSeq);
+                           @ActionParam(description = "群号", order = 1) Long groupId,
+                           @ActionParam(description = "消息ID", order = 2, nullable = true) String messageId,
+                           @ActionParam(description = "消息Seq (可选)", order = 3, nullable = true) String messageSeq);
 
     /**
      * 撤回消息。
@@ -3521,7 +3521,7 @@ public interface BotActionService {
         categories = {"消息接口"}
     )
     void deleteMsg(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                   @ActionParam(description = "消息ID") Long messageId);
+                   @ActionParam(description = "消息ID", order = 1) Long messageId);
 
     /**
      * 获取表情点赞详情。
@@ -3553,11 +3553,11 @@ public interface BotActionService {
         categories = {"消息扩展"}
     )
     EmojiLikeData fetchEmojiLike(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                 @ActionParam(description = "消息ID") Long messageId,
-                                 @ActionParam(description = "表情ID") Long emojiId,
-                                 @ActionParam(description = "表情类型") Long emojiType,
-                                 @ActionParam(description = "获取数量（默认 20）") Integer count,
-                                 @ActionParam(description = "分页Cookie（默认 ）") String cookie);
+                                 @ActionParam(description = "消息ID", order = 1) Long messageId,
+                                 @ActionParam(description = "表情ID", order = 2) Long emojiId,
+                                 @ActionParam(description = "表情类型", order = 3) Long emojiType,
+                                 @ActionParam(description = "获取数量（默认 20）", order = 4) Integer count,
+                                 @ActionParam(description = "分页Cookie（默认 ）", order = 5) String cookie);
 
     /**
      * 获取语音转文字结果。
@@ -3581,7 +3581,7 @@ public interface BotActionService {
         categories = {"消息扩展"}
     )
     PttTextData fetchPttText(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                             @ActionParam(description = "消息ID") Long messageId);
+                             @ActionParam(description = "消息ID", order = 1) Long messageId);
 
     /**
      * 转发单条消息。
@@ -3609,9 +3609,9 @@ public interface BotActionService {
         categories = {"消息接口"}
     )
     void forwardFriendSingleMsg(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                @ActionParam(description = "消息ID") Long messageId,
-                                @ActionParam(description = "目标群号", nullable = true) Long groupId,
-                                @ActionParam(description = "目标用户QQ", nullable = true) Long userId);
+                                @ActionParam(description = "消息ID", order = 1) Long messageId,
+                                @ActionParam(description = "目标群号", order = 2, nullable = true) Long groupId,
+                                @ActionParam(description = "目标用户QQ", order = 3, nullable = true) Long userId);
 
     /**
      * 转发单条消息。
@@ -3639,9 +3639,9 @@ public interface BotActionService {
         categories = {"消息接口"}
     )
     void forwardGroupSingleMsg(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                               @ActionParam(description = "消息ID") Long messageId,
-                               @ActionParam(description = "目标群号", nullable = true) Long groupId,
-                               @ActionParam(description = "目标用户QQ", nullable = true) Long userId);
+                               @ActionParam(description = "消息ID", order = 1) Long messageId,
+                               @ActionParam(description = "目标群号", order = 2, nullable = true) Long groupId,
+                               @ActionParam(description = "目标用户QQ", order = 3, nullable = true) Long userId);
 
     /**
      * 发送戳一戳。
@@ -3669,9 +3669,9 @@ public interface BotActionService {
         categories = {"核心接口"}
     )
     void friendPoke(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                    @ActionParam(description = "群号", nullable = true) Long groupId,
-                    @ActionParam(description = "用户QQ") Long userId,
-                    @ActionParam(description = "目标QQ", nullable = true) String targetId);
+                    @ActionParam(description = "群号", order = 1, nullable = true) Long groupId,
+                    @ActionParam(description = "用户QQ", order = 2) Long userId,
+                    @ActionParam(description = "目标QQ", order = 3, nullable = true) String targetId);
 
     /**
      * 获取消息表情点赞列表。
@@ -3703,11 +3703,11 @@ public interface BotActionService {
         categories = {"消息扩展"}
     )
     EmojiLikesData getEmojiLikes(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                 @ActionParam(description = "群号，短ID可不传", nullable = true) Long groupId,
-                                 @ActionParam(description = "消息ID，可以传递长ID或短ID") String messageId,
-                                 @ActionParam(description = "表情ID") String emojiId,
-                                 @ActionParam(description = "表情类型", nullable = true) String emojiType,
-                                 @ActionParam(description = "数量，0代表全部（默认 0）") Integer count);
+                                 @ActionParam(description = "群号，短ID可不传", order = 1, nullable = true) Long groupId,
+                                 @ActionParam(description = "消息ID，可以传递长ID或短ID", order = 2) String messageId,
+                                 @ActionParam(description = "表情ID", order = 3) String emojiId,
+                                 @ActionParam(description = "表情类型", order = 4, nullable = true) String emojiType,
+                                 @ActionParam(description = "数量，0代表全部（默认 0）", order = 5) Integer count);
 
     /**
      * 获取消息。
@@ -3731,7 +3731,7 @@ public interface BotActionService {
         categories = {"消息接口"}
     )
     MsgData getMsg(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                   @ActionParam(description = "消息ID") Long messageId);
+                   @ActionParam(description = "消息ID", order = 1) Long messageId);
 
     /**
      * 发送戳一戳。
@@ -3759,9 +3759,9 @@ public interface BotActionService {
         categories = {"核心接口"}
     )
     void groupPoke(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                   @ActionParam(description = "群号", nullable = true) Long groupId,
-                   @ActionParam(description = "用户QQ") Long userId,
-                   @ActionParam(description = "目标QQ", nullable = true) String targetId);
+                   @ActionParam(description = "群号", order = 1, nullable = true) Long groupId,
+                   @ActionParam(description = "用户QQ", order = 2) Long userId,
+                   @ActionParam(description = "目标QQ", order = 3, nullable = true) String targetId);
 
     /**
      * 标记所有消息已读。
@@ -3810,9 +3810,9 @@ public interface BotActionService {
         categories = {"消息接口"}
     )
     void markGroupMsgAsRead(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                            @ActionParam(description = "用户QQ", nullable = true) Long userId,
-                            @ActionParam(description = "群号", nullable = true) Long groupId,
-                            @ActionParam(description = "消息ID", nullable = true) String messageId);
+                            @ActionParam(description = "用户QQ", order = 1, nullable = true) Long userId,
+                            @ActionParam(description = "群号", order = 2, nullable = true) Long groupId,
+                            @ActionParam(description = "消息ID", order = 3, nullable = true) String messageId);
 
     /**
      * 标记消息已读 (Go-CQHTTP)。
@@ -3840,9 +3840,9 @@ public interface BotActionService {
         categories = {"消息接口"}
     )
     void markMsgAsRead(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                       @ActionParam(description = "用户QQ", nullable = true) Long userId,
-                       @ActionParam(description = "群号", nullable = true) Long groupId,
-                       @ActionParam(description = "消息ID", nullable = true) String messageId);
+                       @ActionParam(description = "用户QQ", order = 1, nullable = true) Long userId,
+                       @ActionParam(description = "群号", order = 2, nullable = true) Long groupId,
+                       @ActionParam(description = "消息ID", order = 3, nullable = true) String messageId);
 
     /**
      * 标记私聊已读。
@@ -3870,9 +3870,9 @@ public interface BotActionService {
         categories = {"消息接口"}
     )
     void markPrivateMsgAsRead(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                              @ActionParam(description = "用户QQ", nullable = true) Long userId,
-                              @ActionParam(description = "群号", nullable = true) Long groupId,
-                              @ActionParam(description = "消息ID", nullable = true) String messageId);
+                              @ActionParam(description = "用户QQ", order = 1, nullable = true) Long userId,
+                              @ActionParam(description = "群号", order = 2, nullable = true) Long groupId,
+                              @ActionParam(description = "消息ID", order = 3, nullable = true) String messageId);
 
     /**
      * 分享用户 (Ark)。
@@ -3900,9 +3900,9 @@ public interface BotActionService {
         categories = {"消息扩展"}
     )
     ArksharepeerData sendArkShare(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                  @ActionParam(description = "QQ号", nullable = true) Long userId,
-                                  @ActionParam(description = "群号", nullable = true) Long groupId,
-                                  @ActionParam(description = "手机号（默认 ）") String phoneNumber);
+                                  @ActionParam(description = "QQ号", order = 1, nullable = true) Long userId,
+                                  @ActionParam(description = "群号", order = 2, nullable = true) Long groupId,
+                                  @ActionParam(description = "手机号（默认 ）", order = 3) String phoneNumber);
 
     /**
      * 分享群 (Ark)。
@@ -3926,7 +3926,7 @@ public interface BotActionService {
         categories = {"消息扩展"}
     )
     String sendGroupArkShare(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                             @ActionParam(description = "群号") Long groupId);
+                             @ActionParam(description = "群号", order = 1) Long groupId);
 
     /**
      * 发送消息。
@@ -3968,16 +3968,16 @@ public interface BotActionService {
         categories = {"消息接口"}
     )
     GroupMsgData sendMsg(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                         @ActionParam(description = "消息类型 (private/group)", nullable = true) String messageType,
-                         @ActionParam(description = "用户QQ", nullable = true) Long userId,
-                         @ActionParam(description = "群号", nullable = true) Long groupId,
-                         @ActionParam(description = "OneBot 11 消息混合类型") String message,
-                         @ActionParam(description = "是否作为纯文本发送", nullable = true) Boolean autoEscape,
-                         @ActionParam(description = "合并转发来源", nullable = true) String source,
-                         @ActionParam(description = "合并转发新闻", nullable = true) List<JsonNode> news,
-                         @ActionParam(description = "合并转发摘要", nullable = true) String summary,
-                         @ActionParam(description = "合并转发提示", nullable = true) String prompt,
-                         @ActionParam(description = "自定义发送超时(毫秒)，覆盖自动计算值", nullable = true) Long timeout);
+                         @ActionParam(description = "消息类型 (private/group)", order = 1, nullable = true) String messageType,
+                         @ActionParam(description = "用户QQ", order = 2, nullable = true) Long userId,
+                         @ActionParam(description = "群号", order = 3, nullable = true) Long groupId,
+                         @ActionParam(description = "OneBot 11 消息混合类型", order = 4) String message,
+                         @ActionParam(description = "是否作为纯文本发送", order = 5, nullable = true) Boolean autoEscape,
+                         @ActionParam(description = "合并转发来源", order = 6, nullable = true) String source,
+                         @ActionParam(description = "合并转发新闻", order = 7, nullable = true) List<JsonNode> news,
+                         @ActionParam(description = "合并转发摘要", order = 8, nullable = true) String summary,
+                         @ActionParam(description = "合并转发提示", order = 9, nullable = true) String prompt,
+                         @ActionParam(description = "自定义发送超时(毫秒)，覆盖自动计算值", order = 10, nullable = true) Long timeout);
 
     /**
      * 发送戳一戳。
@@ -4005,9 +4005,9 @@ public interface BotActionService {
         categories = {"核心接口"}
     )
     void sendPoke(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                  @ActionParam(description = "群号", nullable = true) Long groupId,
-                  @ActionParam(description = "用户QQ") Long userId,
-                  @ActionParam(description = "目标QQ", nullable = true) String targetId);
+                  @ActionParam(description = "群号", order = 1, nullable = true) Long groupId,
+                  @ActionParam(description = "用户QQ", order = 2) Long userId,
+                  @ActionParam(description = "目标QQ", order = 3, nullable = true) String targetId);
 
     /**
      * 发送私聊消息。
@@ -4049,16 +4049,16 @@ public interface BotActionService {
         categories = {"消息接口"}
     )
     GroupMsgData sendPrivateMsg(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                @ActionParam(description = "消息类型 (private/group)", nullable = true) String messageType,
-                                @ActionParam(description = "用户QQ", nullable = true) Long userId,
-                                @ActionParam(description = "群号", nullable = true) Long groupId,
-                                @ActionParam(description = "OneBot 11 消息混合类型") String message,
-                                @ActionParam(description = "是否作为纯文本发送", nullable = true) Boolean autoEscape,
-                                @ActionParam(description = "合并转发来源", nullable = true) String source,
-                                @ActionParam(description = "合并转发新闻", nullable = true) List<JsonNode> news,
-                                @ActionParam(description = "合并转发摘要", nullable = true) String summary,
-                                @ActionParam(description = "合并转发提示", nullable = true) String prompt,
-                                @ActionParam(description = "自定义发送超时(毫秒)，覆盖自动计算值", nullable = true) Long timeout);
+                                @ActionParam(description = "消息类型 (private/group)", order = 1, nullable = true) String messageType,
+                                @ActionParam(description = "用户QQ", order = 2, nullable = true) Long userId,
+                                @ActionParam(description = "群号", order = 3, nullable = true) Long groupId,
+                                @ActionParam(description = "OneBot 11 消息混合类型", order = 4) String message,
+                                @ActionParam(description = "是否作为纯文本发送", order = 5, nullable = true) Boolean autoEscape,
+                                @ActionParam(description = "合并转发来源", order = 6, nullable = true) String source,
+                                @ActionParam(description = "合并转发新闻", order = 7, nullable = true) List<JsonNode> news,
+                                @ActionParam(description = "合并转发摘要", order = 8, nullable = true) String summary,
+                                @ActionParam(description = "合并转发提示", order = 9, nullable = true) String prompt,
+                                @ActionParam(description = "自定义发送超时(毫秒)，覆盖自动计算值", order = 10, nullable = true) Long timeout);
 
     /**
      * 设置群待办。
@@ -4086,9 +4086,9 @@ public interface BotActionService {
         categories = {"核心接口"}
     )
     void setGroupTodo(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                      @ActionParam(description = "群号") Long groupId,
-                      @ActionParam(description = "消息ID", nullable = true) String messageId,
-                      @ActionParam(description = "消息Seq (可选)", nullable = true) String messageSeq);
+                      @ActionParam(description = "群号", order = 1) Long groupId,
+                      @ActionParam(description = "消息ID", order = 2, nullable = true) String messageId,
+                      @ActionParam(description = "消息Seq (可选)", order = 3, nullable = true) String messageSeq);
 
     /**
      * 设置消息表情点赞。
@@ -4116,9 +4116,9 @@ public interface BotActionService {
         categories = {"消息扩展"}
     )
     MsgEmojiLikeData setMsgEmojiLike(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                     @ActionParam(description = "消息ID") Long messageId,
-                                     @ActionParam(description = "表情ID") Long emojiId,
-                                     @ActionParam(description = "是否设置", nullable = true) Boolean set);
+                                     @ActionParam(description = "消息ID", order = 1) Long messageId,
+                                     @ActionParam(description = "表情ID", order = 2) Long emojiId,
+                                     @ActionParam(description = "是否设置", order = 3, nullable = true) Boolean set);
 
     /**
      * 添加自定义表情。
@@ -4156,14 +4156,14 @@ public interface BotActionService {
         categories = {"系统扩展"}
     )
     void addCustomFace(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                       @ActionParam(description = "本地表情文件路径") String file,
-                       @ActionParam(description = "表情ID，未提供时传空字符串", nullable = true) String emojiId,
-                       @ActionParam(description = "表情包ID，未提供时传0", nullable = true) String packageId,
-                       @ActionParam(description = "文件名，未提供时从file路径取basename", nullable = true) String fileName,
-                       @ActionParam(description = "文件大小，未提供时读取本地文件", nullable = true) String fileSize,
-                       @ActionParam(description = "文件MD5，未提供时读取本地文件计算", nullable = true) String md5,
-                       @ActionParam(description = "是否商城表情", nullable = true) Boolean isMarkFace,
-                       @ActionParam(description = "是否原图", nullable = true) Boolean isOrigin);
+                       @ActionParam(description = "本地表情文件路径", order = 1) String file,
+                       @ActionParam(description = "表情ID，未提供时传空字符串", order = 2, nullable = true) String emojiId,
+                       @ActionParam(description = "表情包ID，未提供时传0", order = 3, nullable = true) String packageId,
+                       @ActionParam(description = "文件名，未提供时从file路径取basename", order = 4, nullable = true) String fileName,
+                       @ActionParam(description = "文件大小，未提供时读取本地文件", order = 5, nullable = true) String fileSize,
+                       @ActionParam(description = "文件MD5，未提供时读取本地文件计算", order = 6, nullable = true) String md5,
+                       @ActionParam(description = "是否商城表情", order = 7, nullable = true) Boolean isMarkFace,
+                       @ActionParam(description = "是否原图", order = 8, nullable = true) Boolean isOrigin);
 
     /**
      * 退出登录。
@@ -4277,10 +4277,10 @@ public interface BotActionService {
         categories = {"系统扩展"}
     )
     void deleteCustomFace(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                          @ActionParam(description = "fetch_custom_face_detail返回的resId", nullable = true) String resId,
-                          @ActionParam(description = "native deleteFavEmoji字符串ID，通常为resId", nullable = true) String id,
-                          @ActionParam(description = "native deleteFavEmoji字符串ID列表，通常为resId列表", nullable = true) List<String> ids,
-                          @ActionParam(description = "表情MD5，不能直接删除，请先通过fetch_custom_face_detail获取resId", nullable = true) String md5);
+                          @ActionParam(description = "fetch_custom_face_detail返回的resId", order = 1, nullable = true) String resId,
+                          @ActionParam(description = "native deleteFavEmoji字符串ID，通常为resId", order = 2, nullable = true) String id,
+                          @ActionParam(description = "native deleteFavEmoji字符串ID列表，通常为resId列表", order = 3, nullable = true) List<String> ids,
+                          @ActionParam(description = "表情MD5，不能直接删除，请先通过fetch_custom_face_detail获取resId", order = 4, nullable = true) String md5);
 
     /**
      * 获取自定义表情。
@@ -4304,7 +4304,7 @@ public interface BotActionService {
         categories = {"系统扩展"}
     )
     List<String> fetchCustomFace(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                 @ActionParam(description = "获取数量（默认 48）") Integer count);
+                                 @ActionParam(description = "获取数量（默认 48）", order = 1) Integer count);
 
     /**
      * 获取自定义表情详情。
@@ -4328,7 +4328,7 @@ public interface BotActionService {
         categories = {"系统扩展"}
     )
     void fetchCustomFaceDetail(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                               @ActionParam(description = "获取数量（默认 48）") Integer count);
+                               @ActionParam(description = "获取数量（默认 48）", order = 1) Integer count);
 
     /**
      * 获取收藏列表。
@@ -4354,8 +4354,8 @@ public interface BotActionService {
         categories = {"系统扩展"}
     )
     CollectionData getCollectionList(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                     @ActionParam(description = "分类ID") String category,
-                                     @ActionParam(description = "获取数量（默认 50）") String count);
+                                     @ActionParam(description = "分类ID", order = 1) String category,
+                                     @ActionParam(description = "获取数量（默认 50）", order = 2) String count);
 
     /**
      * 获取登录凭证。
@@ -4379,7 +4379,7 @@ public interface BotActionService {
         categories = {"系统接口"}
     )
     CredentialsData getCredentials(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                   @ActionParam(description = "需要获取 cookies 的域名") String domain);
+                                   @ActionParam(description = "需要获取 cookies 的域名", order = 1) String domain);
 
     /**
      * 获取 CSRF Token。
@@ -4424,7 +4424,7 @@ public interface BotActionService {
         categories = {"系统接口"}
     )
     List<DoubtFriendsAddRequestData> getDoubtFriendsAddRequest(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                                               @ActionParam(description = "获取数量（默认 50）") Integer count);
+                                                               @ActionParam(description = "获取数量（默认 50）", order = 1) Integer count);
 
     /**
      * 获取群系统消息。
@@ -4448,7 +4448,7 @@ public interface BotActionService {
         categories = {"系统接口"}
     )
     GroupIgnoredNotifiesData getGroupSystemMsg(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                               @ActionParam(description = "获取的消息数量（默认 50）") Integer count);
+                                               @ActionParam(description = "获取的消息数量（默认 50）", order = 1) Integer count);
 
     /**
      * 获取登录号信息。
@@ -4661,7 +4661,7 @@ public interface BotActionService {
         categories = {"系统扩展"}
     )
     UserStatusData ncGetUserStatus(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                   @ActionParam(description = "QQ号") Long userId);
+                                   @ActionParam(description = "QQ号", order = 1) Long userId);
 
     /**
      * 发送原始数据包。
@@ -4689,9 +4689,9 @@ public interface BotActionService {
         categories = {"系统扩展"}
     )
     String sendPacket(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                      @ActionParam(description = "命令字") String cmd,
-                      @ActionParam(description = "十六进制数据") String data,
-                      @ActionParam(description = "是否等待响应（默认 True）") String rsp);
+                      @ActionParam(description = "命令字", order = 1) String cmd,
+                      @ActionParam(description = "十六进制数据", order = 2) String data,
+                      @ActionParam(description = "是否等待响应（默认 True）", order = 3) String rsp);
 
     /**
      * 修改自定义表情描述。
@@ -4721,10 +4721,10 @@ public interface BotActionService {
         categories = {"系统扩展"}
     )
     void setCustomFaceDesc(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                           @ActionParam(description = "表情ID") Long emojiId,
-                           @ActionParam(description = "资源ID") String resId,
-                           @ActionParam(description = "表情MD5") String md5,
-                           @ActionParam(description = "新的表情描述") String desc);
+                           @ActionParam(description = "表情ID", order = 1) Long emojiId,
+                           @ActionParam(description = "资源ID", order = 2) String resId,
+                           @ActionParam(description = "表情MD5", order = 3) String md5,
+                           @ActionParam(description = "新的表情描述", order = 4) String desc);
 
     /**
      * 处理可疑好友申请。
@@ -4750,8 +4750,8 @@ public interface BotActionService {
         categories = {"系统接口"}
     )
     String setDoubtFriendsAddRequest(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                                     @ActionParam(description = "请求 flag") String flag,
-                                     @ActionParam(description = "是否同意 (强制为 true)（默认 True）") Boolean approve);
+                                     @ActionParam(description = "请求 flag", order = 1) String flag,
+                                     @ActionParam(description = "是否同意 (强制为 true)（默认 True）", order = 2) Boolean approve);
 
     /**
      * 设置输入状态。
@@ -4777,8 +4777,8 @@ public interface BotActionService {
         categories = {"系统扩展"}
     )
     void setInputStatus(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                        @ActionParam(description = "QQ号") Long userId,
-                        @ActionParam(description = "事件类型") Long eventType);
+                        @ActionParam(description = "QQ号", order = 1) Long userId,
+                        @ActionParam(description = "事件类型", order = 2) Long eventType);
 
     /**
      * 设置在线状态。
@@ -4806,9 +4806,9 @@ public interface BotActionService {
         categories = {"系统扩展"}
     )
     void setOnlineStatus(@ActionParam(description = "目标 Bot 的 QQ 号") long botQQ,
-                         @ActionParam(description = "在线状态") Long status,
-                         @ActionParam(description = "扩展状态") Long extStatus,
-                         @ActionParam(description = "电量状态") Long batteryStatus);
+                         @ActionParam(description = "在线状态", order = 1) Long status,
+                         @ActionParam(description = "扩展状态", order = 2) Long extStatus,
+                         @ActionParam(description = "电量状态", order = 3) Long batteryStatus);
 
     /**
      * 重启服务。

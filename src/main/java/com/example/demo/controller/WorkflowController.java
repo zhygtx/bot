@@ -26,7 +26,7 @@ public class WorkflowController {
 
     /**
      * 添加工作流
-     * @param request HTTP请求
+     * @param user 用户信息
      * @param workflowInfo 工作流信息
      * @return 添加结果
      */
@@ -38,7 +38,7 @@ public class WorkflowController {
         workflowInfo.setUserId(userId);
         workflowInfo.setAuthorName(authorName);
         int result = workflowService.add(workflowInfo);
-        return result > 0 ? Result.success(null, workflowService.findById(workflowInfo.getId())) : Result.error(500, "添加工作流失败");
+        return result > 0 ? Result.success("创建工作流成功", workflowService.findById(workflowInfo.getId())) : Result.error(500, "添加工作流失败");
     }
 
     /**

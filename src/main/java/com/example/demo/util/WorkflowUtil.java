@@ -1,6 +1,7 @@
 package com.example.demo.util;
 
 import com.example.demo.api.BotActionService;
+import com.example.demo.handler.scanner.BotActionScanner;
 import com.example.demo.manager.ThreadLocalManager;
 import com.example.demo.manager.event.record.*;
 import com.example.demo.pojo.entity.plugin.MethodClassInfo;
@@ -8,10 +9,7 @@ import com.example.demo.pojo.entity.plugin.MethodInfo;
 import com.example.demo.pojo.entity.plugin.ParameterInfo;
 import com.example.demo.pojo.entity.plugin.PluginVersion;
 import com.example.demo.pojo.entity.workflow.*;
-import com.example.demo.handler.scanner.BotActionScanner;
 import com.example.demo.service.WorkflowService;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -37,9 +35,6 @@ import java.util.stream.Stream;
 @Component
 public class WorkflowUtil {
 
-    /** JSON 对象映射器，用于序列化/反序列化 */
-    private static final ObjectMapper mapper = new ObjectMapper();
-    
     /** 单个节点执行超时时间（毫秒） */
     private static final long NODE_TIMEOUT_MS = 5000;
 
@@ -331,19 +326,16 @@ public class WorkflowUtil {
 
     /**
      * 执行节点列表
-     * 按拓扑排序后的顺序依次执行节点，收集最终结果
-     * @param workflowInfo 工作流信息
-     * @param nodeMap 节点映射表
+     * 按拓扑排序后的顺序依次执行节点，执行结果通过事件系统发布
+     * @param workflowInfo   工作流信息
+     * @param nodeMap        节点映射表
      * @param executionOrder 节点执行顺序列表
-     * @return 工作流最终执行结果的 JSON 节点
      */
-    private JsonNode executeNodeList(WorkflowInfo workflowInfo, Map<String, Node> nodeMap, List<String> executionOrder) {
-        List<JsonNode> finalResults = new ArrayList<>();
+    private void executeNodeList(WorkflowInfo workflowInfo, Map<String, Node> nodeMap, List<String> executionOrder) {
         int processedCount = 0;
-        Set<String> skippedNodes = new HashSet<>(); // 记录需要跳过的节点
+        Set<String> skippedNodes = new HashSet<>();
 
         for (String currentNodeId : executionOrder) {
-            // 如果当前节点被标记为跳过，则跳过执行
             if (skippedNodes.contains(currentNodeId)) {
                 log.debug("跳过节点 {}（因条件分支终止）", currentNodeId);
                 eventPublisher.publishEvent(new NodeExecutionSkipped(currentNodeId, "条件分支终止"));
@@ -351,14 +343,12 @@ public class WorkflowUtil {
             }
 
             Date startTime = new Date();
-
             Node currentNode = nodeMap.get(currentNodeId);
             log.debug("执行节点：{} (第{}个)", currentNodeId, ++processedCount);
 
             String methodName = resolveNodeMethodName(currentNode);
             String methodDescription = resolveNodeMethodDescription(currentNode);
 
-            // 发布节点开始执行事件（由 Listener 驱动 NodeLog 创建）
             eventPublisher.publishEvent(new NodeExecutionStarted(
                     currentNodeId, currentNode.getMethodId(), processedCount,
                     methodName, methodDescription));
@@ -369,63 +359,31 @@ public class WorkflowUtil {
             } catch (Throwable e) {
                 log.error("节点 {} 执行失败", currentNodeId, e);
 
-                // 发布节点执行失败事件（由 Listener 驱动错误日志记录）
                 long elapsedMs = System.currentTimeMillis() - startTime.getTime();
                 eventPublisher.publishEvent(new NodeExecutionFailed(currentNodeId, elapsedMs, e));
 
-                // 更新工作流禁用原因（业务逻辑，保留）
                 String errorMsg = String.format("节点 %s 执行失败：%s", currentNodeId, e.getMessage());
                 workflowService.editDisableReason(workflowInfo.getId(), errorMsg);
 
-                // 节点执行失败后，终止工作流执行
                 log.debug("节点执行失败，终止工作流执行");
-                return mapper.createObjectNode();
+                return;
             }
 
-            // 发布节点执行完成事件（由 Listener 驱动执行耗时记录）
             long elapsedMs = System.currentTimeMillis() - startTime.getTime();
             eventPublisher.publishEvent(new NodeExecutionCompleted(currentNodeId, elapsedMs));
 
             // 处理 END：立即结束整个工作流
             if (!executionResult.continueExecution() && executionResult.result() == null) {
                 log.debug("工作流执行被条件终止（END）");
-                return mapper.createObjectNode();
+                return;
             }
 
-            // 处理 BREAK：标记该条件节点的所有后继节点（包括间接后继）为跳过
+            // 处理 BREAK：标记该条件节点的所有后继节点为跳过
             if (!executionResult.continueExecution()) {
                 log.debug("条件判断结果：结束当前分支（BREAK），跳过节点 {} 的所有后继节点", currentNodeId);
-                Set<String> allSuccessors = findAllSuccessors(currentNodeId, nodeMap);
-                skippedNodes.addAll(allSuccessors);
-                log.debug("已标记 {} 个节点为跳过: {}", allSuccessors.size(), allSuccessors);
+                skippedNodes.addAll(findAllSuccessors(currentNodeId, nodeMap));
                 continue;
             }
-
-            if (executionResult.result() != null) {
-                if (currentNode.getNextNodeId() == null || currentNode.getNextNodeId().isEmpty()) {
-                    finalResults.add(mapper.valueToTree(executionResult.result()));
-                }
-            } else {
-                log.debug("跳过节点{}的后续分支", currentNodeId);
-            }
-        }
-
-        return buildFinalResult(finalResults);
-    }
-
-    /**
-     * 构建最终结果
-     * 根据结果数量返回不同的 JSON 结构
-     * @param finalResults 最终结果列表
-     * @return JSON 节点
-     */
-    private JsonNode buildFinalResult(List<JsonNode> finalResults) {
-        if (finalResults.isEmpty()) {
-            return mapper.createObjectNode();
-        } else if (finalResults.size() == 1) {
-            return finalResults.get(0);
-        } else {
-            return mapper.valueToTree(finalResults);
         }
     }
 
@@ -569,31 +527,37 @@ public class WorkflowUtil {
      * @param result 方法调用结果
      */
     private void recordMethodParameters(Node node, Object[] parameters, Object result) {
-        List<String> parameterNames;
+        Map<String, Object> methodParameters = new HashMap<>();
 
         if (node.getBotActionName() != null){
             List<DataMap> dataMaps = node.getDataMaps();
             List<NodeDefaults> nodeDefaults = node.getNodeDefaults();
-            parameterNames = Stream.concat(
+            // 收集 (paramIndex, paramName) 对，按 paramIndex 排序后用 paramIndex 取值
+            Stream.<Map.Entry<Integer, String>>concat(
                     dataMaps != null ? dataMaps.stream()
                             .filter(dm -> dm.getParamIndex() != null)
                             .sorted(Comparator.comparing(DataMap::getParamIndex))
-                            .map(DataMap::getTargetParamName) : Stream.empty(),
+                            .map(dm -> new AbstractMap.SimpleEntry<>(dm.getParamIndex(), dm.getTargetParamName()))
+                            : Stream.empty(),
                     nodeDefaults != null ? nodeDefaults.stream()
                             .filter(nd -> nd.getParamIndex() != null)
                             .sorted(Comparator.comparing(NodeDefaults::getParamIndex))
-                            .map(NodeDefaults::getParamName) : Stream.empty()
-            ).toList();
+                            .map(nd -> new AbstractMap.SimpleEntry<>(nd.getParamIndex(), nd.getParamName()))
+                            : Stream.empty()
+            ).forEach(entry -> {
+                int paramIndex = entry.getKey();
+                if (paramIndex >= 0 && paramIndex < parameters.length) {
+                    methodParameters.put(entry.getValue(), parameters[paramIndex]);
+                }
+            });
         } else {
             List<ParameterInfo> parameterInfos = node.getMethodInfo().getParameters();
             parameterInfos.sort(Comparator.comparing(ParameterInfo::getOrder,
                     Comparator.nullsFirst(Comparator.naturalOrder())));
-            parameterNames = new ArrayList<>(parameterInfos.stream().map(ParameterInfo::getName).toList());
-        }
-
-        Map<String, Object> methodParameters = new HashMap<>();
-        for (int i = 0; i < parameters.length; i++) {
-            methodParameters.put(parameterNames.get(i), parameters[i]);
+            List<String> parameterNames = new ArrayList<>(parameterInfos.stream().map(ParameterInfo::getName).toList());
+            for (int i = 0; i < parameterNames.size(); i++) {
+                methodParameters.put(parameterNames.get(i), parameters[i]);
+            }
         }
 
         // 发布节点输入输出事件（由 Listener 驱动 BigText 处理和日志持久化）
