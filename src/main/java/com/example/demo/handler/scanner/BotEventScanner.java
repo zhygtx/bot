@@ -126,25 +126,15 @@ public class BotEventScanner {
     /**
      * 从事件类名自动推导 eventType。
      * <p>
-     * 规则：去掉类名末尾的 "Event"，首字母转小写，其余保持 camelCase。
+     * 直接使用事件类的原始类名（SimpleName），不做任何变换。
      * <ul>
-     *   <li>{@code GroupMessageEvent} → {@code groupMessage}</li>
-     *   <li>{@code PrivateFriendMessageEvent} → {@code privateFriendMessage}</li>
-     *   <li>{@code GroupAdminSetNoticeEvent} → {@code groupAdminSetNotice}</li>
-     *   <li>{@code HeartbeatMetaEvent} → {@code heartbeatMeta}</li>
+     *   <li>{@code GroupMessageEvent} → {@code GroupMessageEvent}</li>
+     *   <li>{@code PrivateFriendMessageEvent} → {@code PrivateFriendMessageEvent}</li>
+     *   <li>{@code BaseEvent} → {@code BaseEvent}</li>
      * </ul>
      */
     private String deriveEventType(Class<?> eventClass) {
-        String simpleName = eventClass.getSimpleName();
-        // 去掉末尾的 "Event"
-        if (simpleName.endsWith("Event")) {
-            simpleName = simpleName.substring(0, simpleName.length() - "Event".length());
-        }
-        // 首字母转小写
-        if (!simpleName.isEmpty()) {
-            simpleName = Character.toLowerCase(simpleName.charAt(0)) + simpleName.substring(1);
-        }
-        return simpleName;
+        return eventClass.getSimpleName();
     }
 
     /**

@@ -2,6 +2,7 @@ package com.example.demo.handler;
 
 
 import com.example.demo.annotation.BotEvent;
+import com.github.zhygtx.napcat.event.BaseEvent;
 import com.github.zhygtx.napcat.event.EventFilter;
 import com.github.zhygtx.napcat.event.OneBotEventListener;
 import com.github.zhygtx.napcat.event.message.*;
@@ -30,6 +31,16 @@ public class EventHandler implements OneBotEventListener {
         return ((botQQ, event) -> !(event instanceof MessageEvent && botQQ == ((MessageEvent) event).getUserId()) || event instanceof MessageSentEvent);
     }
 
+    @BotEvent(
+            name = "任意事件",
+            categories = {"任意事件"},
+            description = "任意事件时调用",
+            order = -1
+    )
+    @Override
+    public void onAnyEvent(Long botQQ, BaseEvent event){
+        botWorkflowHandler.handleBotEvent(botQQ, event);
+    }
 
     /**
      * 好友添加时调用。
@@ -43,7 +54,7 @@ public class EventHandler implements OneBotEventListener {
     )
     @Override
     public void onFriendAdd(Long botQQ, FriendAddNoticeEvent event) {
-        OneBotEventListener.super.onFriendAdd(botQQ, event);
+        botWorkflowHandler.handleBotEvent(botQQ, event);
     }
 
     /**
@@ -58,7 +69,7 @@ public class EventHandler implements OneBotEventListener {
     )
     @Override
     public void onFriendRecall(Long botQQ, FriendRecallNoticeEvent event) {
-        OneBotEventListener.super.onFriendRecall(botQQ, event);
+        botWorkflowHandler.handleBotEvent(botQQ, event);
     }
 
     /**
@@ -73,7 +84,7 @@ public class EventHandler implements OneBotEventListener {
     )
     @Override
     public void onFriendRequest(Long botQQ, FriendRequestEvent event) {
-        OneBotEventListener.super.onFriendRequest(botQQ, event);
+        botWorkflowHandler.handleBotEvent(botQQ, event);
     }
 
     /**
@@ -88,7 +99,7 @@ public class EventHandler implements OneBotEventListener {
     )
     @Override
     public void onGroupAddRequest(Long botQQ, GroupAddRequestEvent event) {
-        OneBotEventListener.super.onGroupAddRequest(botQQ, event);
+        botWorkflowHandler.handleBotEvent(botQQ, event);
     }
 
     /**
@@ -103,7 +114,7 @@ public class EventHandler implements OneBotEventListener {
     )
     @Override
     public void onGroupAdmin(Long botQQ, GroupAdminNoticeEvent event) {
-        OneBotEventListener.super.onGroupAdmin(botQQ, event);
+        botWorkflowHandler.handleBotEvent(botQQ, event);
     }
 
     /**
@@ -118,7 +129,7 @@ public class EventHandler implements OneBotEventListener {
     )
     @Override
     public void onGroupAdminSet(Long botQQ, GroupAdminSetNoticeEvent event) {
-        OneBotEventListener.super.onGroupAdminSet(botQQ, event);
+        botWorkflowHandler.handleBotEvent(botQQ, event);
     }
 
     /**
@@ -133,7 +144,7 @@ public class EventHandler implements OneBotEventListener {
     )
     @Override
     public void onGroupAdminUnset(Long botQQ, GroupAdminUnsetNoticeEvent event) {
-        OneBotEventListener.super.onGroupAdminUnset(botQQ, event);
+        botWorkflowHandler.handleBotEvent(botQQ, event);
     }
 
     /**
@@ -148,7 +159,7 @@ public class EventHandler implements OneBotEventListener {
     )
     @Override
     public void onGroupBan(Long botQQ, GroupBanNoticeEvent event) {
-        OneBotEventListener.super.onGroupBan(botQQ, event);
+        botWorkflowHandler.handleBotEvent(botQQ, event);
     }
 
     /**
@@ -164,7 +175,7 @@ public class EventHandler implements OneBotEventListener {
     )
     @Override
     public void onGroupBanBan(Long botQQ, GroupBanBanNoticeEvent event) {
-        OneBotEventListener.super.onGroupBanBan(botQQ, event);
+        botWorkflowHandler.handleBotEvent(botQQ, event);
     }
 
     /**
@@ -179,7 +190,7 @@ public class EventHandler implements OneBotEventListener {
     )
     @Override
     public void onGroupBanLiftBan(Long botQQ, GroupBanLiftBanNoticeEvent event) {
-        OneBotEventListener.super.onGroupBanLiftBan(botQQ, event);
+        botWorkflowHandler.handleBotEvent(botQQ, event);
     }
 
     /**
@@ -194,7 +205,7 @@ public class EventHandler implements OneBotEventListener {
     )
     @Override
     public void onGroupCard(Long botQQ, GroupCardNoticeEvent event) {
-        OneBotEventListener.super.onGroupCard(botQQ, event);
+        botWorkflowHandler.handleBotEvent(botQQ, event);
     }
 
     /**
@@ -209,7 +220,7 @@ public class EventHandler implements OneBotEventListener {
     )
     @Override
     public void onGroupDecrease(Long botQQ, GroupDecreaseNoticeEvent event) {
-        OneBotEventListener.super.onGroupDecrease(botQQ, event);
+        botWorkflowHandler.handleBotEvent(botQQ, event);
     }
 
     /**
@@ -224,7 +235,7 @@ public class EventHandler implements OneBotEventListener {
     )
     @Override
     public void onGroupDecreaseKick(Long botQQ, GroupDecreaseKickNoticeEvent event) {
-        OneBotEventListener.super.onGroupDecreaseKick(botQQ, event);
+        botWorkflowHandler.handleBotEvent(botQQ, event);
     }
 
     /**
@@ -239,7 +250,7 @@ public class EventHandler implements OneBotEventListener {
     )
     @Override
     public void onGroupDecreaseKickMe(Long botQQ, GroupDecreaseKickMeNoticeEvent event) {
-        OneBotEventListener.super.onGroupDecreaseKickMe(botQQ, event);
+        botWorkflowHandler.handleBotEvent(botQQ, event);
     }
 
     /**
@@ -254,7 +265,7 @@ public class EventHandler implements OneBotEventListener {
     )
     @Override
     public void onGroupDecreaseLeave(Long botQQ, GroupDecreaseLeaveNoticeEvent event) {
-        OneBotEventListener.super.onGroupDecreaseLeave(botQQ, event);
+        botWorkflowHandler.handleBotEvent(botQQ, event);
     }
 
     /**
@@ -269,7 +280,7 @@ public class EventHandler implements OneBotEventListener {
     )
     @Override
     public void onGroupEssence(Long botQQ, GroupEssenceNoticeEvent event) {
-        OneBotEventListener.super.onGroupEssence(botQQ, event);
+        botWorkflowHandler.handleBotEvent(botQQ, event);
     }
 
     /**
@@ -284,7 +295,7 @@ public class EventHandler implements OneBotEventListener {
     )
     @Override
     public void onGroupEssenceAdd(Long botQQ, GroupEssenceAddNoticeEvent event) {
-        OneBotEventListener.super.onGroupEssenceAdd(botQQ, event);
+        botWorkflowHandler.handleBotEvent(botQQ, event);
     }
 
     /**
@@ -299,7 +310,7 @@ public class EventHandler implements OneBotEventListener {
     )
     @Override
     public void onGroupIncrease(Long botQQ, GroupIncreaseNoticeEvent event) {
-        OneBotEventListener.super.onGroupIncrease(botQQ, event);
+        botWorkflowHandler.handleBotEvent(botQQ, event);
     }
 
     /**
@@ -314,7 +325,7 @@ public class EventHandler implements OneBotEventListener {
     )
     @Override
     public void onGroupIncreaseApprove(Long botQQ, GroupIncreaseApproveNoticeEvent event) {
-        OneBotEventListener.super.onGroupIncreaseApprove(botQQ, event);
+        botWorkflowHandler.handleBotEvent(botQQ, event);
     }
 
     /**
@@ -329,7 +340,7 @@ public class EventHandler implements OneBotEventListener {
     )
     @Override
     public void onGroupIncreaseInvite(Long botQQ, GroupIncreaseInviteNoticeEvent event) {
-        OneBotEventListener.super.onGroupIncreaseInvite(botQQ, event);
+        botWorkflowHandler.handleBotEvent(botQQ, event);
     }
 
     /**
@@ -344,7 +355,7 @@ public class EventHandler implements OneBotEventListener {
     )
     @Override
     public void onGroupInviteRequest(Long botQQ, GroupInviteRequestEvent event) {
-        OneBotEventListener.super.onGroupInviteRequest(botQQ, event);
+        botWorkflowHandler.handleBotEvent(botQQ, event);
     }
 
     /**
@@ -359,7 +370,7 @@ public class EventHandler implements OneBotEventListener {
     )
     @Override
     public void onGroupMessage(Long botQQ, GroupMessageEvent event) {
-        OneBotEventListener.super.onGroupMessage(botQQ, event);
+        botWorkflowHandler.handleBotEvent(botQQ, event);
     }
 
     /**
@@ -374,7 +385,7 @@ public class EventHandler implements OneBotEventListener {
     )
     @Override
     public void onGroupMessageSent(Long botQQ, GroupMessageSentEvent event) {
-        OneBotEventListener.super.onGroupMessageSent(botQQ, event);
+        botWorkflowHandler.handleBotEvent(botQQ, event);
     }
 
     /**
@@ -389,7 +400,7 @@ public class EventHandler implements OneBotEventListener {
     )
     @Override
     public void onGroupMsgEmojiLike(Long botQQ, GroupMsgEmojiLikeNoticeEvent event) {
-        OneBotEventListener.super.onGroupMsgEmojiLike(botQQ, event);
+        botWorkflowHandler.handleBotEvent(botQQ, event);
     }
 
     /**
@@ -404,7 +415,7 @@ public class EventHandler implements OneBotEventListener {
     )
     @Override
     public void onGroupNormalMessage(Long botQQ, GroupNormalMessageEvent event) {
-        OneBotEventListener.super.onGroupNormalMessage(botQQ, event);
+        botWorkflowHandler.handleBotEvent(botQQ, event);
     }
 
     /**
@@ -419,7 +430,7 @@ public class EventHandler implements OneBotEventListener {
     )
     @Override
     public void onGroupNormalMessageSent(Long botQQ, GroupNormalMessageSentEvent event) {
-        OneBotEventListener.super.onGroupNormalMessageSent(botQQ, event);
+        botWorkflowHandler.handleBotEvent(botQQ, event);
     }
 
     /**
@@ -434,7 +445,7 @@ public class EventHandler implements OneBotEventListener {
     )
     @Override
     public void onGroupRecall(Long botQQ, GroupRecallNoticeEvent event) {
-        OneBotEventListener.super.onGroupRecall(botQQ, event);
+        botWorkflowHandler.handleBotEvent(botQQ, event);
     }
 
     /**
@@ -449,7 +460,7 @@ public class EventHandler implements OneBotEventListener {
     )
     @Override
     public void onGroupRequest(Long botQQ, GroupRequestEvent event) {
-        OneBotEventListener.super.onGroupRequest(botQQ, event);
+        botWorkflowHandler.handleBotEvent(botQQ, event);
     }
 
     /**
@@ -464,7 +475,7 @@ public class EventHandler implements OneBotEventListener {
     )
     @Override
     public void onGroupTitle(Long botQQ, TitleNoticeEvent event) {
-        OneBotEventListener.super.onGroupTitle(botQQ, event);
+        botWorkflowHandler.handleBotEvent(botQQ, event);
     }
 
     /**
@@ -479,7 +490,7 @@ public class EventHandler implements OneBotEventListener {
     )
     @Override
     public void onGroupUpload(Long botQQ, GroupUploadNoticeEvent event) {
-        OneBotEventListener.super.onGroupUpload(botQQ, event);
+        botWorkflowHandler.handleBotEvent(botQQ, event);
     }
 
     /**
@@ -494,7 +505,7 @@ public class EventHandler implements OneBotEventListener {
     )
     @Override
     public void onInputStatus(Long botQQ, InputStatusNoticeEvent event) {
-        OneBotEventListener.super.onInputStatus(botQQ, event);
+        botWorkflowHandler.handleBotEvent(botQQ, event);
     }
 
     /**
@@ -509,7 +520,7 @@ public class EventHandler implements OneBotEventListener {
     )
     @Override
     public void onMessageSent(Long botQQ, MessageSentEvent event) {
-        OneBotEventListener.super.onMessageSent(botQQ, event);
+        botWorkflowHandler.handleBotEvent(botQQ, event);
     }
 
     /**
@@ -524,7 +535,7 @@ public class EventHandler implements OneBotEventListener {
     )
     @Override
     public void onPoke(Long botQQ, PokeNoticeEvent event) {
-        OneBotEventListener.super.onPoke(botQQ, event);
+        botWorkflowHandler.handleBotEvent(botQQ, event);
     }
 
     /**
@@ -539,7 +550,7 @@ public class EventHandler implements OneBotEventListener {
     )
     @Override
     public void onPrivateFriendMessage(Long botQQ, PrivateFriendMessageEvent event) {
-        botWorkflowHandler.handleBotEvent(botQQ, "privateFriendMessage", event);
+        botWorkflowHandler.handleBotEvent(botQQ, event);
     }
 
     /**
@@ -554,7 +565,7 @@ public class EventHandler implements OneBotEventListener {
     )
     @Override
     public void onPrivateFriendMessageSent(Long botQQ, PrivateFriendMessageSentEvent event) {
-        OneBotEventListener.super.onPrivateFriendMessageSent(botQQ, event);
+        botWorkflowHandler.handleBotEvent(botQQ, event);
     }
 
     /**
@@ -569,7 +580,7 @@ public class EventHandler implements OneBotEventListener {
     )
     @Override
     public void onPrivateGroupMessage(Long botQQ, PrivateGroupMessageEvent event) {
-        OneBotEventListener.super.onPrivateGroupMessage(botQQ, event);
+        botWorkflowHandler.handleBotEvent(botQQ, event);
     }
 
     /**
@@ -584,7 +595,7 @@ public class EventHandler implements OneBotEventListener {
     )
     @Override
     public void onPrivateGroupMessageSent(Long botQQ, PrivateGroupMessageSentEvent event) {
-        OneBotEventListener.super.onPrivateGroupMessageSent(botQQ, event);
+        botWorkflowHandler.handleBotEvent(botQQ, event);
     }
 
     /**
@@ -599,7 +610,7 @@ public class EventHandler implements OneBotEventListener {
     )
     @Override
     public void onPrivateMessage(Long botQQ, PrivateMessageEvent event) {
-        botWorkflowHandler.handleBotEvent(botQQ, "privateMessage", event);
+        botWorkflowHandler.handleBotEvent(botQQ, event);
     }
 
     /**
@@ -614,7 +625,7 @@ public class EventHandler implements OneBotEventListener {
     )
     @Override
     public void onPrivateMessageSent(Long botQQ, PrivateMessageSentEvent event) {
-        OneBotEventListener.super.onPrivateMessageSent(botQQ, event);
+        botWorkflowHandler.handleBotEvent(botQQ, event);
     }
 
     /**
@@ -629,6 +640,6 @@ public class EventHandler implements OneBotEventListener {
     )
     @Override
     public void onProfileLike(Long botQQ, ProfileLikeNoticeEvent event) {
-        OneBotEventListener.super.onProfileLike(botQQ, event);
+        botWorkflowHandler.handleBotEvent(botQQ, event);
     }
 }
