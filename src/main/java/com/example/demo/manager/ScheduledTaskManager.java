@@ -1,7 +1,7 @@
 package com.example.demo.manager;
 
 import com.example.demo.pojo.entity.workflow.WorkflowInfo;
-import com.example.demo.service.RedisWorkflowService;
+import com.example.demo.service.WorkflowCacheService;
 import com.example.demo.service.WorkflowService;
 import com.example.demo.util.WorkflowUtil;
 import jakarta.annotation.PostConstruct;
@@ -19,16 +19,16 @@ import java.util.List;
 @Slf4j
 public class ScheduledTaskManager {
 
-    private final RedisWorkflowService redisWorkflowService;
+    private final WorkflowCacheService workflowCacheService;
     private final WorkflowService workflowService;
     private final WorkflowUtil workflowUtil;
     private final RedisTemplate<String, Object> redisTemplate;
 
-    public ScheduledTaskManager(RedisWorkflowService redisWorkflowService, 
+    public ScheduledTaskManager(WorkflowCacheService workflowCacheService, 
                                @org.springframework.context.annotation.Lazy WorkflowService workflowService, 
                                WorkflowUtil workflowUtil,
                                RedisTemplate<String, Object> redisTemplate) {
-        this.redisWorkflowService = redisWorkflowService;
+        this.workflowCacheService = workflowCacheService;
         this.workflowService = workflowService;
         this.workflowUtil = workflowUtil;
         this.redisTemplate = redisTemplate;
@@ -44,7 +44,7 @@ public class ScheduledTaskManager {
             log.info("开始初始化定时任务...");
             List<WorkflowInfo> scheduledTasks = workflowService.findAllScheduledTask();
             for (WorkflowInfo workflow : scheduledTasks) {
-                redisWorkflowService.addScheduledTask(workflow);
+                workflowCacheService.addScheduledTask(workflow);
             }
             log.info("定时任务初始化完成");
         } catch (Exception e) {
@@ -60,7 +60,7 @@ public class ScheduledTaskManager {
         try {
             long now = System.currentTimeMillis();
             // 获取所有定时任务
-            List<WorkflowInfo> allTasks = redisWorkflowService.getScheduledTasks();
+            List<WorkflowInfo> allTasks = workflowCacheService.getScheduledTasks();
             
             if (allTasks.isEmpty()) {
                 return;
@@ -83,14 +83,14 @@ public class ScheduledTaskManager {
                     // 检查工作流是否仍存在于定时任务中（节点执行失败时editDisableReason已将其从Redis移除）
                     if (redisTemplate.opsForZSet().score("scheduled_tasks", workflow) != null) {
                         // 执行成功，移除旧任务并重新添加（更新下次执行时间）
-                        redisWorkflowService.removeScheduledTask(workflowId);
-                        redisWorkflowService.addScheduledTask(workflow);
+                        workflowCacheService.removeScheduledTask(workflowId);
+                        workflowCacheService.addScheduledTask(workflow);
                     }
                 } catch (Exception e) {
                     log.error("执行定时任务失败：workflowId={}", workflowId, e);
                     workflowService.editDisableReason(workflowId, "定时任务执行出错:" + e.getMessage());
                     // 执行出错时移除定时任务
-                    redisWorkflowService.removeScheduledTask(workflowId);
+                    workflowCacheService.removeScheduledTask(workflowId);
                 }
             }
         } catch (Exception e) {

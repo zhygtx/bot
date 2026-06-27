@@ -31,6 +31,7 @@ public final class EventFieldDescription {
         put("BaseEvent.time", "事件发生的时间戳（秒）");
         put("BaseEvent.selfId", "收到事件的机器人 QQ 号");
         put("BaseEvent.postType", "事件类型（message / message_sent / notice / request / meta_event）");
+        put("BaseEvent.triggeredTypes", "当前事件会触发的回调类型列表");
 
 
         // ================================================================

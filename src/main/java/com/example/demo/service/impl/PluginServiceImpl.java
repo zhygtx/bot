@@ -6,7 +6,7 @@ import com.example.demo.pojo.dto.PluginInfoDto;
 import com.example.demo.pojo.entity.Result;
 import com.example.demo.pojo.entity.plugin.*;
 import com.example.demo.service.PluginService;
-import com.example.demo.service.RedisWorkflowService;
+import com.example.demo.service.WorkflowCacheService;
 import com.example.demo.util.MD5Util;
 import com.example.demo.util.PluginUtil;
 import com.example.demo.util.WorkflowUtil;
@@ -42,9 +42,9 @@ public class PluginServiceImpl implements PluginService {
     private final AttributeMapper attributeMapper;
     private final WorkflowUtil workflowUtil;
     private final WorkflowInfoMapper workflowInfoMapper;
-    private final RedisWorkflowService redisWorkflowService;
+    private final WorkflowCacheService workflowCacheService;
 
-    public PluginServiceImpl(PluginUtil pluginUtil, PluginMapper pluginMapper, EntityInfoMapper entityInfoMapper, MethodInfoMapper methodInfoMapper, MethodClassInfoMapper methodClassInfoMapper, ParameterInfoMapper parameterInfoMapper, PluginVersionMapper pluginVersionMapper, AttributeMapper attributeMapper, WorkflowUtil workflowUtil, WorkflowInfoMapper workflowInfoMapper, RedisWorkflowService redisWorkflowService) {
+    public PluginServiceImpl(PluginUtil pluginUtil, PluginMapper pluginMapper, EntityInfoMapper entityInfoMapper, MethodInfoMapper methodInfoMapper, MethodClassInfoMapper methodClassInfoMapper, ParameterInfoMapper parameterInfoMapper, PluginVersionMapper pluginVersionMapper, AttributeMapper attributeMapper, WorkflowUtil workflowUtil, WorkflowInfoMapper workflowInfoMapper, WorkflowCacheService workflowCacheService) {
         this.pluginUtil = pluginUtil;
         this.pluginMapper = pluginMapper;
         this.entityInfoMapper = entityInfoMapper;
@@ -55,7 +55,7 @@ public class PluginServiceImpl implements PluginService {
         this.attributeMapper = attributeMapper;
         this.workflowUtil = workflowUtil;
         this.workflowInfoMapper = workflowInfoMapper;
-        this.redisWorkflowService = redisWorkflowService;
+        this.workflowCacheService = workflowCacheService;
     }
 
     /**
@@ -233,7 +233,7 @@ public class PluginServiceImpl implements PluginService {
         log.info("已清理插件 {} 的所有类加载器缓存", id);
             
         // 3. 从 Redis 中删除相关工作流缓存
-        redisWorkflowService.removeWorkflowsByPluginId(id);
+        workflowCacheService.removeWorkflowsByPluginId(id);
             
         // 4. 删除所有版本的文件
         pluginInfo.getPluginVersionList().forEach(version -> {

@@ -1,7 +1,7 @@
 package com.example.demo.handler;
 
 import com.example.demo.pojo.entity.workflow.WorkflowInfo;
-import com.example.demo.service.RedisWorkflowService;
+import com.example.demo.service.WorkflowCacheService;
 import com.example.demo.util.WorkflowUtil;
 import com.github.zhygtx.napcat.event.BaseEvent;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +21,7 @@ import java.util.WeakHashMap;
 @Slf4j
 public class BotWorkflowHandler {
 
-    private final RedisWorkflowService redisWorkflowService;
+    private final WorkflowCacheService workflowCacheService;
     private final WorkflowUtil workflowUtil;
 
     /**
@@ -32,8 +32,8 @@ public class BotWorkflowHandler {
     private final Map<BaseEvent, Boolean> processedEvents =
             Collections.synchronizedMap(new WeakHashMap<>());
 
-    public BotWorkflowHandler(RedisWorkflowService redisWorkflowService, WorkflowUtil workflowUtil) {
-        this.redisWorkflowService = redisWorkflowService;
+    public BotWorkflowHandler(WorkflowCacheService workflowCacheService, WorkflowUtil workflowUtil) {
+        this.workflowCacheService = workflowCacheService;
         this.workflowUtil = workflowUtil;
     }
 
@@ -68,7 +68,7 @@ public class BotWorkflowHandler {
             // 沿继承链向上查找直到 BaseEvent
             while (clazz != null && BaseEvent.class.isAssignableFrom(clazz)) {
                 List<WorkflowInfo> workflows =
-                        redisWorkflowService.getWorkflowsByBotEvent(botQQ, clazz.getSimpleName());
+                        workflowCacheService.getWorkflowsByBotEvent(botQQ, clazz.getSimpleName());
                 for (WorkflowInfo wf : workflows) {
                     if (seenIds.add(wf.getId())) {
                         executeWorkflow(wf, event);
@@ -99,7 +99,7 @@ public class BotWorkflowHandler {
             log.info("处理BOT事件: botQQ={}, eventType={}", botQQ, eventType);
             
             // 从Redis获取相关工作流
-            List<WorkflowInfo> workflows = redisWorkflowService.getWorkflowsByBotEvent(botQQ, eventType);
+            List<WorkflowInfo> workflows = workflowCacheService.getWorkflowsByBotEvent(botQQ, eventType);
             
             if (workflows.isEmpty()) {
                 log.info("未找到与BOT事件 {}:{} 相关的工作流", botQQ, eventType);

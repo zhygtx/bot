@@ -101,6 +101,12 @@ public interface WorkflowInfoMapper {
     WorkflowInfo getById(String id);
 
     /**
+     * 查询所有启用且有 botEvent 节点的工作流（含完整关联数据，用于本地缓存初始化）
+     * @return 工作流列表
+     */
+    List<WorkflowInfo> selectAllEnabledWithBotEvent();
+
+    /**
      * 查询所有定时任务
      * @return 定时任务列表
      */

@@ -393,6 +393,28 @@
         ORDER BY w.create_time DESC
     </select>
 
+    <!--
+        加载所有启用且有 botEvent 节点的工作流（含完整关联数据，用于本地缓存初始化）。
+        注意：节点类型过滤必须放在 EXISTS 子查询中，而非 WHERE 条件，
+        否则 LEFT JOIN node n 的结果集会丢失非 botEvent 的 pluginMethod 等执行节点，
+        导致拓扑排序时 nodeToInDegree.get(nextNodeId) 返回 null 引发 NPE。
+    -->
+    <select id="selectAllEnabledWithBotEvent" resultMap="workflowInfoMap">
+        <include refid="select"/>
+        WHERE w.enabled = true
+          AND w.available = true
+          AND w.disable_reason IS NULL
+          AND EXISTS (
+              SELECT 1 FROM node n2
+              WHERE n2.workflow_id = w.id
+                AND n2.node_type = 'botEvent'
+                AND n2.event_type != 'scheduledEvent'
+                AND n2.bot_qq IS NOT NULL
+                AND n2.event_type IS NOT NULL
+          )
+        ORDER BY w.create_time DESC
+    </select>
+
     <select id="selectAllScheduledTask" resultType="com.example.demo.pojo.entity.workflow.WorkflowInfo">
         <include refid="select"/>
         WHERE w.enabled = true

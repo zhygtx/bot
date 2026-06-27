@@ -4,6 +4,7 @@ import com.example.demo.mapper.log.WorkflowLogMapper;
 import com.example.demo.mapper.workflow.*;
 import com.example.demo.pojo.dto.WorkflowInfoDto;
 import com.example.demo.pojo.entity.workflow.*;
+import com.example.demo.service.WorkflowCacheService;
 import com.example.demo.service.WorkflowService;
 import com.example.demo.util.WorkflowUtil;
 import com.github.pagehelper.PageHelper;
@@ -31,11 +32,11 @@ public class WorkflowServiceImpl implements WorkflowService {
     private final NodeMapper nodeMapper;
     private final ConditionMapper conditionMapper;
     private final DataMapMapper dataMapMapper;
-    private final RedisWorkflowServiceImpl redisWorkflowServiceImpl;
+    private final WorkflowCacheService workflowCacheService;
     private final WorkflowLogMapper workflowLogMapper;
     private final WorkflowCanvasViewMapper workflowCanvasViewMapper;
 
-    public WorkflowServiceImpl(WorkflowInfoMapper workflowInfoMapper, NodeDefaultsMapper nodeDefaultsMapper, NodeNextRelationMapper nodeNextRelationMapper, NodePreRelationMapper nodePreRelationMapper, NodeMapper nodeMapper, ConditionMapper conditionMapper, DataMapMapper dataMapMapper, WorkflowUtil workflowUtil, RedisWorkflowServiceImpl redisWorkflowServiceImpl, WorkflowLogMapper workflowLogMapper, WorkflowCanvasViewMapper workflowCanvasViewMapper) {
+    public WorkflowServiceImpl(WorkflowInfoMapper workflowInfoMapper, NodeDefaultsMapper nodeDefaultsMapper, NodeNextRelationMapper nodeNextRelationMapper, NodePreRelationMapper nodePreRelationMapper, NodeMapper nodeMapper, ConditionMapper conditionMapper, DataMapMapper dataMapMapper, WorkflowUtil workflowUtil, WorkflowCacheService workflowCacheService, WorkflowLogMapper workflowLogMapper, WorkflowCanvasViewMapper workflowCanvasViewMapper) {
         this.workflowInfoMapper = workflowInfoMapper;
         this.nodeDefaultsMapper = nodeDefaultsMapper;
         this.nodeNextRelationMapper = nodeNextRelationMapper;
@@ -44,7 +45,7 @@ public class WorkflowServiceImpl implements WorkflowService {
         this.conditionMapper = conditionMapper;
         this.dataMapMapper = dataMapMapper;
         this.workflowUtil = workflowUtil;
-        this.redisWorkflowServiceImpl = redisWorkflowServiceImpl;
+        this.workflowCacheService = workflowCacheService;
         this.workflowLogMapper = workflowLogMapper;
         this.workflowCanvasViewMapper = workflowCanvasViewMapper;
     }
@@ -66,9 +67,9 @@ public class WorkflowServiceImpl implements WorkflowService {
             WorkflowInfo savedWorkflow = workflowInfoMapper.getById(workflowInfo.getId());
             if (savedWorkflow != null) {
                 // 添加到Redis
-                redisWorkflowServiceImpl.addWorkflowToRedis(savedWorkflow);
+                workflowCacheService.addWorkflowToCache(savedWorkflow);
                 // 处理定时任务
-                redisWorkflowServiceImpl.addScheduledTask(savedWorkflow);
+                workflowCacheService.addScheduledTask(savedWorkflow);
             }
         }
         return result;
@@ -85,9 +86,9 @@ public class WorkflowServiceImpl implements WorkflowService {
         int result = workflowInfoMapper.deleteById(id);
         if (result > 0) {
             // 从Redis中删除
-            redisWorkflowServiceImpl.removeWorkflowFromRedis(id);
+            workflowCacheService.removeWorkflowFromCache(id);
             // 移除定时任务
-            redisWorkflowServiceImpl.removeScheduledTask(id);
+            workflowCacheService.removeScheduledTask(id);
         }
         return result;
     }
@@ -103,8 +104,8 @@ public class WorkflowServiceImpl implements WorkflowService {
         workflowInfo.setUpdateTime(LocalDateTime.now());
         
         // 先从Redis中删除旧数据
-        redisWorkflowServiceImpl.removeWorkflowFromRedis(workflowInfo.getId());
-        redisWorkflowServiceImpl.removeScheduledTask(workflowInfo.getId());
+        workflowCacheService.removeWorkflowFromCache(workflowInfo.getId());
+        workflowCacheService.removeScheduledTask(workflowInfo.getId());
         
         workflowInfoMapper.deleteById(workflowInfo.getId());
         int result = insert(workflowInfo);
@@ -114,9 +115,9 @@ public class WorkflowServiceImpl implements WorkflowService {
             WorkflowInfo updatedWorkflow = workflowInfoMapper.getById(workflowInfo.getId());
             if (updatedWorkflow != null) {
                 // 添加到Redis
-                redisWorkflowServiceImpl.addWorkflowToRedis(updatedWorkflow);
+                workflowCacheService.addWorkflowToCache(updatedWorkflow);
                 // 更新定时任务
-                redisWorkflowServiceImpl.addScheduledTask(updatedWorkflow);
+                workflowCacheService.addScheduledTask(updatedWorkflow);
             }
         }
         return result;
@@ -133,12 +134,12 @@ public class WorkflowServiceImpl implements WorkflowService {
         if (enabled){
             WorkflowInfo workflowInfo = workflowInfoMapper.getById(id);
             if (workflowInfo != null) {
-                redisWorkflowServiceImpl.addWorkflowToRedis(workflowInfo);
-                redisWorkflowServiceImpl.addScheduledTask(workflowInfo);
+                workflowCacheService.addWorkflowToCache(workflowInfo);
+                workflowCacheService.addScheduledTask(workflowInfo);
             }
         }else {
-            redisWorkflowServiceImpl.removeWorkflowFromRedis(id);
-            redisWorkflowServiceImpl.removeScheduledTask(id);
+            workflowCacheService.removeWorkflowFromCache(id);
+            workflowCacheService.removeScheduledTask(id);
         }
         return workflowInfoMapper.updateEnabled(id, enabled);
     }
@@ -152,8 +153,8 @@ public class WorkflowServiceImpl implements WorkflowService {
     @Transactional
     public void editDisableReason(String id, String disableReason) {
         workflowInfoMapper.updateAvailableByWorkflowId(id, disableReason);
-        redisWorkflowServiceImpl.removeScheduledTask(id);
-        redisWorkflowServiceImpl.removeWorkflowFromRedis(id);
+        workflowCacheService.removeScheduledTask(id);
+        workflowCacheService.removeWorkflowFromCache(id);
     }
 
 
