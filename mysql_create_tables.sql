@@ -294,3 +294,21 @@ CREATE TABLE `big_text` (
   `key` VARCHAR(128) NOT NULL PRIMARY KEY COMMENT '大数据引用键',
   `value` LONGTEXT NOT NULL COMMENT '实际数据内容'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='大数据存储表';
+
+# --------------------------------------------------------------------------------------------------------
+
+-- AI 对话轮次与代码存储表
+CREATE TABLE `ai_conversation_turn` (
+  `id`              VARCHAR(64)  NOT NULL PRIMARY KEY COMMENT '记录主键（UUID）',
+  `conversation_id` VARCHAR(64)  NOT NULL COMMENT '会话 ID，同一对话中所有记录共享此值',
+  `plugin_id`       VARCHAR(64)           COMMENT '关联的插件 ID（首次生成时为 null）',
+  `user_id`         VARCHAR(64)  NOT NULL COMMENT '创建者用户 ID',
+  `round`           INT          NOT NULL COMMENT '对话轮次，从 1 开始',
+  `role`            VARCHAR(16)  NOT NULL COMMENT "'user' | 'assistant'",
+  `content`         TEXT                   COMMENT '用户指令文本（role=user）或 JSON 格式代码数组（role=assistant）',
+  `status`          VARCHAR(16)  NOT NULL DEFAULT 'draft' COMMENT "'draft':历史轮次 'current':当前最新未发布 'published':已编译上传",
+  `create_time`     DATETIME     NOT NULL COMMENT '创建时间',
+  INDEX `idx_conversation` (`conversation_id`),
+  INDEX `idx_plugin_user` (`plugin_id`, `user_id`),
+  INDEX `idx_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='AI 对话轮次与代码存储表';

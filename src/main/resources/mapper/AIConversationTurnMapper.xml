@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.demo.mapper.AIConversationTurnMapper">
+
+    <resultMap id="turnMap" type="com.example.demo.ai.pojo.entity.AIConversationTurn">
+        <id column="id" property="id"/>
+        <result column="conversation_id" property="conversationId"/>
+        <result column="plugin_id" property="pluginId"/>
+        <result column="user_id" property="userId"/>
+        <result column="round" property="round"/>
+        <result column="role" property="role"/>
+        <result column="content" property="content"/>
+        <result column="status" property="status"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.example.demo.ai.pojo.entity.AIConversationTurn">
+        INSERT INTO ai_conversation_turn
+            (id, conversation_id, plugin_id, user_id, round, role, content, status, create_time)
+        VALUES
+            (#{id}, #{conversationId}, #{pluginId}, #{userId}, #{round}, #{role}, #{content}, #{status}, #{createTime})
+    </insert>
+
+    <select id="selectByConversationId" resultMap="turnMap">
+        SELECT * FROM ai_conversation_turn
+        WHERE conversation_id = #{conversationId}
+        ORDER BY round ASC, create_time ASC
+    </select>
+
+    <select id="selectCurrentByConversationId" resultMap="turnMap">
+        SELECT * FROM ai_conversation_turn
+        WHERE conversation_id = #{conversationId} AND status = 'current' AND role = 'assistant'
+        ORDER BY round ASC
+    </select>
+
+    <select id="selectMaxRound" resultType="java.lang.Integer">
+        SELECT MAX(round) FROM ai_conversation_turn
+        WHERE conversation_id = #{conversationId}
+    </select>
+
+    <select id="selectByConversationIdAndRound" resultMap="turnMap">
+        SELECT * FROM ai_conversation_turn
+        WHERE conversation_id = #{conversationId} AND round = #{round}
+        ORDER BY create_time ASC
+    </select>
+
+    <update id="updateStatusToDraftFromRound">
+        UPDATE ai_conversation_turn
+        SET status = 'draft'
+        WHERE conversation_id = #{conversationId} AND round >= #{round} AND status != 'published'
+    </update>
+
+    <delete id="deleteFromRound">
+        DELETE FROM ai_conversation_turn
+        WHERE conversation_id = #{conversationId} AND round >= #{round}
+    </delete>
+
+    <update id="updateStatus">
+        UPDATE ai_conversation_turn SET status = #{status}, plugin_id = #{pluginId} WHERE id = #{id}
+    </update>
+
+    <select id="selectPublishedByPluginId" resultMap="turnMap">
+        SELECT * FROM ai_conversation_turn
+        WHERE plugin_id = #{pluginId} AND status = 'published'
+        ORDER BY round DESC
+        LIMIT 1
+    </select>
+
+    <select id="selectDistinctConversationIds" resultType="java.lang.String">
+        SELECT DISTINCT conversation_id FROM ai_conversation_turn
+        WHERE user_id = #{userId}
+    </select>
+
+</mapper>

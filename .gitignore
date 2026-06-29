@@ -38,3 +38,5 @@ build/
 /.trae/
 /upload/
 /scripts/
+/src/main/resources/application-ai.yml
+/src/main/resources/application-napcat.yml
