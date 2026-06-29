@@ -78,9 +78,11 @@ public class BotServiceImpl implements BotService {
     @Override
     @Transactional
     public void update(BotInfo botInfo){
+        botInfo.setPathSuffix(botInfo.getBotQQ().toString());
         botMapper.update(botInfo);
         if (botInfo.getPathSuffix() != null){
-            botRegistrar.updateToken(botInfo.getPathSuffix(),botInfo.getToken());
+            botRegistrar.unregister(botInfo.getPathSuffix());
+            botRegistrar.register(botInfo.getPathSuffix(),botInfo.getToken());
         }
     }
 

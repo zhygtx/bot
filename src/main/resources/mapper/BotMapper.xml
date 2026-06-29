@@ -6,11 +6,10 @@
     <update id="update">
         update bot
         <set>
-            <if test="name != null and name != ''">name = #{name}</if>
-            <if test="botQQ != null and botQQ != ''">bot_qq = #{botQQ}</if>
-            <if test="pathSuffix != null and pathSuffix != ''">
-                path_suffix = #{pathSuffix} and token =#{token}
-            </if>
+            <if test="name != null and name != ''">name = #{name},</if>
+            <if test="botQQ != null and botQQ != ''">bot_qq = #{botQQ},</if>
+            <if test="pathSuffix != null and pathSuffix != ''">path_suffix = #{pathSuffix},</if>
+            <if test="token != null and token != ''">token = #{token},</if>
         </set>
         where id = #{id}
     </update>
