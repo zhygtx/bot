@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 /**
  * AI 声明的 Maven 依赖
  */
+@Builder
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

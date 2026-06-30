@@ -20,6 +20,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -33,16 +34,20 @@ import java.util.concurrent.TimeUnit;
 public class PluginCompiler {
 
     /** 编译工作目录基路径 */
-    @Value("${ai.plugin.compiler.work-dir:}")
+    @Value("${plugin.compiler.work-dir}")
     private String workDirBase;
 
     /** 编译超时（秒） */
-    @Value("${ai.plugin.compiler.timeout-seconds:120}")
+    @Value("${plugin.compiler.timeout-seconds}")
     private int timeoutSeconds;
 
     /** Maven 安装路径（可选，默认使用系统 PATH 中的 mvn） */
-    @Value("${ai.plugin.compiler.maven-home:}")
+    @Value("${plugin.compiler.maven-home:}")
     private String mavenHome;
+
+    @Value("${plugin.template.path}")
+    private String templatePath;
+
 
     /**
      * 编译结果
@@ -149,9 +154,14 @@ public class PluginCompiler {
      * 将模板 pom.xml 写入工作目录，并注入 AI 声明的额外依赖
      */
     private void writePomXml(Path workDir, List<Dependency> dependencies) throws IOException {
-        ClassPathResource resource = new ClassPathResource("ai-plugin-template/pom.xml");
+        String path = templatePath;
+        if (path.startsWith("classpath:")) {
+            path = path.substring("classpath:".length());
+        }
+        String pomPath = path + "/pom.xml";
+        ClassPathResource resource = new ClassPathResource(pomPath);
         if (!resource.exists()) {
-            throw new IOException("找不到 pom.xml 模板文件: classpath:ai-plugin-template/pom.xml");
+            throw new IOException("找不到 pom.xml 模板文件: " + pomPath);
         }
 
         // 读取模板内容
@@ -194,7 +204,10 @@ public class PluginCompiler {
      */
     private void writeSourceFiles(Path workDir, List<SourceFile> sourceFiles) throws IOException {
         for (SourceFile sourceFile : sourceFiles) {
-            Path targetFile = workDir.resolve(sourceFile.getFilePath());
+            Path targetFile = workDir.resolve(sourceFile.getFilePath()).normalize();
+            if (!targetFile.startsWith(workDir)) {
+                throw new IOException("非法文件路径: " + sourceFile.getFilePath());
+            }
             Files.createDirectories(targetFile.getParent());
             Files.writeString(targetFile, sourceFile.getContent(), StandardCharsets.UTF_8);
             log.debug("已写入: {}", sourceFile.getFilePath());
@@ -282,21 +295,9 @@ public class PluginCompiler {
     /**
      * 构建 Maven 命令
      */
-    private List<String> buildMvnCommand(Path workDir) {
+    private List<String> buildMvnCommand(Path workDir) throws IOException {
         List<String> command = new ArrayList<>();
-
-        if (mavenHome != null && !mavenHome.isBlank()) {
-            // 指定了 Maven 安装路径
-            String mvn = mavenHome + File.separator + "bin" + File.separator + "mvn";
-            // 在 Windows 下添加 .cmd 后缀
-            if (System.getProperty("os.name").toLowerCase().contains("win")) {
-                mvn += ".cmd";
-            }
-            command.add(mvn);
-        } else {
-            // 使用系统 PATH 中的 mvn
-            command.add("mvn");
-        }
+        command.add(resolveMavenExecutable());
 
         command.add("clean");
         command.add("package");
@@ -305,6 +306,111 @@ public class PluginCompiler {
         command.add("-q"); // 安静模式，减少冗余输出
 
         return command;
+    }
+
+    /**
+     * 定位 Maven 可执行文件。
+     * 后端进程经常由 IDE 或脚本启动，PATH 不一定与当前终端一致，所以这里主动兼容常见位置。
+     */
+    private String resolveMavenExecutable() throws IOException {
+        boolean windows = isWindows();
+
+        if (mavenHome != null && !mavenHome.isBlank()) {
+            Path configured = Path.of(mavenHome, "bin", windows ? "mvn.cmd" : "mvn");
+            if (!Files.isRegularFile(configured)) {
+                throw new IOException("配置的 Maven 不存在: " + configured);
+            }
+            return configured.toString();
+        }
+
+        Path projectMavenWrapper = findProjectMavenWrapper(windows);
+        if (projectMavenWrapper != null) {
+            return projectMavenWrapper.toString();
+        }
+
+        Path envMaven = findMavenFromEnv("MAVEN_HOME", windows);
+        if (envMaven == null) {
+            envMaven = findMavenFromEnv("M2_HOME", windows);
+        }
+        if (envMaven != null) {
+            return envMaven.toString();
+        }
+
+        Path pathMaven = findExecutableOnPath(windows ? "mvn.cmd" : "mvn");
+        if (pathMaven == null && windows) {
+            pathMaven = findExecutableOnPath("mvn");
+        }
+        if (pathMaven != null) {
+            return pathMaven.toString();
+        }
+
+        Path wrapperCacheMaven = findMavenFromWrapperCache(windows);
+        if (wrapperCacheMaven != null) {
+            return wrapperCacheMaven.toString();
+        }
+
+        throw new IOException("未找到 Maven 可执行文件，请安装 Maven，或配置 plugin.compiler.maven-home");
+    }
+
+    private boolean isWindows() {
+        return System.getProperty("os.name").toLowerCase().contains("win");
+    }
+
+    private Path findProjectMavenWrapper(boolean windows) {
+        Path current = Path.of(System.getProperty("user.dir")).toAbsolutePath();
+        String wrapperName = windows ? "mvnw.cmd" : "mvnw";
+        while (current != null) {
+            Path wrapper = current.resolve(wrapperName);
+            if (Files.isRegularFile(wrapper)) {
+                return wrapper;
+            }
+            current = current.getParent();
+        }
+        return null;
+    }
+
+    private Path findMavenFromEnv(String envName, boolean windows) {
+        String home = System.getenv(envName);
+        if (home == null || home.isBlank()) {
+            return null;
+        }
+        Path mvn = Path.of(home, "bin", windows ? "mvn.cmd" : "mvn");
+        return Files.isRegularFile(mvn) ? mvn : null;
+    }
+
+    private Path findExecutableOnPath(String executable) {
+        String path = System.getenv("PATH");
+        if (path == null || path.isBlank()) {
+            return null;
+        }
+        for (String dir : path.split(File.pathSeparator)) {
+            if (dir == null || dir.isBlank()) {
+                continue;
+            }
+            Path candidate = Path.of(dir, executable);
+            if (Files.isRegularFile(candidate)) {
+                return candidate;
+            }
+        }
+        return null;
+    }
+
+    private Path findMavenFromWrapperCache(boolean windows) throws IOException {
+        Path dists = Path.of(System.getProperty("user.home"), ".m2", "wrapper", "dists");
+        if (!Files.isDirectory(dists)) {
+            return null;
+        }
+
+        String executable = windows ? "mvn.cmd" : "mvn";
+        try (var stream = Files.walk(dists, 5)) {
+            return stream
+                    .filter(path -> Files.isRegularFile(path)
+                            && executable.equals(path.getFileName().toString())
+                            && path.getParent() != null
+                            && "bin".equals(path.getParent().getFileName().toString()))
+                    .max(Comparator.comparing(Path::toString))
+                    .orElse(null);
+        }
     }
 
     /**
@@ -334,34 +440,40 @@ public class PluginCompiler {
         for (String line : output.split("\n")) {
             if (line.contains("[ERROR]")) {
                 // 跳过 Maven 自身的执行摘要行
-                if (line.contains("Failed to execute goal")
-                        || line.contains("To see the full stack trace")
+                if (line.contains("To see the full stack trace")
                         || line.contains("[help 1]")
                         || line.contains("[help 2]")) {
                     continue;
                 }
                 String errorContent = line.substring(line.indexOf("[ERROR]") + 7);
                 String trimmedError = errorContent.trim();
-                if (!trimmedError.isEmpty()) {
-                    // 判断是否是多行错误的续行（缩进或以 " 符号:" 开头）
-                    boolean isContinuation = errorContent.startsWith(" ") || errorContent.startsWith("\t")
-                            || errorContent.startsWith("  symbol")
-                            || errorContent.startsWith("  location")
-                            || (currentError.length() > 0 && !trimmedError.contains(":"));
-                    if (isContinuation) {
-                        if (currentError.length() > 0) {
-                            currentError.append(" ").append(trimmedError);
-                        }
-                    } else {
-                        if (currentError.length() > 0) {
-                            errors.add(currentError.toString());
-                        }
-                        currentError = new StringBuilder(trimmedError);
+                if (trimmedError.isEmpty()) {
+                    continue;
+                }
+                if (line.contains("Failed to execute goal")) {
+                    errors.add(trimmedError);
+                    currentError = new StringBuilder();
+                    continue;
+                }
+
+                // 判断是否是多行错误的续行（缩进或以 " 符号:" 开头）
+                boolean isContinuation = errorContent.startsWith(" ") || errorContent.startsWith("\t")
+                        || errorContent.startsWith("  symbol")
+                        || errorContent.startsWith("  location")
+                        || (!currentError.isEmpty() && !trimmedError.contains(":"));
+                if (isContinuation) {
+                    if (!currentError.isEmpty()) {
+                        currentError.append(" ").append(trimmedError);
                     }
+                } else {
+                    if (!currentError.isEmpty()) {
+                        errors.add(currentError.toString());
+                    }
+                    currentError = new StringBuilder(trimmedError);
                 }
             }
         }
-        if (currentError.length() > 0) {
+        if (!currentError.isEmpty()) {
             errors.add(currentError.toString());
         }
 

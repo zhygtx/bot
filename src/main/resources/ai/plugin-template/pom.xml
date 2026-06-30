@@ -26,8 +26,14 @@
         <dependency>
             <groupId>com.github.zhygtx</groupId>
             <artifactId>generalbot-api</artifactId>
-            <version>main-SNAPSHOT</version>
+            <version>0.3.3</version>
             <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.46</version>
         </dependency>
         <!--AI_DEPENDENCIES-->
     </dependencies>

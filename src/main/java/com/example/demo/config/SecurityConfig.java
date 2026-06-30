@@ -1,6 +1,7 @@
 package com.example.demo.config;
 
 import com.example.demo.security.JwtAuthenticationFilter;
+import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -51,8 +52,10 @@ public class SecurityConfig {
                         .authenticationEntryPoint(authenticationEntryPoint())
                 )
                 .authorizeHttpRequests(auth -> auth
+                        .dispatcherTypeMatchers(DispatcherType.ASYNC, DispatcherType.ERROR).permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/user/login", "/user/insertUser", "/email/**", path + "/**").permitAll()
+                        .requestMatchers("/user/login", "/user/insertUser", "/email/**",
+                                path + "/**", "/ws/ai-plugin", "/ws/ai-plugin/**").permitAll()
                         .requestMatchers("/static/**").permitAll()
                         .anyRequest().authenticated()
                 )

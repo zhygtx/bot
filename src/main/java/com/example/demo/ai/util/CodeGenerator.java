@@ -1,7 +1,5 @@
 package com.example.demo.ai.util;
 
-import com.example.demo.ai.pojo.dto.DeepSeekRequest;
-import com.example.demo.ai.pojo.dto.DeepSeekResponse;
 import com.example.demo.ai.pojo.dto.Dependency;
 import com.example.demo.ai.pojo.dto.SourceFile;
 import lombok.AllArgsConstructor;
@@ -9,20 +7,22 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.messages.SystemMessage;
+import org.springframework.ai.chat.messages.UserMessage;
+import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.deepseek.DeepSeekChatOptions;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -36,43 +36,24 @@ public class CodeGenerator {
 
     // ==================== 配置字段 ====================
 
-    @Value("${ai.plugin.deepseek.api-key}")
-    private String apiKey;
-
-    @Value("${ai.plugin.deepseek.base-url}")
-    private String baseUrl;
-
-    @Value("${ai.plugin.deepseek.model}")
-    private String model;
-
-    @Value("${ai.plugin.deepseek.temperature}")
-    private double temperature;
-
-    @Value("${ai.plugin.deepseek.max-tokens}")
-    private int maxTokens;
+    @Value("${ai.plugin.prompt-template-path}")
+    private String pluginPromptTemplatePath;
 
     // ==================== 审查配置字段 ====================
 
-    @Value("${ai.plugin.review.enabled:true}")
+    @Value("${ai.review.enabled}")
     private boolean reviewEnabled;
 
-    @Value("${ai.plugin.review.prompt-template-path:classpath:ai-plugins/review-prompt-template.txt}")
+    @Value("${ai.review.prompt-template-path}")
     private String reviewPromptTemplatePath;
 
-    @Value("${ai.plugin.review.model:deepseek-chat}")
+    @Value("${ai.review.model}")
     private String reviewModel;
 
-    @Value("${ai.plugin.review.temperature:0.1}")
-    private double reviewTemperature;
+    private final ChatClient chatClient;
 
-    @Value("${ai.plugin.review.max-tokens:2048}")
-    private int reviewMaxTokens;
-
-    /** 复用 RestTemplate 实例，避免每次调用重新创建 */
-    private final RestTemplate restTemplate;
-
-    public CodeGenerator() {
-        this.restTemplate = new RestTemplate();
+    public CodeGenerator(ChatClient.Builder chatClientBuilder) {
+        this.chatClient = chatClientBuilder.build();
     }
 
     // ==================== 内部类型 ====================
@@ -92,6 +73,10 @@ public class CodeGenerator {
         /** AI 声明的额外 Maven 依赖 */
         @Builder.Default
         private List<Dependency> dependencies = Collections.emptyList();
+        /** AI 产出的插件名称 */
+        private String pluginName;
+        /** AI 产出的插件描述 */
+        private String pluginDescription;
         /** 审查结果（审查关闭时为 null） */
         private ReviewResult reviewResult;
         /** AI 返回的原始文本（用于调试或格式异常时回退） */
@@ -132,53 +117,21 @@ public class CodeGenerator {
     // ==================== 公共方法 ====================
 
     /**
-     * 首次生成代码。
-     *
-     * @param requirements   用户需求描述
-     * @param entityPackage  实体类包名
-     * @param methodPackage  方法类包名
-     * @return 生成结果
+     * 流式生成代码。onDelta 会收到模型增量文本；方法返回完整解析结果。
      */
-    public GenerateResult generateCode(String requirements,
-                                       String entityPackage,
-                                       String methodPackage) {
-        return generateCode(requirements, entityPackage, methodPackage, null);
-    }
 
-    /**
-     * 基于已有代码微调/更新。
-     *
-     * @param requirements     用户需求描述
-     * @param entityPackage    实体类包名
-     * @param methodPackage    方法类包名
-     * @param existingCodeJson 已发布的代码 JSON 字符串（可为 null，表示首次生成）
-     * @return 生成结果
-     */
-    public GenerateResult generateCode(String requirements,
-                                       String entityPackage,
-                                       String methodPackage,
-                                       String existingCodeJson) {
-        // ========== 校验 API Key ==========
-        if (apiKey == null || apiKey.isBlank()) {
-            return GenerateResult.builder()
-                    .success(false)
-                    .errorMessage("DeepSeek API Key 未配置，请设置环境变量 DEEPSEEK_API_KEY")
-                    .build();
-        }
-
+    public GenerateResult generateCodeStream(List<Message> historyMessages,
+                                             String requirements,
+                                             String entityPackage,
+                                             String methodPackage,
+                                             String existingCodeJson,
+                                             Consumer<String> onDelta) {
         try {
-            // ========== 构造提示词 ==========
-            String prompt = buildPrompt(requirements, entityPackage, methodPackage, existingCodeJson);
-            log.debug("构造的提示词（前 200 字符）: {}...", prompt.substring(0, Math.min(prompt.length(), 200)));
-
-            // ========== 调用 DeepSeek API ==========
-            String responseContent = callDeepSeek(prompt);
-
-            // ========== 解析返回结果 ==========
+            List<Message> messages = buildMessages(historyMessages, requirements, entityPackage, methodPackage, existingCodeJson);
+            String responseContent = callSpringAiStream(messages, onDelta);
             return parseResponse(responseContent);
-
         } catch (Exception e) {
-            log.error("AI 代码生成异常", e);
+            log.error("AI 流式代码生成异常", e);
             return GenerateResult.builder()
                     .success(false)
                     .errorMessage("AI 代码生成失败: " + e.getMessage())
@@ -202,11 +155,6 @@ public class CodeGenerator {
         if (files == null || files.isEmpty()) {
             return null;
         }
-        if (apiKey == null || apiKey.isBlank()) {
-            log.warn("DeepSeek API Key 未配置，跳过审查");
-            return null;
-        }
-
         // 拼接所有源码
         String code = buildCodeForReview(files);
 
@@ -256,46 +204,17 @@ public class CodeGenerator {
      * 调用 DeepSeek API 进行代码审查
      */
     private String callDeepSeekForReview(String prompt) {
-        DeepSeekRequest request = new DeepSeekRequest();
-        request.setModel(reviewModel);
-        request.setTemperature(reviewTemperature);
-        request.setMaxTokens(reviewMaxTokens);
-        request.setMessages(List.of(
-                new DeepSeekRequest.Message("system",
-                        "你是一个 Java 代码安全审查专家，只输出 JSON 格式的审查结果。"),
-                new DeepSeekRequest.Message("user", prompt)
-        ));
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(apiKey);
-
-        HttpEntity<DeepSeekRequest> entity = new HttpEntity<>(request, headers);
-        String url = baseUrl.replaceAll("/+$", "") + "/chat/completions";
-        log.info("调用 DeepSeek 审查 API: url={}, model={}", url, reviewModel);
-
-        ResponseEntity<DeepSeekResponse> responseEntity;
         try {
-            responseEntity = restTemplate.postForEntity(url, entity, DeepSeekResponse.class);
+            return chatClient.prompt()
+                    .system("你是一个 Java 代码安全审查专家，只输出 JSON 格式的审查结果。")
+                    .user(prompt)
+                    .options(DeepSeekChatOptions.builder().model(reviewModel).build())
+                    .call()
+                    .content();
         } catch (Exception e) {
-            log.error("DeepSeek 审查 API 调用失败: {}", e.getMessage());
+            log.error("Spring AI 审查调用失败: {}", e.getMessage());
             throw new RuntimeException("审查服务调用失败: " + e.getMessage(), e);
         }
-
-        DeepSeekResponse response = responseEntity.getBody();
-        if (response == null || response.getError() != null) {
-            throw new RuntimeException("审查服务返回异常");
-        }
-        if (response.getChoices() == null || response.getChoices().isEmpty()) {
-            throw new RuntimeException("审查服务响应中无内容");
-        }
-
-        String content = response.getChoices().get(0).getMessage().getContent();
-        if (content == null || content.isBlank()) {
-            throw new RuntimeException("审查服务返回内容为空");
-        }
-
-        return content;
     }
 
     /**
@@ -308,8 +227,7 @@ public class CodeGenerator {
             int jsonEnd = response.lastIndexOf("}") + 1;
             if (jsonStart >= 0 && jsonEnd > jsonStart) {
                 String json = response.substring(jsonStart, jsonEnd);
-                com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-                return mapper.readValue(json, ReviewResult.class);
+                return OBJECT_MAPPER.readValue(json, ReviewResult.class);
             }
             log.warn("审查返回中未找到有效 JSON，原始内容: {}", response);
         } catch (Exception e) {
@@ -326,115 +244,93 @@ public class CodeGenerator {
     /**
      * 加载提示词模板并替换占位符
      */
-    private String buildPrompt(String requirements,
-                               String entityPackage,
-                               String methodPackage,
-                               String existingCodeJson) throws IOException {
+    private List<Message> buildMessages(List<Message> historyMessages,
+                                        String requirements,
+                                        String entityPackage,
+                                        String methodPackage,
+                                        String existingCodeJson) throws IOException {
         // 加载模板
         String template = loadTemplate();
 
-        // 替换基本占位符
         String prompt = template
                 .replace("{{entityPackage}}", entityPackage)
                 .replace("{{methodPackage}}", methodPackage)
                 .replace("{{requirements}}", requirements);
 
-        // 处理现有代码块
-        if (existingCodeJson != null && !existingCodeJson.isBlank()) {
-            // 有现有代码：保留块内容，替换标记和内部占位符
-            prompt = prompt.replace("{{#existingCode}}", "")
-                    .replace("{{/existingCode}}", "")
-                    .replace("{{existingCode}}", existingCodeJson);
-        } else {
-            // 无现有代码：移除整个条件块（包括标记和内部内容）
-            prompt = prompt.replaceAll("\\{\\{#existingCode\\}\\}[\\s\\S]*?\\{\\{/existingCode\\}\\}", "");
-        }
+        prompt = prompt.replaceAll("\\{\\{#existingCode}}[\\s\\S]*?\\{\\{/existingCode}}", "");
 
-        return prompt;
+        List<Message> messages = new ArrayList<>();
+        messages.add(new SystemMessage(prompt));
+        if (historyMessages != null && !historyMessages.isEmpty()) {
+            messages.addAll(historyMessages);
+        }
+        messages.add(new UserMessage(buildUserMessage(requirements, entityPackage, methodPackage, existingCodeJson)));
+        return messages;
     }
 
     /**
      * 从 classpath 加载提示词模板
      */
     private String loadTemplate() throws IOException {
-        ClassPathResource resource = new ClassPathResource("ai-plugins/prompt-template.txt");
+        String path = pluginPromptTemplatePath;
+        if (path.startsWith("classpath:")) {
+            path = path.substring("classpath:".length());
+        }
+        ClassPathResource resource = new ClassPathResource(path);
         if (!resource.exists()) {
-            throw new IOException("找不到提示词模板文件: classpath:ai-plugins/prompt-template.txt");
+            throw new IOException("找不到提示词模板文件: " + pluginPromptTemplatePath);
         }
         return new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
     }
 
     // ==================== DeepSeek API 调用 ====================
 
-    /**
-     * 调用 DeepSeek Chat API
-     *
-     * @param prompt 完整提示词
-     * @return AI 返回的文本内容
-     */
-    private String callDeepSeek(String prompt) {
-        // 构造请求
-        DeepSeekRequest request = new DeepSeekRequest();
-        request.setModel(model);
-        request.setTemperature(temperature);
-        request.setMaxTokens(maxTokens);
-        request.setMessages(List.of(
-                new DeepSeekRequest.Message("system",
-                        "你是一个 Java 插件代码生成器，严格遵循用户给出的 SDK 规范生成高质量的 Java 代码。"),
-                new DeepSeekRequest.Message("user", prompt)
-        ));
+    private String callSpringAiStream(List<Message> messages, Consumer<String> onDelta) {
+        StringBuilder fullContent = new StringBuilder();
+        chatClient.prompt(new Prompt(messages))
+                .stream()
+                .content()
+                .doOnNext(delta -> {
+                    if (delta == null || delta.isEmpty()) {
+                        return;
+                    }
+                    fullContent.append(delta);
+                    if (onDelta != null) {
+                        streamDelta(delta, onDelta);
+                    }
+                })
+                .blockLast();
+        return fullContent.toString();
+    }
 
-        // 设置请求头
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(apiKey);
-
-        HttpEntity<DeepSeekRequest> entity = new HttpEntity<>(request, headers);
-
-        // 构造 URL
-        String url = baseUrl.replaceAll("/+$", "") + "/chat/completions";
-        log.info("调用 DeepSeek API: url={}, model={}", url, model);
-
-        // 发送请求
-        ResponseEntity<DeepSeekResponse> responseEntity;
-        try {
-            responseEntity = restTemplate.postForEntity(url, entity, DeepSeekResponse.class);
-        } catch (Exception e) {
-            log.error("DeepSeek API 调用失败: {}", e.getMessage());
-            throw new RuntimeException("AI 服务调用失败: " + e.getMessage(), e);
+    private String buildUserMessage(String requirements,
+                                   String entityPackage,
+                                   String methodPackage,
+                                   String existingCodeJson) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("当前生成参数：\n");
+        sb.append("- 实体类包：").append(entityPackage).append('\n');
+        sb.append("- 方法类包：").append(methodPackage).append('\n');
+        sb.append("- 用户需求：").append(requirements).append('\n');
+        if (existingCodeJson != null && !existingCodeJson.isBlank()) {
+            sb.append('\n');
+            sb.append("当前已存在代码快照（请在此基础上修改，并保持历史轮次代码前后一致）：\n");
+            sb.append(existingCodeJson).append('\n');
         }
+        sb.append('\n');
+        sb.append("请严格输出 `<progress>` 和 `<file>` 结构，优先保持每轮代码前后一致，");
+        sb.append("如历史轮次已有代码，请将其视为当前上下文的一部分，不要丢失已有文件。");
+        return sb.toString();
+    }
 
-        DeepSeekResponse response = responseEntity.getBody();
-
-        // 检查 API 返回的业务错误
-        if (response == null) {
-            throw new RuntimeException("AI 服务返回空响应");
+    private void streamDelta(String delta, Consumer<String> onDelta) {
+        int cursor = 0;
+        int chunkSize = 8;
+        while (cursor < delta.length()) {
+            int end = Math.min(cursor + chunkSize, delta.length());
+            onDelta.accept(delta.substring(cursor, end));
+            cursor = end;
         }
-        if (response.getError() != null) {
-            DeepSeekResponse.ErrorDetail err = response.getError();
-            log.error("DeepSeek API 返回错误: {} - {}", err.getCode(), err.getMessage());
-            throw new RuntimeException("AI 服务错误: " + err.getMessage());
-        }
-
-        // 提取生成内容
-        if (response.getChoices() == null || response.getChoices().isEmpty()) {
-            throw new RuntimeException("AI 服务响应中无生成内容");
-        }
-
-        String content = response.getChoices().get(0).getMessage().getContent();
-        if (content == null || content.isBlank()) {
-            throw new RuntimeException("AI 服务生成内容为空");
-        }
-
-        // 记录 token 用量
-        if (response.getUsage() != null) {
-            log.info("Token 用量 - 输入: {}, 输出: {}, 总计: {}",
-                    response.getUsage().getPromptTokens(),
-                    response.getUsage().getCompletionTokens(),
-                    response.getUsage().getTotalTokens());
-        }
-
-        return content;
     }
 
     // ==================== 响应解析 ====================
@@ -442,6 +338,18 @@ public class CodeGenerator {
     /** 匹配 &lt;dependencies&gt;...&lt;/dependencies&gt; 块 */
     private static final Pattern DEPS_BLOCK_PATTERN = Pattern.compile(
             "<dependencies>(.*?)</dependencies>",
+            Pattern.CASE_INSENSITIVE | Pattern.DOTALL
+    );
+
+    /** 匹配 &lt;plugin&gt;...&lt;/plugin&gt; 块 */
+    private static final Pattern PLUGIN_BLOCK_PATTERN = Pattern.compile(
+            "<plugin>(.*?)</plugin>",
+            Pattern.CASE_INSENSITIVE | Pattern.DOTALL
+    );
+
+    /** 匹配插件发布信息子元素 */
+    private static final Pattern PLUGIN_ELEMENT_PATTERN = Pattern.compile(
+            "<(name|description)>(.*?)</\\1>",
             Pattern.CASE_INSENSITIVE | Pattern.DOTALL
     );
 
@@ -453,6 +361,10 @@ public class CodeGenerator {
             "(?:\\s*<scope>(.+?)</scope>)?",
             Pattern.CASE_INSENSITIVE | Pattern.DOTALL
     );
+
+    /** 复用 ObjectMapper 实例 */
+    private static final com.fasterxml.jackson.databind.ObjectMapper OBJECT_MAPPER =
+            new com.fasterxml.jackson.databind.ObjectMapper();
 
     /** 匹配 &lt;file path="..."&gt;...&lt;/file&gt; 的正则 */
     private static final Pattern FILE_BLOCK_PATTERN = Pattern.compile(
@@ -466,6 +378,7 @@ public class CodeGenerator {
     private GenerateResult parseResponse(String responseContent) {
         // Step 1: 提取依赖
         List<Dependency> dependencies = parseDependencies(responseContent);
+        PluginMetadata metadata = parsePluginMetadata(responseContent);
 
         // Step 2: 提取代码文件
         List<SourceFile> files = new ArrayList<>();
@@ -476,7 +389,7 @@ public class CodeGenerator {
             String content = matcher.group(2).trim();
 
             filePath = filePath.replace("\\", "/");
-            if (!filePath.startsWith("src/main/java/")) {
+            if (!isAllowedGeneratedPath(filePath)) {
                 log.warn("跳过不符合路径规范的文件: {}", filePath);
                 continue;
             }
@@ -489,6 +402,9 @@ public class CodeGenerator {
             return GenerateResult.builder()
                     .success(false)
                     .files(Collections.emptyList())
+                    .dependencies(dependencies)
+                    .pluginName(metadata.name())
+                    .pluginDescription(metadata.description())
                     .rawResponse(responseContent)
                     .errorMessage("AI 返回格式不符合预期，未能提取到代码文件。原始返回内容已保留。")
                     .build();
@@ -499,8 +415,15 @@ public class CodeGenerator {
                 .success(true)
                 .files(files)
                 .dependencies(dependencies)
+                .pluginName(metadata.name())
+                .pluginDescription(metadata.description())
                 .rawResponse(responseContent)
                 .build();
+    }
+
+    private boolean isAllowedGeneratedPath(String filePath) {
+        return filePath.startsWith("src/main/java/")
+                || filePath.startsWith("src/main/resources/");
     }
 
     /**
@@ -527,5 +450,30 @@ public class CodeGenerator {
         }
 
         return deps;
+    }
+
+    private PluginMetadata parsePluginMetadata(String responseContent) {
+        Matcher blockMatcher = PLUGIN_BLOCK_PATTERN.matcher(responseContent);
+        if (!blockMatcher.find()) {
+            return new PluginMetadata(null, null);
+        }
+
+        String pluginContent = blockMatcher.group(1);
+        Matcher elementMatcher = PLUGIN_ELEMENT_PATTERN.matcher(pluginContent);
+        String name = null;
+        String description = null;
+        while (elementMatcher.find()) {
+            String key = elementMatcher.group(1).toLowerCase();
+            String value = elementMatcher.group(2).trim();
+            if ("name".equals(key)) {
+                name = value;
+            } else if ("description".equals(key)) {
+                description = value;
+            }
+        }
+        return new PluginMetadata(name, description);
+    }
+
+    private record PluginMetadata(String name, String description) {
     }
 }

@@ -28,9 +28,15 @@ public class GenerateResponse {
     /** AI 声明的额外 Maven 依赖 */
     private List<Dependency> dependencies;
 
+    /** AI 产出的插件名称 */
+    private String pluginName;
+
+    /** AI 产出的插件描述 */
+    private String pluginDescription;
+
     /** AI 返回的原始文本（格式异常时用于调试） */
     private String rawResponse;
 
-    /** 代码审查结果（审查关闭时为 null） */
+    /** 代码审查结果（当前生成阶段不审查，通常为 null，保留用于历史兼容） */
     private Object reviewResult;
 }

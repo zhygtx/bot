@@ -1,5 +1,6 @@
 package com.example.demo.ai.service.impl;
 
+import com.example.demo.ai.exception.CodeReviewFailedException;
 import com.example.demo.ai.pojo.dto.*;
 import com.example.demo.ai.pojo.entity.AIConversationTurn;
 import com.example.demo.ai.service.AIPluginService;
@@ -13,13 +14,18 @@ import com.example.demo.util.PluginUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.*;
+import java.util.function.Consumer;
 
 /**
  * AI 插件服务实现：纯业务逻辑，不处理 HTTP 层关注点。
@@ -27,6 +33,9 @@ import java.util.*;
 @Slf4j
 @Service
 public class AIPluginServiceImpl implements AIPluginService {
+
+    private static final String DEFAULT_ENTITY_PACKAGE = "com.example.entity";
+    private static final String DEFAULT_METHOD_PACKAGE = "com.example.service";
 
     private final CodeGenerator codeGenerator;
     private final PluginCompiler pluginCompiler;
@@ -53,119 +62,152 @@ public class AIPluginServiceImpl implements AIPluginService {
 
     @Override
     @Transactional
-    public GenerateResponse startConversation(GenerateRequest request, String userId) {
+    public GenerateResponse createStreamTurn(GenerateRequest startRequest,
+                                             TurnRequest turnRequest,
+                                             String userId,
+                                             Consumer<String> onDelta) {
+        if (turnRequest != null && turnRequest.getConversationId() != null
+                && !turnRequest.getConversationId().isBlank()) {
+            return createStreamExistingTurn(turnRequest, userId, onDelta);
+        }
+        return createStreamStartTurn(startRequest, userId, onDelta);
+    }
+
+    private GenerateResponse createStreamStartTurn(GenerateRequest request,
+                                                   String userId,
+                                                   Consumer<String> onDelta) {
+        String entityPackage = normalizePackage(request.getEntityPackage(), DEFAULT_ENTITY_PACKAGE);
+        String methodPackage = normalizePackage(request.getMethodPackage(), DEFAULT_METHOD_PACKAGE);
         String conversationId = UUID.randomUUID().toString();
 
-        // 保存用户消息
-        AIConversationTurn userTurn = new AIConversationTurn();
-        userTurn.setId(UUID.randomUUID().toString());
-        userTurn.setConversationId(conversationId);
-        userTurn.setPluginId(request.getPluginId());
-        userTurn.setUserId(userId);
-        userTurn.setRound(1);
-        userTurn.setRole("user");
-        userTurn.setContent(request.getRequirements());
-        userTurn.setStatus("draft");
-        userTurn.setCreateTime(LocalDateTime.now());
-        conversationTurnMapper.insert(userTurn);
+        saveUserTurn(conversationId, request.getPluginId(), userId, 1, request.getRequirements());
 
-        // 调用 AI
         CodeGenerator.GenerateResult aiResult;
         if (request.getPluginId() != null) {
             String existingCode = loadPublishedCode(request.getPluginId());
-            aiResult = codeGenerator.generateCode(
-                    request.getRequirements(), request.getEntityPackage(),
-                    request.getMethodPackage(), existingCode);
+            aiResult = codeGenerator.generateCodeStream(
+                    Collections.emptyList(),
+                    request.getRequirements(), entityPackage, methodPackage, existingCode, onDelta);
         } else {
-            aiResult = codeGenerator.generateCode(
-                    request.getRequirements(), request.getEntityPackage(),
-                    request.getMethodPackage());
+            aiResult = codeGenerator.generateCodeStream(
+                    Collections.emptyList(),
+                    request.getRequirements(), entityPackage, methodPackage, null, onDelta);
         }
-
         if (!aiResult.isSuccess()) {
             throw new RuntimeException("AI 代码生成失败: " + aiResult.getErrorMessage());
         }
 
-        // 审查代码
-        CodeGenerator.ReviewResult reviewResult = codeGenerator.reviewCode(aiResult.getFiles());
-
-        // 保存 AI 响应
         saveAssistantTurn(conversationId, userId, 1,
                 aiResult.getFiles(), aiResult.getDependencies(),
-                reviewResult, aiResult.getRawResponse());
-
-        log.info("AI 代码生成成功: conversationId={}, round=1, files={}, deps={}, reviewPassed={}",
-                conversationId, aiResult.getFiles().size(),
-                aiResult.getDependencies() != null ? aiResult.getDependencies().size() : 0,
-                reviewResult != null ? reviewResult.isPassed() : "skipped");
+                aiResult.getPluginName(), aiResult.getPluginDescription(),
+                aiResult.getRawResponse());
 
         return GenerateResponse.builder()
                 .conversationId(conversationId)
                 .round(1)
                 .files(aiResult.getFiles())
                 .dependencies(aiResult.getDependencies())
+                .pluginName(aiResult.getPluginName())
+                .pluginDescription(aiResult.getPluginDescription())
                 .rawResponse(aiResult.getRawResponse())
-                .reviewResult(reviewResult)
                 .build();
     }
 
-    @Override
-    @Transactional
-    public GenerateResponse createTurn(TurnRequest request, String userId) {
-
-        // 计算下一轮次编号
+    private GenerateResponse createStreamExistingTurn(TurnRequest request,
+                                                      String userId,
+                                                      Consumer<String> onDelta) {
+        String entityPackage = normalizePackage(request.getEntityPackage(), DEFAULT_ENTITY_PACKAGE);
+        String methodPackage = normalizePackage(request.getMethodPackage(), DEFAULT_METHOD_PACKAGE);
         Integer maxRound = conversationTurnMapper.selectMaxRound(request.getConversationId());
         int nextRound = (maxRound != null ? maxRound : 0) + 1;
 
-        // 保存用户微调指令
-        AIConversationTurn userTurn = new AIConversationTurn();
-        userTurn.setId(UUID.randomUUID().toString());
-        userTurn.setConversationId(request.getConversationId());
-        userTurn.setUserId(userId);
-        userTurn.setRound(nextRound);
-        userTurn.setRole("user");
-        userTurn.setContent(request.getInstruction());
-        userTurn.setStatus("draft");
-        userTurn.setCreateTime(LocalDateTime.now());
-        conversationTurnMapper.insert(userTurn);
+        List<Message> historyMessages = buildHistoryMessages(request.getConversationId());
+        saveUserTurn(request.getConversationId(), null, userId, nextRound, request.getInstruction());
 
-        // 获取上一轮 AI 代码作为上下文
         String existingCode = loadCurrentAiCode(request.getConversationId());
-
-        // 调用 AI
-        CodeGenerator.GenerateResult aiResult = codeGenerator.generateCode(
-                request.getInstruction(), request.getEntityPackage(),
-                request.getMethodPackage(), existingCode);
-
+        CodeGenerator.GenerateResult aiResult = codeGenerator.generateCodeStream(
+                historyMessages,
+                request.getInstruction(), entityPackage, methodPackage, existingCode, onDelta);
         if (!aiResult.isSuccess()) {
             throw new RuntimeException("AI 代码生成失败: " + aiResult.getErrorMessage());
         }
-
-        // 将上一轮 current 标记转为 draft
         if (maxRound != null) {
             conversationTurnMapper.updateStatusToDraftFromRound(request.getConversationId(), maxRound);
         }
 
-        // 审查代码
-        CodeGenerator.ReviewResult reviewResult = codeGenerator.reviewCode(aiResult.getFiles());
-
-        // 保存 AI 响应
         saveAssistantTurn(request.getConversationId(), userId, nextRound,
                 aiResult.getFiles(), aiResult.getDependencies(),
-                reviewResult, aiResult.getRawResponse());
-
-        log.info("AI 微调成功: conversationId={}, round={}, files={}, deps={}, reviewPassed={}",
-                request.getConversationId(), nextRound, aiResult.getFiles().size(),
-                aiResult.getDependencies() != null ? aiResult.getDependencies().size() : 0,
-                reviewResult != null ? reviewResult.isPassed() : "skipped");
+                aiResult.getPluginName(), aiResult.getPluginDescription(),
+                aiResult.getRawResponse());
 
         return GenerateResponse.builder()
                 .conversationId(request.getConversationId())
                 .round(nextRound)
                 .files(aiResult.getFiles())
                 .dependencies(aiResult.getDependencies())
+                .pluginName(aiResult.getPluginName())
+                .pluginDescription(aiResult.getPluginDescription())
                 .rawResponse(aiResult.getRawResponse())
-                .reviewResult(reviewResult)
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public GenerateResponse deleteFromRound(String conversationId, int round, String userId) {
+        if (round <= 0) {
+            throw new IllegalArgumentException("删除轮次必须大于 0");
+        }
+
+        List<AIConversationTurn> targetTurns = conversationTurnMapper
+                .selectByConversationIdAndRound(conversationId, round);
+        if (targetTurns.isEmpty()) {
+            throw new IllegalArgumentException("目标轮次不存在");
+        }
+        boolean ownedByUser = targetTurns.stream().anyMatch(t -> userId.equals(t.getUserId()));
+        if (!ownedByUser) {
+            throw new SecurityException("无权操作该会话");
+        }
+
+        conversationTurnMapper.deleteFromRound(conversationId, round);
+
+        int previousRound = round - 1;
+        if (previousRound <= 0) {
+            return GenerateResponse.builder()
+                    .conversationId(conversationId)
+                    .round(0)
+                    .files(Collections.emptyList())
+                    .dependencies(Collections.emptyList())
+                    .build();
+        }
+
+        List<AIConversationTurn> previousTurns = conversationTurnMapper
+                .selectByConversationIdAndRound(conversationId, previousRound);
+        List<AIConversationTurn> assistantTurns = previousTurns.stream()
+                .filter(t -> "assistant".equals(t.getRole()))
+                .toList();
+        if (assistantTurns.isEmpty()) {
+            return GenerateResponse.builder()
+                    .conversationId(conversationId)
+                    .round(previousRound)
+                    .files(Collections.emptyList())
+                    .dependencies(Collections.emptyList())
+                    .build();
+        }
+
+        for (AIConversationTurn turn : assistantTurns) {
+            conversationTurnMapper.updateStatus(turn.getId(), "current", turn.getPluginId());
+        }
+
+        AIConversationTurn latestAssistant = assistantTurns.get(assistantTurns.size() - 1);
+        return GenerateResponse.builder()
+                .conversationId(conversationId)
+                .round(previousRound)
+                .files(deserializeCodeFiles(latestAssistant.getContent()))
+                .dependencies(deserializeDependencies(latestAssistant.getContent()))
+                .pluginName(deserializePluginName(latestAssistant.getContent()))
+                .pluginDescription(deserializePluginDescription(latestAssistant.getContent()))
+                .reviewResult(deserializeReviewResult(latestAssistant.getContent()))
+                .rawResponse(deserializeRawResponse(latestAssistant.getContent()))
                 .build();
     }
 
@@ -194,6 +236,8 @@ public class AIPluginServiceImpl implements AIPluginService {
 
         List<SourceFile> files = deserializeCodeFiles(assistantTurns.get(0).getContent());
         List<Dependency> dependencies = deserializeDependencies(assistantTurns.get(0).getContent());
+        String pluginName = deserializePluginName(assistantTurns.get(0).getContent());
+        String pluginDescription = deserializePluginDescription(assistantTurns.get(0).getContent());
 
         log.info("撤销成功: conversationId={}, targetRound={}", conversationId, targetRound);
 
@@ -202,6 +246,8 @@ public class AIPluginServiceImpl implements AIPluginService {
                 .round(targetRound)
                 .files(files)
                 .dependencies(dependencies)
+                .pluginName(pluginName)
+                .pluginDescription(pluginDescription)
                 .build();
     }
 
@@ -241,15 +287,12 @@ public class AIPluginServiceImpl implements AIPluginService {
 
     @Override
     @Transactional
-    public Map<String, String> compileAndUpload(PluginCompileRequest request, String userId) {
-        // ========== 0. 审查检查 ==========
-        if (request.getReviewResult() != null) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> review = objectMapper.convertValue(request.getReviewResult(), Map.class);
-            Boolean passed = review != null ? (Boolean) review.get("passed") : null;
-            if (passed != null && !passed) {
-                throw new IllegalStateException("代码审查未通过，请先微调修复问题后再编译");
-            }
+    public PluginCompileResponse compileAndUpload(PluginCompileRequest request, String userId) {
+        // ========== 0. 编译前按配置审查 ==========
+        CodeGenerator.ReviewResult reviewResult = codeGenerator.reviewCode(request.getFiles());
+        if (reviewResult != null && !reviewResult.isPassed()) {
+            throw new CodeReviewFailedException(
+                    "代码审查未通过，请先微调修复问题后再编译", reviewResult);
         }
 
         // 1. 编译
@@ -290,7 +333,10 @@ public class AIPluginServiceImpl implements AIPluginService {
                         request.getConversationId(), 1);
             }
 
-            return Map.of("pluginId", pluginId, "versionId", versionId);
+            return PluginCompileResponse.builder()
+                    .pluginId(pluginId)
+                    .versionId(versionId)
+                    .build();
 
         } finally {
             pluginCompiler.cleanup(compileResult);
@@ -302,8 +348,10 @@ public class AIPluginServiceImpl implements AIPluginService {
     private void saveAssistantTurn(String conversationId, String userId,
                                     int round, List<SourceFile> files,
                                     List<Dependency> dependencies,
-                                    CodeGenerator.ReviewResult reviewResult, String rawResponse) {
-        String contentJson = serializeCodeFiles(files, dependencies, reviewResult, rawResponse);
+                                    String pluginName,
+                                    String pluginDescription,
+                                    String rawResponse) {
+        String contentJson = serializeCodeFiles(files, dependencies, pluginName, pluginDescription, rawResponse);
         AIConversationTurn turn = new AIConversationTurn();
         turn.setId(UUID.randomUUID().toString());
         turn.setConversationId(conversationId);
@@ -316,17 +364,77 @@ public class AIPluginServiceImpl implements AIPluginService {
         conversationTurnMapper.insert(turn);
     }
 
+    private List<Message> buildHistoryMessages(String conversationId) {
+        List<AIConversationTurn> turns = conversationTurnMapper.selectByConversationId(conversationId);
+        if (turns.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<Message> messages = new ArrayList<>();
+        List<AIConversationTurn> sortedTurns = turns.stream()
+                .sorted(Comparator.comparing(AIConversationTurn::getRound)
+                        .thenComparing(AIConversationTurn::getCreateTime))
+                .toList();
+        for (AIConversationTurn turn : sortedTurns) {
+            if ("user".equals(turn.getRole())) {
+                messages.add(new UserMessage("用户需求：" + turn.getContent()));
+                continue;
+            }
+            if ("assistant".equals(turn.getRole())) {
+                messages.add(new AssistantMessage(buildAssistantHistoryContent(turn.getContent(), turn.getRound())));
+            }
+        }
+        return messages;
+    }
+
+    private String buildAssistantHistoryContent(String contentJson, Integer round) {
+        List<SourceFile> files = deserializeCodeFiles(contentJson);
+        List<Dependency> dependencies = deserializeDependencies(contentJson);
+        String pluginName = deserializePluginName(contentJson);
+        String pluginDescription = deserializePluginDescription(contentJson);
+        StringBuilder sb = new StringBuilder();
+        sb.append("第 ").append(round == null ? 0 : round).append(" 轮 AI 输出。\n");
+        if (pluginName != null && !pluginName.isBlank()) {
+            sb.append("插件名：").append(pluginName).append('\n');
+        }
+        if (pluginDescription != null && !pluginDescription.isBlank()) {
+            sb.append("插件描述：").append(pluginDescription).append('\n');
+        }
+        if (!dependencies.isEmpty()) {
+            sb.append("依赖：").append(dependencies).append('\n');
+        }
+        sb.append("代码快照：\n");
+        for (SourceFile file : files) {
+            sb.append("<file path=\"").append(file.getFilePath()).append("\">\n");
+            sb.append(file.getContent()).append("\n</file>\n");
+        }
+        return sb.toString();
+    }
+
+    private void saveUserTurn(String conversationId, String pluginId, String userId, int round, String content) {
+        AIConversationTurn userTurn = new AIConversationTurn();
+        userTurn.setId(UUID.randomUUID().toString());
+        userTurn.setConversationId(conversationId);
+        userTurn.setPluginId(pluginId);
+        userTurn.setUserId(userId);
+        userTurn.setRound(round);
+        userTurn.setRole("user");
+        userTurn.setContent(content);
+        userTurn.setStatus("draft");
+        userTurn.setCreateTime(LocalDateTime.now());
+        conversationTurnMapper.insert(userTurn);
+    }
+
     private String serializeCodeFiles(List<SourceFile> files,
                                         List<Dependency> dependencies,
-                                        CodeGenerator.ReviewResult reviewResult,
+                                        String pluginName,
+                                        String pluginDescription,
                                         String rawResponse) {
         try {
             Map<String, Object> wrapper = new LinkedHashMap<>();
             wrapper.put("files", files != null ? files : Collections.emptyList());
             wrapper.put("dependencies", dependencies != null ? dependencies : Collections.emptyList());
-            if (reviewResult != null) {
-                wrapper.put("reviewResult", reviewResult);
-            }
+            wrapper.put("pluginName", pluginName);
+            wrapper.put("pluginDescription", pluginDescription);
             wrapper.put("rawResponse", rawResponse);
             return objectMapper.writeValueAsString(wrapper);
         } catch (JsonProcessingException e) {
@@ -352,6 +460,54 @@ public class AIPluginServiceImpl implements AIPluginService {
             log.warn("反序列化代码文件失败: {}", e.getMessage());
             return Collections.emptyList();
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Object deserializeReviewResult(String contentJson) {
+        try {
+            if (contentJson != null && contentJson.trim().startsWith("{")) {
+                Map<String, Object> map = objectMapper.readValue(contentJson, Map.class);
+                return map.get("reviewResult");
+            }
+        } catch (Exception e) {
+            log.warn("反序列化审查结果失败: {}", e.getMessage());
+        }
+        return null;
+    }
+
+    private String deserializePluginName(String contentJson) {
+        return deserializeStringField(contentJson, "pluginName");
+    }
+
+    private String deserializePluginDescription(String contentJson) {
+        return deserializeStringField(contentJson, "pluginDescription");
+    }
+
+    private String deserializeStringField(String contentJson, String fieldName) {
+        try {
+            if (contentJson != null && contentJson.trim().startsWith("{")) {
+                Map<String, Object> map = objectMapper.readValue(contentJson, Map.class);
+                Object value = map.get(fieldName);
+                return value != null ? value.toString() : null;
+            }
+        } catch (Exception e) {
+            log.warn("反序列化 {} 失败: {}", fieldName, e.getMessage());
+        }
+        return null;
+    }
+
+    @SuppressWarnings("unchecked")
+    private String deserializeRawResponse(String contentJson) {
+        try {
+            if (contentJson != null && contentJson.trim().startsWith("{")) {
+                Map<String, Object> map = objectMapper.readValue(contentJson, Map.class);
+                Object raw = map.get("rawResponse");
+                return raw != null ? raw.toString() : null;
+            }
+        } catch (Exception e) {
+            log.warn("反序列化原始响应失败: {}", e.getMessage());
+        }
+        return null;
     }
 
     /**
@@ -397,8 +553,8 @@ public class AIPluginServiceImpl implements AIPluginService {
         PluginVersion tempVersion = new PluginVersion();
         tempVersion.setId(UUID.randomUUID().toString());
         tempVersion.setPath(jarPath);
-        tempVersion.setEntityPackage(entityPackage);
-        tempVersion.setMethodPackage(methodPackage);
+        tempVersion.setEntityPackage(normalizePackage(entityPackage, DEFAULT_ENTITY_PACKAGE));
+        tempVersion.setMethodPackage(normalizePackage(methodPackage, DEFAULT_METHOD_PACKAGE));
 
         List<EntityInfo> entityInfoList = pluginUtil.scanEntities(tempVersion);
         List<MethodClassInfo> methodClassInfoList = pluginUtil.scanMethodClasses(tempVersion);
@@ -444,8 +600,8 @@ public class AIPluginServiceImpl implements AIPluginService {
         pluginVersion.setId(versionId);
         pluginVersion.setVersion(request.getVersion() != null ? request.getVersion() : "1.0.0");
         pluginVersion.setChangelog(request.getChangelog());
-        pluginVersion.setEntityPackage(request.getEntityPackage());
-        pluginVersion.setMethodPackage(request.getMethodPackage());
+        pluginVersion.setEntityPackage(normalizePackage(request.getEntityPackage(), DEFAULT_ENTITY_PACKAGE));
+        pluginVersion.setMethodPackage(normalizePackage(request.getMethodPackage(), DEFAULT_METHOD_PACKAGE));
 
         pluginInfo.setPluginVersionList(Collections.singletonList(pluginVersion));
 
@@ -457,5 +613,9 @@ public class AIPluginServiceImpl implements AIPluginService {
         log.info("插件上传成功: name={}, pluginId={}, versionId={}",
                 request.getName(), pluginId, versionId);
         return versionId;
+    }
+
+    private String normalizePackage(String value, String defaultValue) {
+        return value == null || value.isBlank() ? defaultValue : value.trim();
     }
 }
