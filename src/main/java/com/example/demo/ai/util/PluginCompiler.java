@@ -1,5 +1,6 @@
 package com.example.demo.ai.util;
 
+import com.example.demo.ai.pojo.dto.Dependency;
 import com.example.demo.ai.pojo.dto.SourceFile;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,7 +18,6 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -69,9 +69,10 @@ public class PluginCompiler {
      * 注意：编译成功后，调用方需在使用完 JAR 后调用 {@link #cleanup(CompileResult)} 清理临时目录。
      *
      * @param sourceFiles 待编译的源码文件列表
+     * @param dependencies AI 声明的额外 Maven 依赖（可为空列表）
      * @return 编译结果
      */
-    public CompileResult compile(List<SourceFile> sourceFiles) {
+    public CompileResult compile(List<SourceFile> sourceFiles, List<Dependency> dependencies) {
         // 创建 UUID 隔离的独立工作目录
         Path workDir = createWorkDir();
         if (workDir == null) {
@@ -82,8 +83,8 @@ public class PluginCompiler {
         }
 
         try {
-            // 写入 pom.xml 模板
-            writePomXml(workDir);
+            // 写入 pom.xml（含依赖注入）
+            writePomXml(workDir, dependencies != null ? dependencies : Collections.emptyList());
 
             // 写入源码文件
             writeSourceFiles(workDir, sourceFiles);
@@ -94,7 +95,6 @@ public class PluginCompiler {
             if (result.isSuccess()) {
                 result.setWorkDir(workDir.toAbsolutePath().toString());
             } else {
-                // 编译失败时直接清理，不保留已删除的目录路径
                 deleteDirectory(workDir);
             }
 
@@ -146,17 +146,47 @@ public class PluginCompiler {
     }
 
     /**
-     * 将模板 pom.xml 写入工作目录
+     * 将模板 pom.xml 写入工作目录，并注入 AI 声明的额外依赖
      */
-    private void writePomXml(Path workDir) throws IOException {
+    private void writePomXml(Path workDir, List<Dependency> dependencies) throws IOException {
         ClassPathResource resource = new ClassPathResource("ai-plugin-template/pom.xml");
         if (!resource.exists()) {
             throw new IOException("找不到 pom.xml 模板文件: classpath:ai-plugin-template/pom.xml");
         }
+
+        // 读取模板内容
+        String templateContent;
         try (var is = resource.getInputStream()) {
-            Files.copy(is, workDir.resolve("pom.xml"), StandardCopyOption.REPLACE_EXISTING);
+            templateContent = new String(is.readAllBytes(), StandardCharsets.UTF_8);
         }
-        log.debug("已写入 pom.xml");
+
+        // 构造依赖 XML 片段并替换占位符
+        String depXml = buildDependencyXml(dependencies);
+        String pomContent = templateContent.replace("<!--AI_DEPENDENCIES-->", depXml);
+
+        Files.writeString(workDir.resolve("pom.xml"), pomContent, StandardCharsets.UTF_8);
+        log.debug("已写入 pom.xml，注入 {} 个额外依赖", dependencies.size());
+    }
+
+    /**
+     * 构造 Maven 依赖 XML 片段
+     */
+    private String buildDependencyXml(List<Dependency> dependencies) {
+        if (dependencies == null || dependencies.isEmpty()) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder();
+        for (Dependency dep : dependencies) {
+            sb.append("        <dependency>\n");
+            sb.append("            <groupId>").append(dep.getGroupId()).append("</groupId>\n");
+            sb.append("            <artifactId>").append(dep.getArtifactId()).append("</artifactId>\n");
+            sb.append("            <version>").append(dep.getVersion()).append("</version>\n");
+            String scope = dep.getScope() != null && !dep.getScope().isBlank()
+                    ? dep.getScope() : "compile";
+            sb.append("            <scope>").append(scope).append("</scope>\n");
+            sb.append("        </dependency>\n");
+        }
+        return sb.toString();
     }
 
     /**

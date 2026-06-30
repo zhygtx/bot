@@ -86,18 +86,26 @@ public class AIPluginServiceImpl implements AIPluginService {
             throw new RuntimeException("AI 代码生成失败: " + aiResult.getErrorMessage());
         }
 
+        // 审查代码
+        CodeGenerator.ReviewResult reviewResult = codeGenerator.reviewCode(aiResult.getFiles());
+
         // 保存 AI 响应
         saveAssistantTurn(conversationId, userId, 1,
-                aiResult.getFiles(), aiResult.getRawResponse());
+                aiResult.getFiles(), aiResult.getDependencies(),
+                reviewResult, aiResult.getRawResponse());
 
-        log.info("AI 代码生成成功: conversationId={}, round=1, files={}",
-                conversationId, aiResult.getFiles().size());
+        log.info("AI 代码生成成功: conversationId={}, round=1, files={}, deps={}, reviewPassed={}",
+                conversationId, aiResult.getFiles().size(),
+                aiResult.getDependencies() != null ? aiResult.getDependencies().size() : 0,
+                reviewResult != null ? reviewResult.isPassed() : "skipped");
 
         return GenerateResponse.builder()
                 .conversationId(conversationId)
                 .round(1)
                 .files(aiResult.getFiles())
+                .dependencies(aiResult.getDependencies())
                 .rawResponse(aiResult.getRawResponse())
+                .reviewResult(reviewResult)
                 .build();
     }
 
@@ -138,18 +146,26 @@ public class AIPluginServiceImpl implements AIPluginService {
             conversationTurnMapper.updateStatusToDraftFromRound(request.getConversationId(), maxRound);
         }
 
+        // 审查代码
+        CodeGenerator.ReviewResult reviewResult = codeGenerator.reviewCode(aiResult.getFiles());
+
         // 保存 AI 响应
         saveAssistantTurn(request.getConversationId(), userId, nextRound,
-                aiResult.getFiles(), aiResult.getRawResponse());
+                aiResult.getFiles(), aiResult.getDependencies(),
+                reviewResult, aiResult.getRawResponse());
 
-        log.info("AI 微调成功: conversationId={}, round={}, files={}",
-                request.getConversationId(), nextRound, aiResult.getFiles().size());
+        log.info("AI 微调成功: conversationId={}, round={}, files={}, deps={}, reviewPassed={}",
+                request.getConversationId(), nextRound, aiResult.getFiles().size(),
+                aiResult.getDependencies() != null ? aiResult.getDependencies().size() : 0,
+                reviewResult != null ? reviewResult.isPassed() : "skipped");
 
         return GenerateResponse.builder()
                 .conversationId(request.getConversationId())
                 .round(nextRound)
                 .files(aiResult.getFiles())
+                .dependencies(aiResult.getDependencies())
                 .rawResponse(aiResult.getRawResponse())
+                .reviewResult(reviewResult)
                 .build();
     }
 
@@ -177,6 +193,7 @@ public class AIPluginServiceImpl implements AIPluginService {
         }
 
         List<SourceFile> files = deserializeCodeFiles(assistantTurns.get(0).getContent());
+        List<Dependency> dependencies = deserializeDependencies(assistantTurns.get(0).getContent());
 
         log.info("撤销成功: conversationId={}, targetRound={}", conversationId, targetRound);
 
@@ -184,6 +201,7 @@ public class AIPluginServiceImpl implements AIPluginService {
                 .conversationId(conversationId)
                 .round(targetRound)
                 .files(files)
+                .dependencies(dependencies)
                 .build();
     }
 
@@ -224,8 +242,20 @@ public class AIPluginServiceImpl implements AIPluginService {
     @Override
     @Transactional
     public Map<String, String> compileAndUpload(PluginCompileRequest request, String userId) {
+        // ========== 0. 审查检查 ==========
+        if (request.getReviewResult() != null) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> review = objectMapper.convertValue(request.getReviewResult(), Map.class);
+            Boolean passed = review != null ? (Boolean) review.get("passed") : null;
+            if (passed != null && !passed) {
+                throw new IllegalStateException("代码审查未通过，请先微调修复问题后再编译");
+            }
+        }
+
         // 1. 编译
-        PluginCompiler.CompileResult compileResult = pluginCompiler.compile(request.getFiles());
+        List<Dependency> deps = request.getDependencies() != null
+                ? request.getDependencies() : Collections.emptyList();
+        PluginCompiler.CompileResult compileResult = pluginCompiler.compile(request.getFiles(), deps);
         if (!compileResult.isSuccess()) {
             throw new RuntimeException("编译失败: " + compileResult.getErrors());
         }
@@ -270,8 +300,10 @@ public class AIPluginServiceImpl implements AIPluginService {
     // ==================== 内部方法 ====================
 
     private void saveAssistantTurn(String conversationId, String userId,
-                                    int round, List<SourceFile> files, String rawResponse) {
-        String contentJson = serializeCodeFiles(files, rawResponse);
+                                    int round, List<SourceFile> files,
+                                    List<Dependency> dependencies,
+                                    CodeGenerator.ReviewResult reviewResult, String rawResponse) {
+        String contentJson = serializeCodeFiles(files, dependencies, reviewResult, rawResponse);
         AIConversationTurn turn = new AIConversationTurn();
         turn.setId(UUID.randomUUID().toString());
         turn.setConversationId(conversationId);
@@ -284,15 +316,22 @@ public class AIPluginServiceImpl implements AIPluginService {
         conversationTurnMapper.insert(turn);
     }
 
-    private String serializeCodeFiles(List<SourceFile> files, String rawResponse) {
+    private String serializeCodeFiles(List<SourceFile> files,
+                                        List<Dependency> dependencies,
+                                        CodeGenerator.ReviewResult reviewResult,
+                                        String rawResponse) {
         try {
             Map<String, Object> wrapper = new LinkedHashMap<>();
-            wrapper.put("files", files);
+            wrapper.put("files", files != null ? files : Collections.emptyList());
+            wrapper.put("dependencies", dependencies != null ? dependencies : Collections.emptyList());
+            if (reviewResult != null) {
+                wrapper.put("reviewResult", reviewResult);
+            }
             wrapper.put("rawResponse", rawResponse);
             return objectMapper.writeValueAsString(wrapper);
         } catch (JsonProcessingException e) {
             log.error("序列化代码文件失败", e);
-            return "[]";
+            return "{}";
         }
     }
 
@@ -311,6 +350,27 @@ public class AIPluginServiceImpl implements AIPluginService {
                     .constructCollectionType(List.class, SourceFile.class));
         } catch (Exception e) {
             log.warn("反序列化代码文件失败: {}", e.getMessage());
+            return Collections.emptyList();
+        }
+    }
+
+    /**
+     * 从 JSON 反序列化 Dependency 列表
+     */
+    @SuppressWarnings("unchecked")
+    private List<Dependency> deserializeDependencies(String contentJson) {
+        try {
+            if (contentJson.trim().startsWith("{")) {
+                Map<String, Object> map = objectMapper.readValue(contentJson, Map.class);
+                Object depsObj = map.get("dependencies");
+                if (depsObj instanceof List) {
+                    return objectMapper.convertValue(depsObj, objectMapper.getTypeFactory()
+                            .constructCollectionType(List.class, Dependency.class));
+                }
+            }
+            return Collections.emptyList();
+        } catch (Exception e) {
+            log.warn("反序列化依赖信息失败: {}", e.getMessage());
             return Collections.emptyList();
         }
     }

@@ -29,6 +29,7 @@
             <version>main-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
+        <!--AI_DEPENDENCIES-->
     </dependencies>
 
     <build>

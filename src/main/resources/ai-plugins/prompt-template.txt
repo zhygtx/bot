@@ -11,6 +11,22 @@
 - 每个方法必须有 @Method 注解和完整的 @Param 注解
 - 基本类型（int, long 等）禁止标记 nullable=true
 
+## 依赖声明
+如果你的代码需要引入第三方库（如 Gson、Apache Commons 等），请在文件列表之前声明依赖：
+
+<dependencies>
+<dependency>
+    <groupId>com.google.code.gson</groupId>
+    <artifactId>gson</artifactId>
+    <version>2.11.0</version>
+    <scope>compile</scope>
+</dependency>
+</dependencies>
+
+- scope 可选值：compile（默认编译和运行）、provided（由容器提供，如 generalbot-api）、runtime（仅运行时）
+- 不需要依赖时不要输出 <dependencies> 块
+- generalbot-api 已作为 provided 依赖引入，不要重复声明
+
 ## 输出格式要求
 请使用以下格式输出代码，每个文件用文件路径标记，文件路径必须以 src/main/java/ 开头：
 

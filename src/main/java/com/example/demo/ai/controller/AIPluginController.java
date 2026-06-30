@@ -104,6 +104,8 @@ public class AIPluginController {
         try {
             Map<String, String> data = aiPluginService.compileAndUpload(request, user.userId());
             return Result.success(data);
+        } catch (IllegalStateException e) {
+            return Result.error(403, e.getMessage());
         } catch (IllegalArgumentException e) {
             return Result.error(400, e.getMessage());
         } catch (RuntimeException e) {

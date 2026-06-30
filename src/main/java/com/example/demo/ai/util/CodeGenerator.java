@@ -2,6 +2,7 @@ package com.example.demo.ai.util;
 
 import com.example.demo.ai.pojo.dto.DeepSeekRequest;
 import com.example.demo.ai.pojo.dto.DeepSeekResponse;
+import com.example.demo.ai.pojo.dto.Dependency;
 import com.example.demo.ai.pojo.dto.SourceFile;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -50,6 +51,23 @@ public class CodeGenerator {
     @Value("${ai.plugin.deepseek.max-tokens}")
     private int maxTokens;
 
+    // ==================== 审查配置字段 ====================
+
+    @Value("${ai.plugin.review.enabled:true}")
+    private boolean reviewEnabled;
+
+    @Value("${ai.plugin.review.prompt-template-path:classpath:ai-plugins/review-prompt-template.txt}")
+    private String reviewPromptTemplatePath;
+
+    @Value("${ai.plugin.review.model:deepseek-chat}")
+    private String reviewModel;
+
+    @Value("${ai.plugin.review.temperature:0.1}")
+    private double reviewTemperature;
+
+    @Value("${ai.plugin.review.max-tokens:2048}")
+    private int reviewMaxTokens;
+
     /** 复用 RestTemplate 实例，避免每次调用重新创建 */
     private final RestTemplate restTemplate;
 
@@ -71,10 +89,44 @@ public class CodeGenerator {
         private boolean success;
         /** 解析出的源码文件列表 */
         private List<SourceFile> files;
+        /** AI 声明的额外 Maven 依赖 */
+        @Builder.Default
+        private List<Dependency> dependencies = Collections.emptyList();
+        /** 审查结果（审查关闭时为 null） */
+        private ReviewResult reviewResult;
         /** AI 返回的原始文本（用于调试或格式异常时回退） */
         private String rawResponse;
         /** 错误信息 */
         private String errorMessage;
+    }
+
+    /**
+     * 代码审查结果
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class ReviewResult {
+        private boolean passed;
+        private String summary;
+        @Builder.Default
+        private List<ReviewIssue> issues = Collections.emptyList();
+    }
+
+    /**
+     * 审查发现的具体问题
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class ReviewIssue {
+        private String severity;
+        private String file;
+        private Integer line;
+        private String message;
+        private String suggestion;
     }
 
     // ==================== 公共方法 ====================
@@ -132,6 +184,141 @@ public class CodeGenerator {
                     .errorMessage("AI 代码生成失败: " + e.getMessage())
                     .build();
         }
+    }
+
+    // ==================== 代码审查 ====================
+
+    /**
+     * 审查生成的代码。
+     *
+     * @param files 生成的源码文件
+     * @return 审查结果（审查关闭时返回 null，审查失败时降级为 passed=false 结果）
+     */
+    public ReviewResult reviewCode(List<SourceFile> files) {
+        if (!reviewEnabled) {
+            log.info("代码审查已关闭，跳过审查");
+            return null;
+        }
+        if (files == null || files.isEmpty()) {
+            return null;
+        }
+        if (apiKey == null || apiKey.isBlank()) {
+            log.warn("DeepSeek API Key 未配置，跳过审查");
+            return null;
+        }
+
+        // 拼接所有源码
+        String code = buildCodeForReview(files);
+
+        try {
+            String reviewPrompt = loadReviewTemplate();
+            reviewPrompt = reviewPrompt.replace("{{code}}", code);
+
+            String response = callDeepSeekForReview(reviewPrompt);
+            return parseReviewResponse(response);
+        } catch (Exception e) {
+            log.warn("代码审查调用失败，降级处理", e);
+            return ReviewResult.builder()
+                    .passed(false)
+                    .summary("审查服务暂时不可用: " + e.getMessage())
+                    .build();
+        }
+    }
+
+    /**
+     * 将所有源码拼接为审查用的文本
+     */
+    private String buildCodeForReview(List<SourceFile> files) {
+        StringBuilder sb = new StringBuilder();
+        for (SourceFile file : files) {
+            sb.append("// File: ").append(file.getFilePath()).append("\n");
+            sb.append(file.getContent()).append("\n\n");
+        }
+        return sb.toString();
+    }
+
+    /**
+     * 从 classpath 加载审查提示词模板
+     */
+    private String loadReviewTemplate() throws IOException {
+        String path = reviewPromptTemplatePath;
+        if (path.startsWith("classpath:")) {
+            path = path.substring("classpath:".length());
+        }
+        ClassPathResource resource = new ClassPathResource(path);
+        if (!resource.exists()) {
+            throw new IOException("找不到审查提示词模板文件: " + reviewPromptTemplatePath);
+        }
+        return new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+    }
+
+    /**
+     * 调用 DeepSeek API 进行代码审查
+     */
+    private String callDeepSeekForReview(String prompt) {
+        DeepSeekRequest request = new DeepSeekRequest();
+        request.setModel(reviewModel);
+        request.setTemperature(reviewTemperature);
+        request.setMaxTokens(reviewMaxTokens);
+        request.setMessages(List.of(
+                new DeepSeekRequest.Message("system",
+                        "你是一个 Java 代码安全审查专家，只输出 JSON 格式的审查结果。"),
+                new DeepSeekRequest.Message("user", prompt)
+        ));
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(apiKey);
+
+        HttpEntity<DeepSeekRequest> entity = new HttpEntity<>(request, headers);
+        String url = baseUrl.replaceAll("/+$", "") + "/chat/completions";
+        log.info("调用 DeepSeek 审查 API: url={}, model={}", url, reviewModel);
+
+        ResponseEntity<DeepSeekResponse> responseEntity;
+        try {
+            responseEntity = restTemplate.postForEntity(url, entity, DeepSeekResponse.class);
+        } catch (Exception e) {
+            log.error("DeepSeek 审查 API 调用失败: {}", e.getMessage());
+            throw new RuntimeException("审查服务调用失败: " + e.getMessage(), e);
+        }
+
+        DeepSeekResponse response = responseEntity.getBody();
+        if (response == null || response.getError() != null) {
+            throw new RuntimeException("审查服务返回异常");
+        }
+        if (response.getChoices() == null || response.getChoices().isEmpty()) {
+            throw new RuntimeException("审查服务响应中无内容");
+        }
+
+        String content = response.getChoices().get(0).getMessage().getContent();
+        if (content == null || content.isBlank()) {
+            throw new RuntimeException("审查服务返回内容为空");
+        }
+
+        return content;
+    }
+
+    /**
+     * 解析审查 API 返回的 JSON
+     */
+    private ReviewResult parseReviewResponse(String response) {
+        try {
+            // 提取 JSON（AI 可能前后有多余文本）
+            int jsonStart = response.indexOf("{");
+            int jsonEnd = response.lastIndexOf("}") + 1;
+            if (jsonStart >= 0 && jsonEnd > jsonStart) {
+                String json = response.substring(jsonStart, jsonEnd);
+                com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                return mapper.readValue(json, ReviewResult.class);
+            }
+            log.warn("审查返回中未找到有效 JSON，原始内容: {}", response);
+        } catch (Exception e) {
+            log.warn("解析审查结果 JSON 失败: {}", e.getMessage());
+        }
+        return ReviewResult.builder()
+                .passed(false)
+                .summary("审查结果解析失败，原始返回: " + response)
+                .build();
     }
 
     // ==================== 提示词构造 ====================
@@ -252,6 +439,21 @@ public class CodeGenerator {
 
     // ==================== 响应解析 ====================
 
+    /** 匹配 &lt;dependencies&gt;...&lt;/dependencies&gt; 块 */
+    private static final Pattern DEPS_BLOCK_PATTERN = Pattern.compile(
+            "<dependencies>(.*?)</dependencies>",
+            Pattern.CASE_INSENSITIVE | Pattern.DOTALL
+    );
+
+    /** 匹配 &lt;dependency&gt; 内的四个子元素 */
+    private static final Pattern DEP_ELEMENT_PATTERN = Pattern.compile(
+            "<groupId>(.+?)</groupId>\\s*" +
+            "<artifactId>(.+?)</artifactId>\\s*" +
+            "<version>(.+?)</version>" +
+            "(?:\\s*<scope>(.+?)</scope>)?",
+            Pattern.CASE_INSENSITIVE | Pattern.DOTALL
+    );
+
     /** 匹配 &lt;file path="..."&gt;...&lt;/file&gt; 的正则 */
     private static final Pattern FILE_BLOCK_PATTERN = Pattern.compile(
             "<file\\s+path=\"([^\"]+)\">\\s*([\\s\\S]*?)\\s*</file>",
@@ -259,9 +461,13 @@ public class CodeGenerator {
     );
 
     /**
-     * 解析 AI 返回的文本，提取 &lt;file&gt; 块
+     * 解析 AI 返回的文本，先提取依赖，再提取代码文件
      */
     private GenerateResult parseResponse(String responseContent) {
+        // Step 1: 提取依赖
+        List<Dependency> dependencies = parseDependencies(responseContent);
+
+        // Step 2: 提取代码文件
         List<SourceFile> files = new ArrayList<>();
         Matcher matcher = FILE_BLOCK_PATTERN.matcher(responseContent);
 
@@ -269,10 +475,7 @@ public class CodeGenerator {
             String filePath = matcher.group(1).trim();
             String content = matcher.group(2).trim();
 
-            // 标准化文件路径分隔符
             filePath = filePath.replace("\\", "/");
-
-            // 校验路径是否以 src/main/java/ 开头
             if (!filePath.startsWith("src/main/java/")) {
                 log.warn("跳过不符合路径规范的文件: {}", filePath);
                 continue;
@@ -291,11 +494,38 @@ public class CodeGenerator {
                     .build();
         }
 
-        log.info("成功解析出 {} 个代码文件", files.size());
+        log.info("成功解析出 {} 个代码文件，{} 个依赖", files.size(), dependencies.size());
         return GenerateResult.builder()
                 .success(true)
                 .files(files)
+                .dependencies(dependencies)
                 .rawResponse(responseContent)
                 .build();
+    }
+
+    /**
+     * 从 AI 返回中解析 &lt;dependencies&gt; 块
+     */
+    private List<Dependency> parseDependencies(String responseContent) {
+        Matcher blockMatcher = DEPS_BLOCK_PATTERN.matcher(responseContent);
+        if (!blockMatcher.find()) {
+            return Collections.emptyList();
+        }
+
+        String depsContent = blockMatcher.group(1);
+        Matcher depMatcher = DEP_ELEMENT_PATTERN.matcher(depsContent);
+        List<Dependency> deps = new ArrayList<>();
+
+        while (depMatcher.find()) {
+            String groupId = depMatcher.group(1).trim();
+            String artifactId = depMatcher.group(2).trim();
+            String version = depMatcher.group(3).trim();
+            String scope = depMatcher.group(4) != null ? depMatcher.group(4).trim() : "compile";
+
+            deps.add(new Dependency(groupId, artifactId, version, scope));
+            log.info("解析到依赖: {}:{}:{} (scope={})", groupId, artifactId, version, scope);
+        }
+
+        return deps;
     }
 }

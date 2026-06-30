@@ -17,6 +17,9 @@ public class PluginCompileRequest {
     /** AI 生成的源码文件列表 */
     private List<SourceFile> files;
 
+    /** AI 声明的额外 Maven 依赖 */
+    private List<Dependency> dependencies;
+
     /** 插件名称 */
     private String name;
 
@@ -40,4 +43,7 @@ public class PluginCompileRequest {
 
     /** 关联的会话 ID（编译上传成功后更新对话状态） */
     private String conversationId;
+
+    /** 审查结果（编译前检查是否通过，未通过则拒绝编译） */
+    private Object reviewResult;
 }
