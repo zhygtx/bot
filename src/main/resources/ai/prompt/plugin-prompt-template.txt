@@ -15,8 +15,8 @@
 
 ### 包结构与类规范
 
-- 实体类放在 `{{entityPackage}}` 包下，标注 `@Entity(description="...")`，字段标注 `@Attribute(description="...")`
-- 方法类放在 `{{methodPackage}}` 包下，标注 `@MethodClass(description="...")`
+- 实体类放在 `com.example.entity` 包下，标注 `@Entity(description="...")`，字段标注 `@Attribute(description="...")`
+- 方法类放在 `com.example.service` 包下，标注 `@MethodClass(description="...")`
 - 方法类如需持久化数据则继承 `PluginServiceBase`（来自 `com.github.zhygtx.service`），通过 `sqlService` 字段操作数据；否则直接实现普通方法
 - 方法标注 `@Method(description="...", returnDescription="...")`
 - 参数标注 `@Param(description="...", nullable=true/false)`
@@ -50,7 +50,7 @@
 ### 代码示例
 ```java
 // -------- 实体类 --------
-package {{entityPackage}};
+package com.example.entity;
 
 import com.github.zhygtx.annotation.Attribute;
 import com.github.zhygtx.annotation.Entity;
@@ -66,7 +66,7 @@ public class UserData {
 }
 
 // -------- 方法类（无持久化） --------
-package {{methodPackage}};
+package com.example.service;
 
 import com.github.zhygtx.annotation.Method;
 import com.github.zhygtx.annotation.MethodClass;
@@ -84,7 +84,7 @@ public class TextService {
 }
 
 // -------- 方法类（带持久化） --------
-package {{methodPackage}};
+package com.example.service;
 
 import com.github.zhygtx.annotation.Method;
 import com.github.zhygtx.annotation.MethodClass;
@@ -137,23 +137,11 @@ public class ConfigService extends PluginServiceBase {
 ## 输出格式要求
 请使用以下格式输出代码，每个文件用文件路径标记：
 
-生成过程中请在关键阶段输出进度标记，进度标记可以穿插在文件块之前，但不要写进文件源码内部：
-
-<progress>正在获取上下文</progress>
-<progress>正在加入依赖</progress>
-<progress>正在生成实体类</progress>
-<progress>正在生成主方法类</progress>
-<progress>正在生成辅助方法</progress>
-
-- 一旦开始输出某个具体文件，进度必须立即切换为 `正在生成 文件名.java`
-- 如果当前轮存在多个文件，请按文件顺序逐个切换文件名进度
-- 不要长时间停留在“正在获取上下文”
-
-<file path="src/main/java/{{entityPackage}}/实体类名.java">
+<file path="src/main/java/com.example.entity/实体类名.java">
 实体类源码
 </file>
 
-<file path="src/main/java/{{methodPackage}}/方法类名.java">
+<file path="src/main/java/com.example.service/方法类名.java">
 方法类源码
 </file>
 
@@ -163,11 +151,3 @@ public class ConfigService extends PluginServiceBase {
 - 不要输出 pom.xml、构建脚本或项目外路径。
 - 数据持久化功能只有在需求明确需要保存、查询、统计历史数据时才生成；普通文本处理、计算、调用接口或一次性响应不需要实体类或 SQL 持久化。
 - 不要生成匿名内部类、Lambda 产生的合成类。
-
-{{#existingCode}}
-## 现有代码（请在此基础上修改）
-{{existingCode}}
-{{/existingCode}}
-
-## 需求
-{{requirements}}

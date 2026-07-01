@@ -1,5 +1,7 @@
-package com.example.demo.ai.ws;
+package com.example.demo.ai.ai.ws;
 
+import com.example.demo.ai.ws.AIPluginWebSocketHandler;
+import com.example.demo.ai.ws.AIPluginWsAuthInterceptor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
@@ -10,15 +12,15 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
  */
 @Configuration
 @EnableWebSocket
-public class AIPluginWebSocketConfig implements WebSocketConfigurer {
+public class AIWebSocketConfig implements WebSocketConfigurer {
 
     public static final String PATH = "/ws/ai-plugin";
 
     private final AIPluginWebSocketHandler handler;
     private final AIPluginWsAuthInterceptor authInterceptor;
 
-    public AIPluginWebSocketConfig(AIPluginWebSocketHandler handler,
-                                   AIPluginWsAuthInterceptor authInterceptor) {
+    public AIWebSocketConfig(AIPluginWebSocketHandler handler,
+                             AIPluginWsAuthInterceptor authInterceptor) {
         this.handler = handler;
         this.authInterceptor = authInterceptor;
     }

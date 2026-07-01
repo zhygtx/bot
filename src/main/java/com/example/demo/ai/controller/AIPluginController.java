@@ -21,12 +21,12 @@ import java.util.Map;
 public class AIPluginController {
 
     private final AIPluginService aiPluginService;
-    private final boolean reviewEnabled;
 
-    public AIPluginController(AIPluginService aiPluginService,
-                              @Value("${ai.review.enabled:false}") boolean reviewEnabled) {
+    @Value("${ai.review.enabled:false}")
+    private boolean reviewEnabled;
+
+    public AIPluginController(AIPluginService aiPluginService) {
         this.aiPluginService = aiPluginService;
-        this.reviewEnabled = reviewEnabled;
     }
 
     /**
@@ -41,8 +41,7 @@ public class AIPluginController {
      * 撤销到指定轮次
      */
     @PostMapping("/conversation/undo")
-    public Result<GenerateResponse> undo(
-            @AuthenticationPrincipal UserPrincipal user,
+    public Result<GenerateResponse> undo(@AuthenticationPrincipal UserPrincipal user,
             @RequestBody UndoRequest request) {
 
         try {

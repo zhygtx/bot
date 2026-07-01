@@ -323,6 +323,9 @@ public class CodeGenerator {
         return sb.toString();
     }
 
+    /**
+     * 流式处理模型增量，将每个增量分块处理
+     */
     private void streamDelta(String delta, Consumer<String> onDelta) {
         int cursor = 0;
         int chunkSize = 8;

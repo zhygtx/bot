@@ -1,4 +1,4 @@
-package com.example.demo.ai.ws;
+package com.example.demo.ai.ai.ws;
 
 import com.example.demo.security.UserPrincipal;
 import com.example.demo.util.JWTUtil;
@@ -21,13 +21,13 @@ import java.util.Map;
  */
 @Slf4j
 @Component
-public class AIPluginWsAuthInterceptor implements HandshakeInterceptor {
+public class AIWsAuthInterceptor implements HandshakeInterceptor {
 
     public static final String ATTR_USER = "aiPluginUser";
 
     private final JWTUtil jwtUtil;
 
-    public AIPluginWsAuthInterceptor(JWTUtil jwtUtil) {
+    public AIWsAuthInterceptor(JWTUtil jwtUtil) {
         this.jwtUtil = jwtUtil;
     }
 

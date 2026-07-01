@@ -260,7 +260,7 @@ public class AIPluginServiceImpl implements AIPluginService {
         }
 
         int currentRound = turns.stream()
-                .filter(t -> "current".equals(t.getStatus()))
+                .filter(t -> AIConversationTurn.Status.CURRENT.equals(t.getStatus()))
                 .map(AIConversationTurn::getRound)
                 .max(Integer::compareTo)
                 .orElse(0);
@@ -359,7 +359,7 @@ public class AIPluginServiceImpl implements AIPluginService {
         turn.setRound(round);
         turn.setRole("assistant");
         turn.setContent(contentJson);
-        turn.setStatus("current");
+        turn.setStatus(AIConversationTurn.Status.CURRENT);
         turn.setCreateTime(LocalDateTime.now());
         conversationTurnMapper.insert(turn);
     }
@@ -419,7 +419,7 @@ public class AIPluginServiceImpl implements AIPluginService {
         userTurn.setRound(round);
         userTurn.setRole("user");
         userTurn.setContent(content);
-        userTurn.setStatus("draft");
+        userTurn.setStatus(AIConversationTurn.Status.DRAFT);
         userTurn.setCreateTime(LocalDateTime.now());
         conversationTurnMapper.insert(userTurn);
     }

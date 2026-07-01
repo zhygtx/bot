@@ -1,7 +1,8 @@
-package com.example.demo.ai.ai.pojo;
+package com.example.demo.ai.ai.pojo.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -10,8 +11,8 @@ import java.time.LocalDateTime;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class AIChatMessage {
-
 
     /** 记录主键（UUID，每条记录唯一） */
     private String id;
@@ -34,7 +35,13 @@ public class AIChatMessage {
     /**
      * 用户指令文本（role=user）或 JSON 格式代码数组（role=assistant）
      */
-    private String content;
+    private String message;
+
+    /**
+     * 生成的代码JSON格式（role=assistant）
+     * 格式：{[{"path":"path","code":"code"},...]}
+     */
+    private String code;
 
     /**
      * 'draft': 历史轮次（已被后续覆盖）

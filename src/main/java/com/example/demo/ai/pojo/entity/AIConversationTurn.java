@@ -43,8 +43,14 @@ public class AIConversationTurn {
      * 'current': 当前最新未发布版本
      * 'published': 已编译上传的版本
      */
-    private String status;
+    private Status status;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime createTime;
+
+    public enum Status {
+        DRAFT,//历史轮次（已被后续覆盖）
+        CURRENT,//当前最新未发布版本
+        PUBLISHED//已编译上传的版本
+    }
 }

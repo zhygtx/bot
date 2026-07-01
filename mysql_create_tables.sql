@@ -298,14 +298,15 @@ CREATE TABLE `big_text` (
 # --------------------------------------------------------------------------------------------------------
 
 -- AI 对话轮次与代码存储表
-CREATE TABLE `ai_conversation_turn` (
+CREATE TABLE `ai_chat_message` (
   `id`              VARCHAR(64)  NOT NULL PRIMARY KEY COMMENT '记录主键（UUID）',
   `conversation_id` VARCHAR(64)  NOT NULL COMMENT '会话 ID，同一对话中所有记录共享此值',
   `plugin_id`       VARCHAR(64)           COMMENT '关联的插件 ID（首次生成时为 null）',
   `user_id`         VARCHAR(64)  NOT NULL COMMENT '创建者用户 ID',
   `round`           INT          NOT NULL COMMENT '对话轮次，从 1 开始',
   `role`            VARCHAR(16)  NOT NULL COMMENT "'user' | 'assistant'",
-  `content`         TEXT                   COMMENT '用户指令文本（role=user）或 JSON 格式代码数组（role=assistant）',
+  `message`         TEXT                   COMMENT '用户指令文本（role=user）或 JSON 格式代码数组（role=assistant）',
+  `code`            JSON                   COMMENT '生成的代码JSON格式（role=assistant）',
   `status`          VARCHAR(16)  NOT NULL DEFAULT 'draft' COMMENT "'draft':历史轮次 'current':当前最新未发布 'published':已编译上传",
   `create_time`     DATETIME     NOT NULL COMMENT '创建时间',
   INDEX `idx_conversation` (`conversation_id`),
