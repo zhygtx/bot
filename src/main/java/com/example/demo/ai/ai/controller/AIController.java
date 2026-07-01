@@ -48,7 +48,7 @@ public class AIController {
     public Result<?> findDtoList(@AuthenticationPrincipal UserPrincipal user,
                                  @RequestParam(required = false,defaultValue = "1") Integer pageNum,
                                  @RequestParam(required = false,defaultValue = "10") Integer pageSize) {
-        return Result.success(aiService.findDtoList(user.userId(), pageNum, pageSize));
+        return Result.success(null, aiService.findDtoList(user.userId(), pageNum, pageSize));
     }
 
     /**
@@ -56,6 +56,6 @@ public class AIController {
      */
     @GetMapping("/{conversationId}")
     public Result<?> findByConversationId(@PathVariable String conversationId) {
-        return Result.success(aiService.findByConversationId(conversationId));
+        return Result.success(null, aiService.findByConversationId(conversationId));
     }
 }

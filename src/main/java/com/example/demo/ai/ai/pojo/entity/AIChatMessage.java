@@ -1,5 +1,6 @@
 package com.example.demo.ai.ai.pojo.entity;
 
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,6 +13,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@TableName("ai_chat_message")
 public class AIChatMessage {
 
     /** 记录主键（UUID，每条记录唯一） */

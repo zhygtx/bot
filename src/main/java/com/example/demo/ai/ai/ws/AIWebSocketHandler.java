@@ -2,7 +2,6 @@ package com.example.demo.ai.ai.ws;
 
 import com.example.demo.ai.ai.pojo.entity.AIChatMessage;
 import com.example.demo.ai.ai.service.AIService;
-import com.example.demo.ai.ws.AIPluginWsAuthInterceptor;
 import com.example.demo.security.UserPrincipal;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -96,7 +95,7 @@ public class AIWebSocketHandler extends TextWebSocketHandler {
      */
     private void startGeneration(WebSocketSession session, JsonNode payloadNode) {
         cancelTask(session);
-        UserPrincipal user = (UserPrincipal) session.getAttributes().get(AIPluginWsAuthInterceptor.ATTR_USER);
+        UserPrincipal user = (UserPrincipal) session.getAttributes().get(AIWsAuthInterceptor.ATTR_USER);
         if (user == null) {
             send(session, "error", Map.of("message", "登录状态已失效"));
             closeQuietly(session, CloseStatus.NOT_ACCEPTABLE);

@@ -1,16 +1,18 @@
 package com.example.demo.ai.controller;
 
 import com.example.demo.ai.exception.CodeReviewFailedException;
-import com.example.demo.ai.pojo.dto.*;
+import com.example.demo.ai.pojo.dto.PluginCompileRequest;
+import com.example.demo.ai.pojo.dto.PluginCompileResponse;
 import com.example.demo.ai.service.AIPluginService;
 import com.example.demo.pojo.entity.Result;
 import com.example.demo.security.UserPrincipal;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * AI 插件生成 API
@@ -27,65 +29,6 @@ public class AIPluginController {
 
     public AIPluginController(AIPluginService aiPluginService) {
         this.aiPluginService = aiPluginService;
-    }
-
-    /**
-     * AI 插件生成页面配置。
-     */
-    @GetMapping("/config")
-    public Result<Map<String, Object>> config() {
-        return Result.success("", Map.of("reviewEnabled", reviewEnabled));
-    }
-
-    /**
-     * 撤销到指定轮次
-     */
-    @PostMapping("/conversation/undo")
-    public Result<GenerateResponse> undo(@AuthenticationPrincipal UserPrincipal user,
-            @RequestBody UndoRequest request) {
-
-        try {
-            GenerateResponse resp = aiPluginService.undoToRound(
-                    request.getConversationId(), request.getTargetRound(), user.userId());
-            return Result.success(resp);
-        } catch (SecurityException e) {
-            return Result.error(403, e.getMessage());
-        } catch (IllegalArgumentException e) {
-            return Result.error(400, e.getMessage());
-        }
-    }
-
-    /**
-     * 删除指定轮次及其之后的对话内容
-     */
-    @PostMapping("/conversation/delete-round")
-    public Result<GenerateResponse> deleteRound(
-            @AuthenticationPrincipal UserPrincipal user,
-            @RequestBody DeleteRoundRequest request) {
-
-        try {
-            GenerateResponse resp = aiPluginService.deleteFromRound(
-                    request.getConversationId(), request.getRound(), user.userId());
-            return Result.success(resp);
-        } catch (SecurityException e) {
-            return Result.error(403, e.getMessage());
-        } catch (IllegalArgumentException e) {
-            return Result.error(400, e.getMessage());
-        }
-    }
-
-    /**
-     * 加载对话历史
-     */
-    @GetMapping("/conversation/{conversationId}")
-    public Result<ConversationResponse> loadConversation(@PathVariable("conversationId") String conversationId) {
-
-        try {
-            ConversationResponse resp = aiPluginService.loadConversation(conversationId);
-            return Result.success(resp);
-        } catch (IllegalArgumentException e) {
-            return Result.error(404, e.getMessage());
-        }
     }
 
     /**

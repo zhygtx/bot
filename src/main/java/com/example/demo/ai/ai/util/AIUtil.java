@@ -109,6 +109,17 @@ public class AIUtil {
      * @param springMessages 构建好的消息列表
      * @param onEvent       事件回调，(事件类型, 数据) → 推给前端
      * @return {"rawText": AI 完整回复, "codeJson": 解析后的结构化 JSON}
+     * {
+     *      *   "dependencies": [
+     *      *     {"groupId": "com.google.code.gson", "artifactId": "gson", "version": "2.11.0", "scope": "compile"}
+     *      *   ],
+     *      *   "pluginName": "文本处理工具",
+     *      *   "pluginDescription": "提供字符串拼接功能",
+     *      *   "files": [
+     *      *     {"path": "src/main/java/com/example/entity/UserData.java", "content": "package com.example.entity;\n..."},
+     *      *     {"path": "src/main/java/com/example/service/TextService.java", "content": "package com.example.service;\n..."}
+     *      *   ]
+     *      * }
      */
     public static Map<String, String> streamAndParse(ChatClient chatClient,
                                                       List<Message> springMessages,

@@ -90,6 +90,9 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
     @Override
     public List<AIChatMessage> aiGenerate(String message, String conversationId, String userId,
                                           BiConsumer<String, Object> onEvent) throws IOException {
+
+        onEvent.accept("message_change", "正在获取上下文信息");
+
         List<AIChatMessage> messages = new ArrayList<>();
         if (!conversationId.isEmpty()) {
             messages = findByConversationId(conversationId);
@@ -98,9 +101,9 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
         AIChatMessage userMessage = AIChatMessage.builder()
                 .id(UUID.randomUUID().toString())
                 .conversationId(conversationId.isEmpty() ? UUID.randomUUID().toString() : conversationId)
-                .pluginId(messages.isEmpty() ? null : messages.getFirst().getPluginId())
+                .pluginId(messages.isEmpty() ? null : messages.get(0).getPluginId())
                 .userId(userId)
-                .round(messages.isEmpty() ? 1 : messages.getLast().getRound() + 1)
+                .round(messages.isEmpty() ? 1 : messages.get(0).getRound() + 1)
                 .role("user")
                 .message(message)
                 .status(AIChatMessage.Status.CURRENT)
@@ -132,6 +135,7 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
         aiChatMessageMapper.insert(userMessage);
         aiChatMessageMapper.insert(aiMessage);
 
+        onEvent.accept("message_change", "代码生成完毕");
         return messages;
     }
 
