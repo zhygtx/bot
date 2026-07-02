@@ -2,14 +2,16 @@ package com.example.demo.ai.ai.pojo.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@TableName("ai_config")
-public class AIConfig {
+@TableName("user_ai_config")
+public class UserAIConfig {
 
     /** 主键ID */
     private String id;
@@ -32,8 +34,8 @@ public class AIConfig {
     /** API接口类型枚举 */
     public enum ApiProvider {
         /** OpenAI */
-        OpenAI,
+        OPENAI,
         /** Anthropic */
-        Anthropic
+        ANTHROPIC
     }
 }

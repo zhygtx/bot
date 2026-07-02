@@ -313,3 +313,15 @@ CREATE TABLE `ai_chat_message` (
   INDEX `idx_plugin_user` (`plugin_id`, `user_id`),
   INDEX `idx_status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='AI 对话轮次与代码存储表';
+
+-- AI 配置信息表
+CREATE TABLE `user_ai_config` (
+ `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '主键ID',
+ `user_id` VARCHAR(36) NOT NULL COMMENT '用户ID',
+ `api_provider` VARCHAR(50) NOT NULL COMMENT 'API接口类型',
+ `base_url` VARCHAR(500) NOT NULL COMMENT 'API接口基础URL',
+ `api_key` VARCHAR(255) NOT NULL COMMENT 'API密钥',
+ `model` VARCHAR(100) NOT NULL COMMENT '模型名称',
+ FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE,
+ INDEX `idx_user_id` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='AI配置信息表';

@@ -2,6 +2,7 @@ package com.example.demo.ai.ai.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.example.demo.ai.ai.client.DynamicChatClientFactory;
 import com.example.demo.ai.ai.mapper.AIChatMessageMapper;
 import com.example.demo.ai.ai.pojo.dto.AIChatMessageDto;
 import com.example.demo.ai.ai.pojo.entity.AIChatMessage;
@@ -28,15 +29,15 @@ import java.util.function.BiConsumer;
 @Service
 public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessage> implements AIService {
 
-    @Value("${ai.plugin.prompt-template-path}")
+    @Value("${ai.default.plugin.prompt-template-path}")
     private String pluginTemplatePath;
 
-    private final ChatClient chatClient;
+    private final DynamicChatClientFactory dynamicChatClientFactory;
     private final AIChatMessageMapper aiChatMessageMapper;
 
-    public AIServiceImpl(AIChatMessageMapper aiChatMessageMapper, ChatClient.Builder chatClientBuilder) {
+    public AIServiceImpl(AIChatMessageMapper aiChatMessageMapper, DynamicChatClientFactory dynamicChatClientFactory) {
         this.aiChatMessageMapper = aiChatMessageMapper;
-        this.chatClient = chatClientBuilder.build();
+        this.dynamicChatClientFactory = dynamicChatClientFactory;
     }
 
     /**
@@ -114,6 +115,7 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
         List<Message> springMessages = buildMessages(messages);
 
         // ==================== 流式调用 + 增量解析（委托给 AIUtil） ====================
+        ChatClient chatClient = dynamicChatClientFactory.getPluginChatClient(userId);
         Map<String, String> aiResult = AIUtil.streamAndParse(chatClient, springMessages, onEvent);
         String rawText = aiResult.get("rawText");
         String codeJson = aiResult.get("codeJson");

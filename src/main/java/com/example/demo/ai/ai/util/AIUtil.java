@@ -124,6 +124,8 @@ public class AIUtil {
     public static Map<String, String> streamAndParse(ChatClient chatClient,
                                                       List<Message> springMessages,
                                                       BiConsumer<String, Object> onEvent) {
+        onEvent.accept("message_change", "连接中");
+
         StringBuilder fullContent = new StringBuilder();
 
         // 增量解析状态
@@ -140,13 +142,11 @@ public class AIUtil {
                     fullContent.append(chunk);
 
                     // 1. 打字机效果：8 字分块推送
-                    if (onEvent != null) {
-                        int cursor = 0, size = 8;
-                        while (cursor < chunk.length()) {
-                            int end = Math.min(cursor + size, chunk.length());
-                            onEvent.accept("delta", chunk.substring(cursor, end));
-                            cursor = end;
-                        }
+                    int cursor = 0, size = 8;
+                    while (cursor < chunk.length()) {
+                        int end = Math.min(cursor + size, chunk.length());
+                        onEvent.accept("delta", chunk.substring(cursor, end));
+                        cursor = end;
                     }
 
                     // 2. 增量解析：扫描新增文本，检测标签

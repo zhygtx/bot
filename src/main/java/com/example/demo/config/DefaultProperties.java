@@ -9,7 +9,7 @@ import org.springframework.validation.annotation.Validated;
 @Data
 @Validated
 @ConfigurationProperties(prefix = "ai.default")
-public class AiDefaultProperties {
+public class DefaultProperties {
 
     private Plugin plugin = new Plugin();
     private Review review = new Review();
@@ -17,17 +17,17 @@ public class AiDefaultProperties {
     @PostConstruct
     public void validate() {
         // plugin 始终必填
-        Assert.hasText(plugin.provider, "ai.default.plugin.provider is required");
-        Assert.hasText(plugin.baseUrl, "ai.default.plugin.base-url is required");
-        Assert.hasText(plugin.apiKey, "ai.default.plugin.api-key is required");
-        Assert.hasText(plugin.pluginModel, "ai.default.plugin.plugin-model is required");
+        Assert.hasText(plugin.provider, "ai.default.plugin.provider不得为空");
+        Assert.hasText(plugin.baseUrl, "ai.default.plugin.base-url不得为空");
+        Assert.hasText(plugin.apiKey, "ai.default.plugin.api-key不得为空");
+        Assert.hasText(plugin.pluginModel, "ai.default.plugin.plugin-model不得为空");
 
         // review 仅在 enabled=true 时要求填写
         if (Boolean.TRUE.equals(review.enabled)) {
-            Assert.hasText(review.provider, "ai.default.review.provider is required when review is enabled");
-            Assert.hasText(review.baseUrl, "ai.default.review.base-url is required when review is enabled");
-            Assert.hasText(review.apiKey, "ai.default.review.api-key is required when review is enabled");
-            Assert.hasText(review.reviewModel, "ai.default.review.review-model is required when review is enabled");
+            Assert.hasText(review.provider, "ai.default.review.provider当启用编译前审查时不得为空");
+            Assert.hasText(review.baseUrl, "ai.default.review.base-url当启用编译前审查时不得为空");
+            Assert.hasText(review.apiKey, "ai.default.review.api-key当启用编译前审查时不得为空");
+            Assert.hasText(review.reviewModel, "ai.default.review.review-model当启用编译前审查时不得为空");
         }
     }
 
