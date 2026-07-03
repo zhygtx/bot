@@ -6,6 +6,7 @@ import com.example.demo.ai.ai.pojo.entity.AIChatMessage;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 
 public interface AIService extends IService<AIChatMessage> {
@@ -42,5 +43,6 @@ public interface AIService extends IService<AIChatMessage> {
      * @param onEvent 事件消费函数，第一个参数为事件类型（"delta" / "file_start" / "file_end"），第二个参数为事件数据
      * @return 生成任务 ID
      */
-    List<AIChatMessage> aiGenerate(String message, String conversationId, String userId, BiConsumer<String, Object> onEvent) throws IOException;
+    List<AIChatMessage> aiGenerate(String message, String conversationId, String userId,
+                                   BiConsumer<String, Object> onEvent, AtomicBoolean cancelled) throws IOException;
 }

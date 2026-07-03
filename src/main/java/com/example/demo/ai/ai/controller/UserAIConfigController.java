@@ -41,11 +41,12 @@ public class UserAIConfigController {
     }
 
     @PutMapping
-    public Result<?> update(@RequestBody UserAIConfig userAIConfig) {
+    public Result<?> update(@AuthenticationPrincipal UserPrincipal user, @RequestBody UserAIConfig userAIConfig) {
+        userAIConfig.setUserId(user.userId());
         boolean update = userAIConfigService.update(userAIConfig,
                 Wrappers.lambdaUpdate(UserAIConfig.class)
                         .eq(UserAIConfig::getId, userAIConfig.getId()));
-        dynamicChatClientFactory.evictCache(userAIConfig.getUserId());
+        dynamicChatClientFactory.evictCache(user.userId());
         return update ? Result.success("更新成功",null) : Result.error(400,"更新失败");
     }
 
@@ -53,6 +54,16 @@ public class UserAIConfigController {
     public Result<?> get(@AuthenticationPrincipal UserPrincipal user) {
         UserAIConfig userAIConfig = userAIConfigService.getOne(new LambdaQueryWrapper<UserAIConfig>()
                 .eq(UserAIConfig::getUserId, user.userId()));
-        return userAIConfig != null ? Result.success(null ,userAIConfig) : Result.error(400,"查询失败");
+        return Result.success(null ,userAIConfig);
+    }
+
+    @GetMapping("/test")
+    public Result<?> test(@AuthenticationPrincipal UserPrincipal user) throws RuntimeException {
+        try {
+            userAIConfigService.test(user.userId());
+        } catch (RuntimeException e) {
+            return Result.error(400,e.getMessage());
+        }
+        return Result.success("测试成功",null);
     }
 }

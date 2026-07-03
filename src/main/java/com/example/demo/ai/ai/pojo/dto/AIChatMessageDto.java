@@ -22,11 +22,14 @@ public class AIChatMessageDto {
     private String pluginName;
 
     /**
-     * 'draft': 历史轮次（已被后续覆盖）
-     * 'current': 当前最新未发布版本
-     * 'published': 已编译上传的版本
+     * 'draft': 未发布（从未发布过）
+     * 'published': 已发布
+     * 'published_draft': 更新未发布（曾经发布过，当前又有改动未发布）
      */
     private AIChatMessage.Status status;
+
+    /** 最后一次对话的代码（首次生成时为 null） */
+    private String lastCode;
 
     /** 创建时间 */
     private LocalDateTime createTime;

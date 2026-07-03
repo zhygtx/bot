@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -123,7 +124,8 @@ public class AIUtil {
      */
     public static Map<String, String> streamAndParse(ChatClient chatClient,
                                                       List<Message> springMessages,
-                                                      BiConsumer<String, Object> onEvent) {
+                                                      BiConsumer<String, Object> onEvent,
+                                                      AtomicBoolean cancelled) {
         onEvent.accept("message_change", "连接中");
 
         StringBuilder fullContent = new StringBuilder();
@@ -139,6 +141,9 @@ public class AIUtil {
                 .stream()
                 .content()
                 .doOnNext(chunk -> {
+                    if (cancelled != null && cancelled.get()) {
+                        throw new RuntimeException("任务已取消");
+                    }
                     fullContent.append(chunk);
 
                     // 1. 打字机效果：8 字分块推送

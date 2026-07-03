@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 
 @Slf4j
@@ -90,7 +91,7 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
      */
     @Override
     public List<AIChatMessage> aiGenerate(String message, String conversationId, String userId,
-                                          BiConsumer<String, Object> onEvent) throws IOException {
+                                          BiConsumer<String, Object> onEvent, AtomicBoolean cancelled) throws IOException {
 
         onEvent.accept("message_change", "正在获取上下文信息");
 
@@ -107,7 +108,7 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
                 .round(messages.isEmpty() ? 1 : messages.get(0).getRound() + 1)
                 .role("user")
                 .message(message)
-                .status(AIChatMessage.Status.CURRENT)
+                .status(AIChatMessage.Status.DRAFT)
                 .createTime(LocalDateTime.now())
                 .build();
         messages.add(userMessage);
@@ -116,7 +117,7 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
 
         // ==================== 流式调用 + 增量解析（委托给 AIUtil） ====================
         ChatClient chatClient = dynamicChatClientFactory.getPluginChatClient(userId);
-        Map<String, String> aiResult = AIUtil.streamAndParse(chatClient, springMessages, onEvent);
+        Map<String, String> aiResult = AIUtil.streamAndParse(chatClient, springMessages, onEvent, cancelled);
         String rawText = aiResult.get("rawText");
         String codeJson = aiResult.get("codeJson");
 

@@ -1,8 +1,8 @@
 package com.example.demo.ai.ai.client;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.example.demo.ai.ai.mapper.UserAIConfigMapper;
 import com.example.demo.ai.ai.pojo.entity.UserAIConfig;
-import com.example.demo.ai.ai.service.UserAIConfigService;
 import com.example.demo.config.DefaultProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.anthropic.AnthropicChatModel;
@@ -21,13 +21,13 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class DynamicChatClientFactory {
 
+    private final UserAIConfigMapper userAIConfigMapper;
     private final DefaultProperties defaultProperties;
-    private final UserAIConfigService userAIConfigService;
     private final Map<String, ChatClient> cache = new ConcurrentHashMap<>();
 
-    public DynamicChatClientFactory(UserAIConfigService userAIConfigService, DefaultProperties defaultProperties) {
-        this.userAIConfigService = userAIConfigService;
+    public DynamicChatClientFactory(DefaultProperties defaultProperties, UserAIConfigMapper userAIConfigMapper) {
         this.defaultProperties = defaultProperties;
+        this.userAIConfigMapper = userAIConfigMapper;
     }
 
     /**
@@ -40,12 +40,14 @@ public class DynamicChatClientFactory {
 
     /** 用户更新配置后清除缓存 */
     public void evictCache(String userId) {
+        if (!cache.containsKey(userId)) {
+            return;
+        }
         cache.remove(userId);
     }
 
     private ChatClient buildClient(String userId) {
-        UserAIConfig config = userAIConfigService.getBaseMapper()
-                .selectOne(new LambdaQueryWrapper<UserAIConfig>()
+        UserAIConfig config = userAIConfigMapper.selectOne(new LambdaQueryWrapper<UserAIConfig>()
                         .eq(UserAIConfig::getUserId, userId));
 
         if (config == null) {

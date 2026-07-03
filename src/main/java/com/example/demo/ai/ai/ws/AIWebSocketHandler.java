@@ -17,10 +17,10 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
 @Component
@@ -30,7 +30,7 @@ public class AIWebSocketHandler extends TextWebSocketHandler {
     private final ObjectMapper objectMapper;
 
     private final Executor generationExecutor = Executors.newCachedThreadPool();
-    private final Map<String, CompletableFuture<?>> tasks = new ConcurrentHashMap<>();
+    private final Map<String, AtomicBoolean> cancelFlags = new ConcurrentHashMap<>();
 
     private final Map<String, Object> sendLocks = new ConcurrentHashMap<>();
 
@@ -103,21 +103,23 @@ public class AIWebSocketHandler extends TextWebSocketHandler {
         }
 
         String conversationId = payloadNode.path("conversationId").asText();
-        CompletableFuture<?> task = CompletableFuture.runAsync(() -> {
-            try{
+        AtomicBoolean cancelled = new AtomicBoolean(false);
+        cancelFlags.put(session.getId(), cancelled);
+
+        generationExecutor.execute(() -> {
+            try {
                 List<AIChatMessage> messages = aiService.aiGenerate(
                         payloadNode.path("message").asText(), conversationId, user.userId(),
-                        (type, data) -> send(session, type, data));
+                        (type, data) -> send(session, type, data), cancelled);
                 send(session, "done", messages);
-            } catch (Exception e){
+            } catch (Exception e) {
                 log.error("AI 生成任务执行异常", e);
                 send(session, "error", Map.of("message", "AI 生成任务执行异常"));
             } finally {
-                tasks.remove(session.getId());
+                cancelFlags.remove(session.getId());
                 closeQuietly(session, CloseStatus.NORMAL);
             }
-        }, generationExecutor);
-        tasks.put(session.getId(), task);
+        });
     }
 
 
@@ -158,9 +160,9 @@ public class AIWebSocketHandler extends TextWebSocketHandler {
      * @param session WebSocket 会话
      */
     private void cancelTask(WebSocketSession session) {
-        CompletableFuture<?> task = tasks.remove(session.getId());
-        if (task != null) {
-            task.cancel(true);
+        AtomicBoolean cancelled = cancelFlags.remove(session.getId());
+        if (cancelled != null) {
+            cancelled.set(true);
         }
     }
 

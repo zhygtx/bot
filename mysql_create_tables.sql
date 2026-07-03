@@ -307,7 +307,7 @@ CREATE TABLE `ai_chat_message` (
   `role`            VARCHAR(16)  NOT NULL COMMENT "'user' | 'assistant'",
   `message`         TEXT                   COMMENT '用户指令文本（role=user）或 JSON 格式代码数组（role=assistant）',
   `code`            JSON                   COMMENT '生成的代码JSON格式（role=assistant）',
-  `status`          VARCHAR(16)  NOT NULL DEFAULT 'draft' COMMENT "'draft':历史轮次 'current':当前最新未发布 'published':已编译上传",
+  `status`          VARCHAR(16)  NOT NULL DEFAULT 'draft' COMMENT "'draft':未发布（从未发布过） 'published':已发布 'published_draft':更新未发布（曾经发布过，当前又有改动未发布）",
   `create_time`     DATETIME     NOT NULL COMMENT '创建时间',
   INDEX `idx_conversation` (`conversation_id`),
   INDEX `idx_plugin_user` (`plugin_id`, `user_id`),

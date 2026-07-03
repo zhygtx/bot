@@ -10,38 +10,40 @@
         <result column="status" property="status"/>
         <result column="create_time" property="createTime"/>
         <result column="update_time" property="updateTime"/>
+        <result column="last_code" property="lastCode" jdbcType="VARCHAR"/>
     </resultMap>
 
     <select id="selectByUserId" resultMap="AIChatMessageDtoResultMap">
         SELECT
-            conv.conversation_id,
-            latest.plugin_id,
-            p.name            AS plugin_name,
-            latest.status,
-            first.create_time,
-            latest.create_time AS update_time
+        conv.conversation_id,
+        latest.plugin_id,
+        p.name            AS plugin_name,
+        latest.status,
+        latest.code      AS last_code,     <!-- 新增：取最后一条消息的 code -->
+        first.create_time,
+        latest.create_time AS update_time
         FROM (
-                 SELECT conversation_id, MAX(round) AS max_round
-                 FROM ai_chat_message
-                 WHERE user_id = #{userId}
-                 GROUP BY conversation_id
-             ) conv
-                 INNER JOIN ai_chat_message first
-                            ON first.conversation_id = conv.conversation_id
-                                AND first.round = 1
-                                AND first.role = 'user'
-                 INNER JOIN ai_chat_message latest
-                            ON latest.conversation_id = conv.conversation_id
-                                AND latest.round = conv.max_round
-                                AND latest.id = (
-                                    SELECT m.id
-                                    FROM ai_chat_message m
-                                    WHERE m.conversation_id = conv.conversation_id
-                                      AND m.round = conv.max_round
-                                    ORDER BY m.create_time DESC, m.id DESC
-                                    LIMIT 1
-                                )
-                 LEFT JOIN plugin_info p ON latest.plugin_id = p.id
+            SELECT conversation_id, MAX(round) AS max_round
+            FROM ai_chat_message
+            WHERE user_id = #{userId}
+            GROUP BY conversation_id
+        ) conv
+        INNER JOIN ai_chat_message first
+            ON first.conversation_id = conv.conversation_id
+            AND first.round = 1
+            AND first.role = 'user'
+        INNER JOIN ai_chat_message latest
+            ON latest.conversation_id = conv.conversation_id
+            AND latest.round = conv.max_round
+            AND latest.id = (
+                SELECT m.id
+                FROM ai_chat_message m
+                WHERE m.conversation_id = conv.conversation_id
+                AND m.round = conv.max_round
+                ORDER BY m.create_time DESC, m.id DESC
+                LIMIT 1
+        )
+        LEFT JOIN plugin_info p ON latest.plugin_id = p.id
         ORDER BY latest.create_time DESC
         LIMIT #{offset}, #{count}
     </select>

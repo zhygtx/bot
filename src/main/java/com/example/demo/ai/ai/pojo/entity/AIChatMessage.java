@@ -46,9 +46,9 @@ public class AIChatMessage {
     private String code;
 
     /**
-     * 'draft': 历史轮次（已被后续覆盖）
-     * 'current': 当前最新未发布版本
-     * 'published': 已编译上传的版本
+     * 'draft': 未发布（从未发布过）
+     * 'published': 已发布
+     * 'published_draft': 更新未发布（曾经发布过，当前又有改动未发布）
      */
     private Status status;
 
@@ -56,9 +56,9 @@ public class AIChatMessage {
     private LocalDateTime createTime;
 
     public enum Status {
-        DRAFT,//历史轮次（已被后续覆盖）
-        CURRENT,//当前最新未发布版本
-        PUBLISHED//已编译上传的版本
+        DRAFT,             // 未发布（草稿）
+        PUBLISHED,         // 已发布
+        PUBLISHED_DRAFT    // 更新未发布（曾经发布过，当前又有改动未发布）
     }
 
 }
