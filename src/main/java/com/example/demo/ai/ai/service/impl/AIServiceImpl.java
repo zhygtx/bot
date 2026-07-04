@@ -1,14 +1,26 @@
 package com.example.demo.ai.ai.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.demo.ai.ai.client.DynamicChatClientFactory;
 import com.example.demo.ai.ai.mapper.AIChatMessageMapper;
 import com.example.demo.ai.ai.pojo.dto.AIChatMessageDto;
+import com.example.demo.ai.ai.pojo.dto.CompileCodeDto;
 import com.example.demo.ai.ai.pojo.entity.AIChatMessage;
 import com.example.demo.ai.ai.service.AIService;
 import com.example.demo.ai.ai.util.AIUtil;
+import com.example.demo.ai.ai.util.CompileUtil;
+import com.example.demo.config.DefaultProperties;
+import com.example.demo.pojo.entity.Result;
+import com.example.demo.pojo.entity.plugin.PluginInfo;
+import com.example.demo.pojo.entity.plugin.PluginVersion;
+import com.example.demo.service.PluginService;
+import com.example.demo.util.PathMultipartFile;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
@@ -16,8 +28,10 @@ import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,15 +44,29 @@ import java.util.function.BiConsumer;
 @Service
 public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessage> implements AIService {
 
+    @Value("${plugin.compiler.work-dir}")
+    private String workDir;
     @Value("${ai.default.plugin.prompt-template-path}")
     private String pluginTemplatePath;
+    @Value("${ai.default.review.prompt-template-path}")
+    private String reviewPromptTemplatePath;
 
+    private final CompileUtil compileUtil;
+    private final ObjectMapper objectMapper;
+    private final DefaultProperties defaultProperties;
     private final DynamicChatClientFactory dynamicChatClientFactory;
     private final AIChatMessageMapper aiChatMessageMapper;
+    private final DynamicChatClientFactory chatClientFactory;
+    private final PluginService pluginService;
 
-    public AIServiceImpl(AIChatMessageMapper aiChatMessageMapper, DynamicChatClientFactory dynamicChatClientFactory) {
+    public AIServiceImpl(AIChatMessageMapper aiChatMessageMapper, DynamicChatClientFactory dynamicChatClientFactory, DefaultProperties defaultProperties, DynamicChatClientFactory chatClientFactory, ObjectMapper objectMapper, CompileUtil compileUtil, PluginService pluginService) {
         this.aiChatMessageMapper = aiChatMessageMapper;
         this.dynamicChatClientFactory = dynamicChatClientFactory;
+        this.defaultProperties = defaultProperties;
+        this.chatClientFactory = chatClientFactory;
+        this.objectMapper = objectMapper;
+        this.compileUtil = compileUtil;
+        this.pluginService = pluginService;
     }
 
     /**
@@ -137,9 +165,106 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
         messages.add(aiMessage);
         aiChatMessageMapper.insert(userMessage);
         aiChatMessageMapper.insert(aiMessage);
+        if (messages.get(0).getStatus() == AIChatMessage.Status.PUBLISHED){
+            LambdaUpdateWrapper<AIChatMessage> updateWrapper = new LambdaUpdateWrapper<>();
+            updateWrapper.eq(AIChatMessage::getConversationId, userMessage.getConversationId())
+                    .set(AIChatMessage::getStatus, AIChatMessage.Status.PUBLISHED_DRAFT);
+            aiChatMessageMapper.update(null, updateWrapper);
+        }
 
         onEvent.accept("message_change", "代码生成完毕");
         return messages;
+    }
+
+    /**
+     * 编译代码。
+     *
+     * @param compileCodeDto 编译参数-
+     * @param onEvent        事件消费函数，第一个参数为事件类型，第二个参数为事件数据
+     * @return 插件ID
+     */
+    @Override
+    public String compileCode(CompileCodeDto compileCodeDto, BiConsumer<String, Object> onEvent) throws Exception{
+        AIChatMessage lastMessage = aiChatMessageMapper.selectLastCode(compileCodeDto.getConversationId());
+
+        if (lastMessage == null) {
+            throw new RuntimeException("未找到该会话的代码记录");
+        }
+
+        if (defaultProperties.getReview().getEnabled()){
+            onEvent.accept("compile_change","正在使用AI审核代码");
+            String reviewPrompt = AIUtil.loadTemplate(reviewPromptTemplatePath);
+            ChatClient chatClient = chatClientFactory.getReviewChatClient();
+            String content = chatClient.prompt()
+                    .system(reviewPrompt)
+                    .user(lastMessage.getCode())
+                    .call()
+                    .content();
+            JsonNode codeJson = objectMapper.readTree(content);
+            if (!codeJson.has("passed")){
+                throw new RuntimeException(codeJson.get("issues").asText());
+            }
+        }
+
+        onEvent.accept("compile_change","正在创建代码文件");
+        compileUtil.createCodeFile(lastMessage);
+
+        onEvent.accept("compile_change","正在编译代码");
+        Path path = compileUtil.compileCode(lastMessage);
+
+        onEvent.accept("compile_change","正在上传插件");
+        compileCodeDto.setPluginId(lastMessage.getPluginId());
+        PluginInfo pluginInfo = getPluginInfo(compileCodeDto);
+
+        // 3. 转 MultipartFile + 调用上传
+        MultipartFile jarFile = new PathMultipartFile(path);
+        Result<?> result = pluginService.add(pluginInfo, jarFile);
+
+        if (!Integer.valueOf(200).equals(result.getCode())) {
+            throw new RuntimeException("插件上传失败: " + result.getMessage());
+        }
+
+        onEvent.accept("compile_change", "正在清理临时文件");
+        compileUtil.deleteDirectoryRecursively(Path.of(workDir, lastMessage.getConversationId()));
+
+        onEvent.accept("compile_change", "正常合并需求");
+        List<AIChatMessage> messages = findByConversationId(compileCodeDto.getConversationId());
+
+        Integer round = 0;
+        StringBuilder userMsg = new StringBuilder().append("用户指令历史需求：" + "\n");
+        for (AIChatMessage message : messages) {
+            if ("user".equals(message.getRole())){
+                round++;
+                userMsg.append("第").append(round).append("轮：").append(message.getMessage()).append("\n");
+            }
+        }
+        userMsg.append("当前插件代码：").append("\n").append(lastMessage.getCode());
+        aiChatMessageMapper.deleteByConversationIdAndRound(compileCodeDto.getConversationId(), round);
+        aiChatMessageMapper.updateStatusAndRound(compileCodeDto.getConversationId(), pluginInfo.getId(), AIChatMessage.Status.PUBLISHED);
+        aiChatMessageMapper.updateMessage(lastMessage.getId(), userMsg.toString());
+        return pluginInfo.getId();
+    }
+
+    private @NotNull PluginInfo getPluginInfo(CompileCodeDto compileCodeDto) {
+        PluginInfo pluginInfo = new PluginInfo();
+
+        // 新建 vs 更新：有 pluginId → 更新已有插件；无 pluginId → 新建
+        if (compileCodeDto.getPluginId() != null && !compileCodeDto.getPluginId().isBlank()) {
+            pluginInfo.setId(compileCodeDto.getPluginId());
+        }
+        pluginInfo.setName(compileCodeDto.getPluginName());
+        pluginInfo.setDescription(compileCodeDto.getPluginDescription());
+        pluginInfo.setAuthorId(compileCodeDto.getUserId());
+        pluginInfo.setIsPublic(compileCodeDto.getIsPublic() != null ? compileCodeDto.getIsPublic() : false);
+
+        // 2. 组装 PluginVersion
+        PluginVersion pluginVersion = new PluginVersion();
+        pluginVersion.setVersion(compileCodeDto.getPluginVersion());
+        pluginVersion.setChangelog(compileCodeDto.getPluginChangeDescription());
+        pluginVersion.setEntityPackage(compileCodeDto.getEntityPackage());
+        pluginVersion.setMethodPackage(compileCodeDto.getMethodPackage());
+        pluginInfo.setPluginVersionList(List.of(pluginVersion));
+        return pluginInfo;
     }
 
 

@@ -51,7 +51,6 @@ CREATE TABLE `plugin_info` (
   `name` VARCHAR(255) NOT NULL COMMENT '插件名称',
   `description` TEXT COMMENT '插件描述',
   `author_id` VARCHAR(36) NOT NULL COMMENT '插件作者 (即 userId)',
-  `author_name` VARCHAR(255) not null COMMENT '作者昵称',
   `latest_version` VARCHAR(50) COMMENT '最新版本号',
   `version_count` INT DEFAULT 0 COMMENT '版本总数',
   `create_time` DATETIME NOT NULL COMMENT '创建时间',
@@ -136,7 +135,6 @@ CREATE TABLE `parameter_info` (
 CREATE TABLE `workflow_info` (
   `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '工作流 ID',
   `user_id` VARCHAR(36) NOT NULL COMMENT '工作流创建者 ID',
-  `author_name` VARCHAR(255) not null comment '作者昵称',
   `name` VARCHAR(255) NOT NULL COMMENT '工作流名称',
   `enabled` TINYINT DEFAULT 1 COMMENT '工作流是否启用',
   `available` TINYINT DEFAULT 1 COMMENT '工作流是否可用',

@@ -8,7 +8,6 @@
         <result column="name" property="name"/>
         <result column="description" property="description"/>
         <result column="author_id" property="authorId"/>
-        <result column="author_name" property="authorName"/>
 
         <result column="latest_version" property="latestVersion"/>
         <result column="version_count" property="versionCount"/>
@@ -78,7 +77,7 @@
     <!-- 插件信息查询语句 -->
     <sql id="pluginSelectStatement">
         SELECT 
-            p.id, p.name, p.description, p.author_id, p.author_name,
+            p.id, p.name, p.description, p.author_id,
             p.latest_version, p.version_count, 
             p.create_time, p.update_time,p.is_public,
             pv.id as plugin_version_id, pv.plugin_id as plugin_version_plugin_id, pv.version as plugin_version_version, 
@@ -122,7 +121,7 @@
     </resultMap>
 
     <sql id="pluginSelectDto">
-        select p.id , p.name , p.description , p.author_id , p.author_name ,
+        select p.id , p.name , p.description , p.author_id ,
         p.latest_version , p.update_time , p.is_public,
         pv.id as plugin_version_id, pv.version as plugin_version_version
         from plugin_info p
@@ -132,11 +131,11 @@
     <!-- 插入插件信息 -->
     <insert id="insert" parameterType="com.example.demo.pojo.entity.plugin.PluginInfo">
         INSERT INTO plugin_info (
-            id, name, description, author_id, author_name,
+            id, name, description, author_id,
             latest_version, version_count,
             create_time, update_time, is_public
         ) VALUES (
-            #{id}, #{name}, #{description}, #{authorId}, #{authorName},
+            #{id}, #{name}, #{description}, #{authorId},
             #{latestVersion}, #{versionCount},
             #{createTime}, #{updateTime}, #{isPublic}
         );
@@ -147,7 +146,6 @@
         UPDATE plugin_info SET
         description = #{description},
         <if test="name != null">name = #{name},</if>
-        <if test="authorName != null">author_name = #{authorName},</if>
         <if test="latestVersion != null">latest_version = #{latestVersion},</if>
         <if test="versionCount != null">version_count = #{versionCount},</if>
         <if test="isPublic != null">is_public = #{isPublic},</if>

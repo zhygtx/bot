@@ -1,8 +1,10 @@
 package com.example.demo.ai.ai.ws;
 
+import com.example.demo.ai.ai.pojo.dto.CompileCodeDto;
 import com.example.demo.ai.ai.pojo.entity.AIChatMessage;
 import com.example.demo.ai.ai.service.AIService;
 import com.example.demo.security.UserPrincipal;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.NonNull;
@@ -64,6 +66,10 @@ public class AIWebSocketHandler extends TextWebSocketHandler {
             send(session, "cancelled", null);
             return;
         }
+        if ("compile".equals(type)) {
+            compileCode(session, root.path("data"));
+            return;
+        }
         send(session, "error", Map.of("message", "未知消息类型: " + type));
     }
 
@@ -106,6 +112,7 @@ public class AIWebSocketHandler extends TextWebSocketHandler {
         AtomicBoolean cancelled = new AtomicBoolean(false);
         cancelFlags.put(session.getId(), cancelled);
 
+        // 异步执行生成任务
         generationExecutor.execute(() -> {
             try {
                 List<AIChatMessage> messages = aiService.aiGenerate(
@@ -115,6 +122,44 @@ public class AIWebSocketHandler extends TextWebSocketHandler {
             } catch (Exception e) {
                 log.error("AI 生成任务执行异常", e);
                 send(session, "error", Map.of("message", "AI 生成任务执行异常"));
+            } finally {
+                cancelFlags.remove(session.getId());
+                closeQuietly(session, CloseStatus.NORMAL);
+            }
+        });
+    }
+
+    /**
+     * 编译上传代码。
+     * <p>
+     * 处理逻辑：
+     * @param session WebSocket 会话
+     * @param payloadNode 请求参数 JSON 节点
+     * JSON包含插件版本、插件变更描述、会话ID
+     */
+    private void compileCode(WebSocketSession session, JsonNode payloadNode) {
+        cancelTask(session);
+
+        CompileCodeDto compileCodeDto;
+        try {
+             compileCodeDto = objectMapper.readValue(payloadNode.toString(), CompileCodeDto.class);
+        } catch (JsonProcessingException e) {
+            send(session, "error", Map.of("message", "编译参数解析错误"));
+            closeQuietly(session, CloseStatus.NOT_ACCEPTABLE);
+            return;
+        }
+
+        AtomicBoolean cancelled = new AtomicBoolean(false);
+        cancelFlags.put(session.getId(), cancelled);
+
+        // 异步执行编译任务
+        generationExecutor.execute(() -> {
+            try {
+                String pluginId = aiService.compileCode(compileCodeDto, (type, data) -> send(session, type, data));
+                send(session, "done", pluginId);
+            } catch (Exception e) {
+                log.error("编译任务执行异常", e);
+                send(session, "error", Map.of("message", e.getMessage()));
             } finally {
                 cancelFlags.remove(session.getId());
                 closeQuietly(session, CloseStatus.NORMAL);

@@ -8,6 +8,7 @@ import com.github.zhygtx.napcat.event.BotEventListener;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Primary;
+import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
@@ -28,6 +29,12 @@ public class BotCoreEvent  implements BotEventListener {
     private final BotService botService;
     private final DockerService dockerService;
     private final EmailUtil emailUtil;
+
+    /**
+     * 服务器是否正在关闭。
+     * volatile 保证多线程可见性。
+     */
+    private volatile boolean serverShuttingDown = false;
 
     public BotCoreEvent(BotService botService, DockerService dockerService, EmailUtil emailUtil, BotRegistrar botRegistrar) {
         this.botService = botService;
@@ -53,13 +60,29 @@ public class BotCoreEvent  implements BotEventListener {
      */
     @Override
     public void botOffline(Long botQQ) {
-        String email = botService.selectEmail(botQQ);
-        if (email != null) {
-            emailUtil.sendEmail(email, "Bot下线通知" , "您的QQBot已下线，如非手动下线请检查账号状态或联系管理员" , false);
-        }
         log.info("[Bot 下线] QQ: {}, 已从在线缓存移除", botQQ);
         botService.updateOnline(botQQ, false);
         dockerService.deleteContainer(botQQ);
+
+        if (serverShuttingDown) {
+            log.info("[Bot 下线] 服务器正在关闭，跳过邮件通知: QQ={}", botQQ);
+            return;
+        }
+
+        String email = botService.selectEmail(botQQ);
+        if (email != null) {
+            emailUtil.sendEmail(email, "Bot下线通知",
+                    "您的QQBot已下线，如非手动下线请检查账号状态或联系管理员", false);
+        }
+    }
+
+    /**
+     * 容器关闭前设置标志位，避免 botOffline 中误发邮件。
+     */
+    @EventListener(ContextClosedEvent.class)
+    public void onServerShutdown() {
+        serverShuttingDown = true;
+        log.info("[服务器关闭] 已设置关闭标志，Bot 下线时将跳过邮件通知");
     }
     
     /**

@@ -38,6 +38,25 @@ public class DynamicChatClientFactory {
         return cache.computeIfAbsent(userId, k -> buildClient(userId));
     }
 
+    public ChatClient getReviewChatClient() {
+        var reviewProps = defaultProperties.getReview();
+        if (!reviewProps.getEnabled()) {
+            return null;
+        }
+        return cache.computeIfAbsent("review", k -> {
+            var provider = reviewProps.getProvider();
+            UserAIConfig config = UserAIConfig.builder()
+                    .baseUrl(reviewProps.getBaseUrl())
+                    .apiKey(reviewProps.getApiKey())
+                    .model(reviewProps.getReviewModel())
+                    .apiProvider(UserAIConfig.ApiProvider.valueOf(provider.toUpperCase()))
+                    .build();
+            return provider.equalsIgnoreCase("ANTHROPIC")
+                    ? buildAnthropic(config)
+                    : buildOpenAi(config);
+        });
+    }
+
     /** 用户更新配置后清除缓存 */
     public void evictCache(String userId) {
         if (!cache.containsKey(userId)) {

@@ -7,7 +7,6 @@
     <resultMap id="workflowInfoMap" type="com.example.demo.pojo.entity.workflow.WorkflowInfo">
         <id column="workflow_id" property="id"/>
         <result column="workflow_user_id" property="userId"/>
-        <result column="workflow_author_name" property="authorName"/>
         <result column="workflow_name" property="name"/>
         <result column="workflow_enabled" property="enabled"/>
         <result column="workflow_available" property="available"/>
@@ -48,7 +47,6 @@
                 <result column="plugin_name" property="name"/>
                 <result column="plugin_description" property="description"/>
                 <result column="plugin_author_id" property="authorId"/>
-                <result column="plugin_author_name" property="authorName"/>
                 <result column="plugin_latest_version" property="latestVersion"/>
                 <result column="plugin_version_count" property="versionCount"/>
                 <result column="plugin_create_time" property="createTime"/>
@@ -215,7 +213,7 @@
     <sql id="select">
         SELECT
             -- 工作流基本信息
-            w.id as workflow_id, w.user_id as workflow_user_id, w.author_name as workflow_author_name, w.name as workflow_name,
+            w.id as workflow_id, w.user_id as workflow_user_id,  w.name as workflow_name,
             w.enabled as workflow_enabled,w.available as workflow_available, w.disable_reason as workflow_disable_reason,
             w.create_time as workflow_create_time,w.update_time as workflow_update_time,
 
@@ -253,7 +251,7 @@
 
             -- 插件信息
             p.id as plugin_id, p.name as plugin_name, p.description as plugin_description,
-            p.author_id as plugin_author_id, p.author_name as plugin_author_name, p.latest_version as plugin_latest_version,
+            p.author_id as plugin_author_id,  p.latest_version as plugin_latest_version,
             p.version_count as plugin_version_count, p.create_time as plugin_create_time,
             p.update_time as plugin_update_time, p.is_public as plugin_is_public,
 
@@ -346,8 +344,8 @@
     </sql>
 
     <insert id="insert" parameterType="com.example.demo.pojo.entity.workflow.WorkflowInfo">
-        INSERT INTO workflow_info(id, user_id, author_name, enabled,name, available, create_time, update_time)
-        VALUES (#{id}, #{userId}, #{authorName}, #{enabled}, #{name}, true, #{createTime}, #{updateTime})
+        INSERT INTO workflow_info(id, user_id, enabled,name, available, create_time, update_time)
+        VALUES (#{id}, #{userId}, #{enabled}, #{name}, true, #{createTime}, #{updateTime})
     </insert>
 
     <delete id="deleteById" parameterType="string">

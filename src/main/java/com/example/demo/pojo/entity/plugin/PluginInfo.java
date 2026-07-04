@@ -43,12 +43,6 @@ public class PluginInfo {
     private String authorId;
 
     /**
-     * 插件作者名称
-     * 系统生成系统与用户均不可修改
-     */
-    private String authorName;
-
-    /**
      * 最新版本号
      * 系统生成系统与用户均不可修改
      */

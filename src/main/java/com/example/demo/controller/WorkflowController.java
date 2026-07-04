@@ -33,10 +33,8 @@ public class WorkflowController {
     @PostMapping
     public Result<?> add(@AuthenticationPrincipal UserPrincipal user, @RequestBody WorkflowInfo workflowInfo) {
         String userId = user.userId();
-        String authorName = user.name();
         workflowInfo.setId(UUID.randomUUID().toString());
         workflowInfo.setUserId(userId);
-        workflowInfo.setAuthorName(authorName);
         int result = workflowService.add(workflowInfo);
         return result > 0 ? Result.success("创建成功", workflowService.findById(workflowInfo.getId())) : Result.error(500, "添加工作流失败");
     }

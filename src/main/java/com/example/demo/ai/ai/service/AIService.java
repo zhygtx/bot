@@ -2,6 +2,7 @@ package com.example.demo.ai.ai.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.example.demo.ai.ai.pojo.dto.AIChatMessageDto;
+import com.example.demo.ai.ai.pojo.dto.CompileCodeDto;
 import com.example.demo.ai.ai.pojo.entity.AIChatMessage;
 
 import java.io.IOException;
@@ -45,4 +46,12 @@ public interface AIService extends IService<AIChatMessage> {
      */
     List<AIChatMessage> aiGenerate(String message, String conversationId, String userId,
                                    BiConsumer<String, Object> onEvent, AtomicBoolean cancelled) throws IOException;
+
+    /**
+     * 编译代码。
+     * @param compileCodeDto 编译参数-
+     * @param onEvent 事件消费函数，第一个参数为事件类型，第二个参数为事件数据
+     * @return 插件ID
+     */
+    String compileCode(CompileCodeDto compileCodeDto, BiConsumer<String, Object> onEvent) throws Exception;
 }

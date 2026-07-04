@@ -32,8 +32,6 @@ public class PluginController {
                          @RequestPart("pluginInfo") PluginInfo pluginInfo,
                          @RequestPart("file") MultipartFile file) {
         String userId = user.userId();
-        String userName = user.name();
-        pluginInfo.setAuthorName(userName);
         pluginInfo.setAuthorId(userId);
         return pluginService.add(pluginInfo, file);
     }
