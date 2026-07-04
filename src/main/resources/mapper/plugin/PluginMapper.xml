@@ -123,9 +123,10 @@
     <sql id="pluginSelectDto">
         select p.id , p.name , p.description , p.author_id ,
         p.latest_version , p.update_time , p.is_public,
-        pv.id as plugin_version_id, pv.version as plugin_version_version
+        pv.id as plugin_version_id, pv.version as plugin_version_version, u.name as author_name
         from plugin_info p
         left join plugin_version pv on p.id = pv.plugin_id
+        left join user u on p.author_id = u.id
     </sql>
 
     <!-- 插入插件信息 -->

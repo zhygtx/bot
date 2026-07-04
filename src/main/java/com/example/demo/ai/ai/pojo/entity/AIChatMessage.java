@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -31,19 +32,15 @@ public class AIChatMessage {
     /** 对话轮次，从 1 开始 */
     private Integer round;
 
-    /** 'user' | 'assistant' */
-    private String role;
+    /**
+     * 用户指令文本
+     */
+    private String userMessage;
 
     /**
-     * 用户指令文本（role=user）或 JSON 格式代码数组（role=assistant）
+     * AI 回复文本
      */
-    private String message;
-
-    /**
-     * 生成的代码JSON格式（role=assistant）
-     * 格式：{[{"path":"path","code":"code"},...]}
-     */
-    private String code;
+    private String aiMessage;
 
     /**
      * 'draft': 未发布（从未发布过）
@@ -54,6 +51,41 @@ public class AIChatMessage {
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime createTime;
+
+    /**
+     * 代码依赖
+     */
+    private String pom;
+
+    /**
+     * 插件名称
+     */
+    private String pluginName;
+
+    /**
+     * 插件介绍
+     */
+    private String pluginDescription;
+
+    /**
+     * 版本号
+     */
+    private String version;
+
+    /**
+     * 是否公开
+     */
+    private Boolean isPublic;
+
+    /**
+     * 版本变更说明
+     */
+    private String changelog;
+
+    /**
+     * 该会话的代码列表
+     */
+    private List<Code> codeList;
 
     public enum Status {
         DRAFT,             // 未发布（草稿）

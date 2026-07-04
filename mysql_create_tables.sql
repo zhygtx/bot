@@ -294,23 +294,48 @@ CREATE TABLE `big_text` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='大数据存储表';
 
 # --------------------------------------------------------------------------------------------------------
+-- ============================================
+-- AI Chat Message 消息表
+-- ============================================
+CREATE TABLE `ai_chat_message`(
+    `id`                 VARCHAR(36)  NOT NULL COMMENT '记录主键（UUID，每条记录唯一）',
+    `conversation_id`    VARCHAR(36)  NOT NULL COMMENT '会话 ID（同一对话中所有记录共享此值）',
+    `plugin_id`          VARCHAR(36)  DEFAULT NULL COMMENT '关联的插件 ID（首次生成时为 null）',
+    `user_id`            VARCHAR(36)  NOT NULL COMMENT '创建者用户 ID',
+    `round`              INT          NOT NULL DEFAULT 1 COMMENT '对话轮次，从 1 开始',
+    `user_message`       TEXT         DEFAULT NULL COMMENT '用户指令文本',
+    `ai_message`         TEXT         DEFAULT NULL COMMENT 'AI 回复文本',
+    `status`             VARCHAR(32)  NOT NULL DEFAULT 'DRAFT' COMMENT '状态: DRAFT-未发布, PUBLISHED-已发布, PUBLISHED_DRAFT-更新未发布',
+    `create_time`        DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `pom`                TEXT         DEFAULT NULL COMMENT '代码依赖（pom.xml 内容）',
+    `plugin_name`        VARCHAR(255) DEFAULT NULL COMMENT '插件名称',
+    `plugin_description` TEXT         DEFAULT NULL COMMENT '插件介绍',
+    `version`            VARCHAR(64)  DEFAULT NULL COMMENT '版本号',
+    `is_public`          TINYINT(1)   DEFAULT 0 COMMENT '是否公开: 0-否, 1-是',
+    `changelog`          TEXT         DEFAULT NULL COMMENT '版本变更说明',
+    PRIMARY KEY (`id`),
+    INDEX `idx_conversation_id` (`conversation_id`),
+    INDEX `idx_plugin_id` (`plugin_id`),
+    INDEX `idx_user_id` (`user_id`),
+    CONSTRAINT `fk_message_user_id` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT ='AI 聊天消息表';
 
--- AI 对话轮次与代码存储表
-CREATE TABLE `ai_chat_message` (
-  `id`              VARCHAR(64)  NOT NULL PRIMARY KEY COMMENT '记录主键（UUID）',
-  `conversation_id` VARCHAR(64)  NOT NULL COMMENT '会话 ID，同一对话中所有记录共享此值',
-  `plugin_id`       VARCHAR(64)           COMMENT '关联的插件 ID（首次生成时为 null）',
-  `user_id`         VARCHAR(64)  NOT NULL COMMENT '创建者用户 ID',
-  `round`           INT          NOT NULL COMMENT '对话轮次，从 1 开始',
-  `role`            VARCHAR(16)  NOT NULL COMMENT "'user' | 'assistant'",
-  `message`         TEXT                   COMMENT '用户指令文本（role=user）或 JSON 格式代码数组（role=assistant）',
-  `code`            JSON                   COMMENT '生成的代码JSON格式（role=assistant）',
-  `status`          VARCHAR(16)  NOT NULL DEFAULT 'draft' COMMENT "'draft':未发布（从未发布过） 'published':已发布 'published_draft':更新未发布（曾经发布过，当前又有改动未发布）",
-  `create_time`     DATETIME     NOT NULL COMMENT '创建时间',
-  INDEX `idx_conversation` (`conversation_id`),
-  INDEX `idx_plugin_user` (`plugin_id`, `user_id`),
-  INDEX `idx_status` (`status`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='AI 对话轮次与代码存储表';
+-- ============================================
+-- Code 代码表（子表）
+-- ============================================
+CREATE TABLE `code`(
+    `id`          VARCHAR(36)  NOT NULL COMMENT '代码 ID',
+    `message_id`  VARCHAR(36)  NOT NULL COMMENT '消息 ID（外键，关联 ai_chat_message.id）',
+    `path`        VARCHAR(512) DEFAULT NULL COMMENT '代码路径',
+    `content`     LONGTEXT     DEFAULT NULL COMMENT '代码内容',
+    `description` TEXT         DEFAULT NULL COMMENT '代码介绍',
+    PRIMARY KEY (`id`),
+    INDEX `idx_message_id` (`message_id`),
+    CONSTRAINT `fk_code_message_id`
+        FOREIGN KEY (`message_id`) REFERENCES `ai_chat_message` (`id`)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT ='代码表';
 
 -- AI 配置信息表
 CREATE TABLE `user_ai_config` (
