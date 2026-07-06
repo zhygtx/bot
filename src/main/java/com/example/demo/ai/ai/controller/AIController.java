@@ -1,5 +1,7 @@
 package com.example.demo.ai.ai.controller;
 
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.example.demo.ai.ai.pojo.entity.AIChatMessage;
 import com.example.demo.ai.ai.service.AIService;
 import com.example.demo.pojo.entity.Result;
 import com.example.demo.security.UserPrincipal;
@@ -8,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -29,8 +32,10 @@ public class AIController {
      */
     @PostMapping
     public Result<?> undo(String conversationId, Integer round) {
-        Integer i = aiService.undoToRound(conversationId, round);
-        return i > 0 ? Result.success(i) : Result.error(400, "撤销失败");
+        boolean remove = aiService.remove(Wrappers.lambdaQuery(AIChatMessage.class)
+                .eq(AIChatMessage::getConversationId, conversationId)
+                .eq(AIChatMessage::getRound, round));
+        return remove ? Result.success(null) : Result.error(400, "撤销失败");
     }
 
     /**
@@ -56,6 +61,10 @@ public class AIController {
      */
     @GetMapping("/{conversationId}")
     public Result<?> findByConversationId(@PathVariable String conversationId) {
-        return Result.success(null, aiService.findByConversationId(conversationId));
+        List<AIChatMessage> aiChatMessages = aiService.lambdaQuery()
+                .eq(AIChatMessage::getConversationId, conversationId)
+                .orderByAsc(AIChatMessage::getRound)
+                .list();
+        return Result.success(null, aiChatMessages);
     }
 }

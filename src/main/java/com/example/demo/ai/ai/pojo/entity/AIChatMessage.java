@@ -1,5 +1,6 @@
 package com.example.demo.ai.ai.pojo.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
@@ -83,9 +84,10 @@ public class AIChatMessage {
     private String changelog;
 
     /**
-     * 该会话的代码列表
+     * 代码变更列表
      */
-    private List<Code> codeList;
+    @TableField(exist = false)
+    private List<Code> codes;
 
     public enum Status {
         DRAFT,             // 未发布（草稿）

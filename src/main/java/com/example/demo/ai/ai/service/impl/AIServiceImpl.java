@@ -5,37 +5,37 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.demo.ai.ai.client.DynamicChatClientFactory;
 import com.example.demo.ai.ai.mapper.AIChatMessageMapper;
+import com.example.demo.ai.ai.mapper.CodeMapper;
 import com.example.demo.ai.ai.pojo.dto.AIChatMessageDto;
 import com.example.demo.ai.ai.pojo.dto.CompileCodeDto;
 import com.example.demo.ai.ai.pojo.entity.AIChatMessage;
+import com.example.demo.ai.ai.pojo.entity.Code;
 import com.example.demo.ai.ai.service.AIService;
 import com.example.demo.ai.ai.util.AIUtil;
 import com.example.demo.ai.ai.util.CompileUtil;
 import com.example.demo.config.DefaultProperties;
-import com.example.demo.pojo.entity.Result;
 import com.example.demo.pojo.entity.plugin.PluginInfo;
 import com.example.demo.pojo.entity.plugin.PluginVersion;
 import com.example.demo.service.PluginService;
-import com.example.demo.util.PathMultipartFile;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
+import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
@@ -58,8 +58,9 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
     private final AIChatMessageMapper aiChatMessageMapper;
     private final DynamicChatClientFactory chatClientFactory;
     private final PluginService pluginService;
+    private final CodeMapper codeMapper;
 
-    public AIServiceImpl(AIChatMessageMapper aiChatMessageMapper, DynamicChatClientFactory dynamicChatClientFactory, DefaultProperties defaultProperties, DynamicChatClientFactory chatClientFactory, ObjectMapper objectMapper, CompileUtil compileUtil, PluginService pluginService) {
+    public AIServiceImpl(AIChatMessageMapper aiChatMessageMapper, DynamicChatClientFactory dynamicChatClientFactory, DefaultProperties defaultProperties, DynamicChatClientFactory chatClientFactory, ObjectMapper objectMapper, CompileUtil compileUtil, PluginService pluginService, CodeMapper codeMapper) {
         this.aiChatMessageMapper = aiChatMessageMapper;
         this.dynamicChatClientFactory = dynamicChatClientFactory;
         this.defaultProperties = defaultProperties;
@@ -67,41 +68,36 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
         this.objectMapper = objectMapper;
         this.compileUtil = compileUtil;
         this.pluginService = pluginService;
+        this.codeMapper = codeMapper;
     }
 
     /**
      * 根据会话 ID 查询所有消息记录。
-     *
      * @param conversationId 会话 ID
      * @return 排序后的所有消息记录列表
      */
     @Override
     public List<AIChatMessage> findByConversationId(String conversationId) {
-
-        return aiChatMessageMapper.selectList(new LambdaQueryWrapper<AIChatMessage>()
+        List<AIChatMessage> aiChatMessages = aiChatMessageMapper.selectList(new LambdaQueryWrapper<AIChatMessage>()
                 .eq(AIChatMessage::getConversationId, conversationId)
-                .orderByAsc(AIChatMessage::getRound)
-                .orderByDesc(AIChatMessage::getRole));
+                .orderByAsc(AIChatMessage::getRound));
+        List<Code> codes = codeMapper.selectList(new LambdaQueryWrapper<Code>()
+                .eq(Code::getMessageId, aiChatMessages.getLast().getId()));
+        aiChatMessages.getLast().setCodes(codes);
+        return aiChatMessages;
     }
 
+    /**
+     * 根据用户 ID 分页查询所有消息记录。
+     * @param userId 用户 ID
+     * @param pageNum 页码
+     * @param pageSize 每页数量
+     * @return 排序后的所有消息记录列表
+     */
     @Override
     public List<AIChatMessageDto> findDtoList(String userId, Integer pageNum, Integer pageSize) {
         Integer offset = (pageNum - 1) * pageSize;
         return aiChatMessageMapper.selectByUserId(userId, offset, pageSize);
-    }
-
-    /**
-     * 撤销指定轮次的对话记录。
-     *
-     * @param conversationId 会话 ID
-     * @param round          轮次
-     * @return 操作结果
-     */
-    @Override
-    public Integer undoToRound(String conversationId, Integer round) {
-        return aiChatMessageMapper.delete(new LambdaQueryWrapper<AIChatMessage>()
-                .eq(AIChatMessage::getConversationId, conversationId)
-                .eq(AIChatMessage::getRound, round));
     }
 
     /**
@@ -118,63 +114,107 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
      * @return 包含 user + assistant 的完整消息列表
      */
     @Override
+    @Transactional
     public List<AIChatMessage> aiGenerate(String message, String conversationId, String userId,
                                           BiConsumer<String, Object> onEvent, AtomicBoolean cancelled) throws IOException {
-
-        onEvent.accept("message_change", "正在获取上下文信息");
-
         List<AIChatMessage> messages = new ArrayList<>();
-        if (!conversationId.isEmpty()) {
-            messages = findByConversationId(conversationId);
+        if (conversationId != null) {
+            aiChatMessageMapper.update(new LambdaUpdateWrapper<AIChatMessage>()
+                    .set(AIChatMessage::getStatus, AIChatMessage.Status.PUBLISHED_DRAFT)
+                    .eq(AIChatMessage::getConversationId, conversationId)
+                    .eq(AIChatMessage::getStatus, AIChatMessage.Status.PUBLISHED));
+            messages = aiChatMessageMapper.selectList(new LambdaQueryWrapper<AIChatMessage>()
+                    .eq(AIChatMessage::getConversationId, conversationId)
+                    .orderByAsc(AIChatMessage::getRound));
         }
+        String template = AIUtil.loadTemplate(pluginTemplatePath);
+        AIChatMessage newMessage = buildNewMessage(message, conversationId, userId, messages);
+        List<Message> springMessages = AIUtil.buildMessages(messages);
+        String codeAbstract = buildCodeAbstract(newMessage.getCodes());
 
-        AIChatMessage userMessage = AIChatMessage.builder()
-                .id(UUID.randomUUID().toString())
-                .conversationId(conversationId.isEmpty() ? UUID.randomUUID().toString() : conversationId)
-                .pluginId(messages.isEmpty() ? null : messages.get(0).getPluginId())
-                .userId(userId)
-                .round(messages.isEmpty() ? 1 : messages.get(0).getRound() + 1)
-                .role("user")
-                .message(message)
-                .status(AIChatMessage.Status.DRAFT)
-                .createTime(LocalDateTime.now())
-                .build();
-        messages.add(userMessage);
+        // ==================== 调用 AI ====================
+        onEvent.accept("message_change", "正在连接 AI");
 
-        List<Message> springMessages = buildMessages(messages);
+        // 1. 构建用户提示词（messageId + 已有代码摘要 + 用户需求）
+        StringBuilder userPrompt = new StringBuilder();
+        userPrompt.append("messageId: ").append(newMessage.getId()).append("\n\n");
+        if (codeAbstract != null && !codeAbstract.isBlank() && !codeAbstract.equals("{\"codes\":[]}")) {
+            userPrompt.append("当前已有代码：\n").append(codeAbstract).append("\n\n");
+        }
+        userPrompt.append("用户需求：\n").append(message);
 
-        // ==================== 流式调用 + 增量解析（委托给 AIUtil） ====================
+        // 2. 组装完整消息列表：系统提示词 + 历史对话 + 当前用户消息
+        List<Message> promptMessages = new ArrayList<>();
+        promptMessages.add(new SystemMessage(template));
+        promptMessages.addAll(springMessages);
+        promptMessages.add(new UserMessage(userPrompt.toString()));
+
+        // 3. 获取 ChatClient（已注册 PluginFileTool）
         ChatClient chatClient = dynamicChatClientFactory.getPluginChatClient(userId);
-        Map<String, String> aiResult = AIUtil.streamAndParse(chatClient, springMessages, onEvent, cancelled);
-        String rawText = aiResult.get("rawText");
-        String codeJson = aiResult.get("codeJson");
+        StringBuilder aiResponse = new StringBuilder();
 
-        // ==================== 持久化 ====================
-        AIChatMessage aiMessage = AIChatMessage.builder()
-                .id(UUID.randomUUID().toString())
-                .conversationId(userMessage.getConversationId())
-                .pluginId(userMessage.getPluginId())
-                .userId(userMessage.getUserId())
-                .round(userMessage.getRound())
-                .role("assistant")
-                .message(rawText)
-                .status(userMessage.getStatus())
-                .code(codeJson)
-                .createTime(LocalDateTime.now())
-                .build();
-        messages.add(aiMessage);
-        aiChatMessageMapper.insert(userMessage);
-        aiChatMessageMapper.insert(aiMessage);
-        if (messages.get(0).getStatus() == AIChatMessage.Status.PUBLISHED){
-            LambdaUpdateWrapper<AIChatMessage> updateWrapper = new LambdaUpdateWrapper<>();
-            updateWrapper.eq(AIChatMessage::getConversationId, userMessage.getConversationId())
-                    .set(AIChatMessage::getStatus, AIChatMessage.Status.PUBLISHED_DRAFT);
-            aiChatMessageMapper.update(null, updateWrapper);
-        }
+        // 4. 流式调用 + 推送到前端
+        chatClient.prompt(new Prompt(promptMessages))
+                .stream()
+                .chatResponse()
+                .doOnNext(chatResponse -> {
+                    if (cancelled != null && cancelled.get()) {
+                        throw new RuntimeException("任务已取消");
+                    }
 
-        onEvent.accept("message_change", "代码生成完毕");
+                    var output = chatResponse.getResult().getOutput();
+
+                    // ── 工具调用：提取参数推给前端 ──
+                    var toolCalls = output.getToolCalls();
+                    if (!toolCalls.isEmpty()) {
+                        for (var tc : toolCalls) {
+                            JsonNode args;
+                            try {
+                                args = objectMapper.readTree(tc.arguments());
+                            } catch (IOException e) {
+                                throw new RuntimeException("解析工具参数失败", e);
+                            }
+
+                             switch (tc.name()) {
+                                case "saveCode" -> {
+                                    String path = args.get("path").asText();
+                                    onEvent.accept("message_change", "正在保存文件: " + path);
+                                }
+                                case "deleteCode" -> {
+                                    String codeId = args.get("codeId").asText();
+                                    onEvent.accept("message_change", "正在删除文件: " + codeId);
+                                }
+                                case "updatePom" ->
+                                        onEvent.accept("message_change", "正在更新依赖配置");
+                            }
+
+                        }
+                        return;
+                    }
+
+                    // ── 普通文本：打字机推送 ──
+                    String text = output.getText();
+                    if (text != null && !text.isEmpty()) {
+                        aiResponse.append(text);
+                        for (int i = 0; i < text.length(); i += 8) {
+                            int end = Math.min(i + 8, text.length());
+                            onEvent.accept("delta", text.substring(i, end));
+                        }
+                    }
+                })
+                .blockLast();
+
+        String aiResponseString = aiResponse.toString();
+        // 5. 持久化 AI 回复
+        newMessage.setAiMessage(aiResponseString);
+        aiChatMessageMapper.update(new LambdaUpdateWrapper<AIChatMessage>()
+                .set(AIChatMessage::getAiMessage, aiResponseString)
+                .eq(AIChatMessage::getId, newMessage.getId()));
+        messages.add(newMessage);
+
         return messages;
     }
+
 
     /**
      * 编译代码。
@@ -185,64 +225,8 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
      */
     @Override
     public String compileCode(CompileCodeDto compileCodeDto, BiConsumer<String, Object> onEvent) throws Exception{
-        AIChatMessage lastMessage = aiChatMessageMapper.selectLastCode(compileCodeDto.getConversationId());
 
-        if (lastMessage == null) {
-            throw new RuntimeException("未找到该会话的代码记录");
-        }
-
-        if (defaultProperties.getReview().getEnabled()){
-            onEvent.accept("compile_change","正在使用AI审核代码");
-            String reviewPrompt = AIUtil.loadTemplate(reviewPromptTemplatePath);
-            ChatClient chatClient = chatClientFactory.getReviewChatClient();
-            String content = chatClient.prompt()
-                    .system(reviewPrompt)
-                    .user(lastMessage.getCode())
-                    .call()
-                    .content();
-            JsonNode codeJson = objectMapper.readTree(content);
-            if (!codeJson.has("passed")){
-                throw new RuntimeException(codeJson.get("issues").asText());
-            }
-        }
-
-        onEvent.accept("compile_change","正在创建代码文件");
-        compileUtil.createCodeFile(lastMessage);
-
-        onEvent.accept("compile_change","正在编译代码");
-        Path path = compileUtil.compileCode(lastMessage);
-
-        onEvent.accept("compile_change","正在上传插件");
-        compileCodeDto.setPluginId(lastMessage.getPluginId());
-        PluginInfo pluginInfo = getPluginInfo(compileCodeDto);
-
-        // 3. 转 MultipartFile + 调用上传
-        MultipartFile jarFile = new PathMultipartFile(path);
-        Result<?> result = pluginService.add(pluginInfo, jarFile);
-
-        if (!Integer.valueOf(200).equals(result.getCode())) {
-            throw new RuntimeException("插件上传失败: " + result.getMessage());
-        }
-
-        onEvent.accept("compile_change", "正在清理临时文件");
-        compileUtil.deleteDirectoryRecursively(Path.of(workDir, lastMessage.getConversationId()));
-
-        onEvent.accept("compile_change", "正常合并需求");
-        List<AIChatMessage> messages = findByConversationId(compileCodeDto.getConversationId());
-
-        Integer round = 0;
-        StringBuilder userMsg = new StringBuilder().append("用户指令历史需求：" + "\n");
-        for (AIChatMessage message : messages) {
-            if ("user".equals(message.getRole())){
-                round++;
-                userMsg.append("第").append(round).append("轮：").append(message.getMessage()).append("\n");
-            }
-        }
-        userMsg.append("当前插件代码：").append("\n").append(lastMessage.getCode());
-        aiChatMessageMapper.deleteByConversationIdAndRound(compileCodeDto.getConversationId(), round);
-        aiChatMessageMapper.updateStatusAndRound(compileCodeDto.getConversationId(), pluginInfo.getId(), AIChatMessage.Status.PUBLISHED);
-        aiChatMessageMapper.updateMessage(lastMessage.getId(), userMsg.toString());
-        return pluginInfo.getId();
+        return null;
     }
 
     private @NotNull PluginInfo getPluginInfo(CompileCodeDto compileCodeDto) {
@@ -268,25 +252,57 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
     }
 
 
-    /**
-     * 构建 Spring AI 消息列表。
-     * @param messages 会话消息记录
-     * @return Spring AI 消息列表
-     */
-    private List<Message> buildMessages(List<AIChatMessage> messages) throws IOException {
-        List<Message> springMessages = new ArrayList<>();
+    private AIChatMessage buildNewMessage(String message, String conversationId, String userId, List<AIChatMessage> messages) {
+        AIChatMessage messageBuilder = AIChatMessage.builder()
+                .id(UUID.randomUUID().toString())
+                .conversationId(conversationId == null ? UUID.randomUUID().toString() : conversationId)
+                .userId(userId)
+                .round(conversationId == null ? 1 : messages.getLast().getRound() + 1)
+                .userMessage(message)
+                .aiMessage(null)
+                .status(conversationId == null ? AIChatMessage.Status.DRAFT : messages.getLast().getStatus())
+                .createTime(LocalDateTime.now())
+                .build();
 
-        String template;
-        template = AIUtil.loadTemplate(pluginTemplatePath);
-
-        springMessages.add(new SystemMessage(template));
-        for (AIChatMessage message : messages) {
-            if ("user".equals(message.getRole())){
-                springMessages.add(new UserMessage(message.getMessage()));
-            } else if ("assistant".equals(message.getRole())){
-                springMessages.add(new AssistantMessage(message.getMessage()));
+        if (!messages.isEmpty()){
+            AIChatMessage last = messages.getLast();
+            messageBuilder.setPom(last.getPom());
+            messageBuilder.setPluginId(last.getPluginId());
+            messageBuilder.setPluginName(last.getPluginName());
+            messageBuilder.setPluginDescription(last.getPluginDescription());
+            messageBuilder.setVersion(last.getVersion());
+            messageBuilder.setIsPublic(last.getIsPublic());
+            messageBuilder.setChangelog(last.getChangelog());
+            List<Code> codes = codeMapper.selectList(new LambdaQueryWrapper<Code>()
+                    .eq(Code::getMessageId, last.getId()));
+            for (Code code : codes) {
+                code.setId(UUID.randomUUID().toString());
+                code.setMessageId(messageBuilder.getId());
             }
+            messageBuilder.setCodes(codes);
+            codeMapper.insert(codes);
         }
-        return springMessages;
+        return messageBuilder;
+    }
+
+    public String buildCodeAbstract(List<Code> codes) {
+        ObjectMapper mapper = new ObjectMapper();
+        ObjectNode rootNode = mapper.createObjectNode();
+
+        // 创建数组节点
+        ArrayNode codesArray = rootNode.putArray("codes");
+
+        for (Code code : codes) {
+            ObjectNode codeNode = codesArray.addObject();
+            codeNode.put("id", code.getId());
+            codeNode.put("path", code.getPath());
+            codeNode.put("content", code.getContent());
+            codeNode.put("description", code.getDescription());
+        }
+        try {
+            return mapper.writeValueAsString(rootNode);
+        } catch (Exception e) {
+            throw new RuntimeException("JSON 序列化失败", e);
+        }
     }
 }

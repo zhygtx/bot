@@ -29,14 +29,6 @@ public interface AIService extends IService<AIChatMessage> {
     List<AIChatMessageDto> findDtoList(String userId, Integer pageNum, Integer pageSize);
 
     /**
-     * 撤销指定轮次的对话记录。
-     * @param conversationId 会话 ID
-     * @param round 轮次
-     * @return 操作结果
-     */
-    Integer undoToRound(String conversationId, Integer round);
-
-    /**
      * 启动流式 AI 生成任务。
      * @param message 用户指令文本
      * @param conversationId 会话 ID

@@ -59,6 +59,11 @@ public class PluginFileTool {
                         .eq(Code::getMessageId, messageId));
     }
 
+    @Tool(description = "根据代码ID获取代码内容")
+    public Code getCodeById(@ToolParam(description = "代码ID") String codeId) {
+        return codeService.getById(codeId);
+    }
+
     @Tool(description = "根据代码 ID 删除代码与相关内容")
     public Boolean deleteCode(@ToolParam(description = "代码ID") String codeId) {
         return codeService.removeById(codeId);

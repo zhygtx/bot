@@ -121,7 +121,7 @@ public class AIWebSocketHandler extends TextWebSocketHandler {
                 send(session, "done", messages);
             } catch (Exception e) {
                 log.error("AI 生成任务执行异常", e);
-                send(session, "error", Map.of("message", "AI 生成任务执行异常"));
+                send(session, "error", Map.of("message", e.getMessage()));
             } finally {
                 cancelFlags.remove(session.getId());
                 closeQuietly(session, CloseStatus.NORMAL);

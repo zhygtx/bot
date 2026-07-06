@@ -28,9 +28,6 @@ public class AIChatMessageDto {
      */
     private AIChatMessage.Status status;
 
-    /** 最后一次对话的代码（首次生成时为 null） */
-    private String lastCode;
-
     /** 创建时间 */
     private LocalDateTime createTime;
 

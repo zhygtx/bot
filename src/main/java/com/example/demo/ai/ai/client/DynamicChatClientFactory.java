@@ -2,6 +2,7 @@ package com.example.demo.ai.ai.client;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.example.demo.ai.ai.mapper.UserAIConfigMapper;
+import com.example.demo.ai.ai.mcp.PluginFileTool;
 import com.example.demo.ai.ai.pojo.entity.UserAIConfig;
 import com.example.demo.config.DefaultProperties;
 import lombok.extern.slf4j.Slf4j;
@@ -23,11 +24,14 @@ public class DynamicChatClientFactory {
 
     private final UserAIConfigMapper userAIConfigMapper;
     private final DefaultProperties defaultProperties;
+    private final PluginFileTool pluginFileTool;
     private final Map<String, ChatClient> cache = new ConcurrentHashMap<>();
 
-    public DynamicChatClientFactory(DefaultProperties defaultProperties, UserAIConfigMapper userAIConfigMapper) {
+    public DynamicChatClientFactory(DefaultProperties defaultProperties, UserAIConfigMapper userAIConfigMapper,
+                                     PluginFileTool pluginFileTool) {
         this.defaultProperties = defaultProperties;
         this.userAIConfigMapper = userAIConfigMapper;
+        this.pluginFileTool = pluginFileTool;
     }
 
     /**
@@ -92,7 +96,9 @@ public class DynamicChatClientFactory {
                 .openAiApi(api)
                 .defaultOptions(OpenAiChatOptions.builder().model(config.getModel()).build())
                 .build();
-        return ChatClient.builder(chatModel).build();
+        return ChatClient.builder(chatModel)
+                .defaultTools(pluginFileTool)
+                .build();
     }
 
     private ChatClient buildAnthropic(UserAIConfig config) {
@@ -104,6 +110,8 @@ public class DynamicChatClientFactory {
                 .anthropicApi(api)
                 .defaultOptions(AnthropicChatOptions.builder().model(config.getModel()).build())
                 .build();
-        return ChatClient.builder(chatModel).build();
+        return ChatClient.builder(chatModel)
+                .defaultTools(pluginFileTool)
+                .build();
     }
 }

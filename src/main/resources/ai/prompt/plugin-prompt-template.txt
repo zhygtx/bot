@@ -117,6 +117,7 @@ public class ConfigService extends PluginServiceBase {
 ### 查看
 - **getCode(messageId)** — 获取当前消息关联的所有代码文件（含文件路径、id、描述、完整内容）。用于查看已经生成的文件或了解当前状态。
 - **getPomTemplate()** — 获取插件 pom.xml 模板。在需要声明依赖时，先调用此工具拿到模板，再修改后写入。
+- **getCodeById(codeId)** — 根据代码ID获取代码内容。用于查看已生成的代码文件内容。
 
 ### 修改
 - **saveCode(messageId, path, content, description)** — 保存代码文件。如果该路径下已有文件则更新内容，否则新建。path 例如 `src/main/java/com/example/entity/User.java`。
