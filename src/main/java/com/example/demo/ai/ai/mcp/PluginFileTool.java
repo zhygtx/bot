@@ -7,17 +7,72 @@ import com.example.demo.ai.ai.pojo.entity.Code;
 import com.example.demo.ai.ai.service.AIService;
 import com.example.demo.ai.ai.service.CodeService;
 import com.example.demo.ai.ai.util.AIUtil;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Component
 public class PluginFileTool {
+
+    // ==================== 工具元数据缓存 ====================
+
+    /**
+     * 工具元数据：方法名 → (描述, 参数名→参数描述)
+     */
+    public record ToolMeta(String description, Map<String, String> params) {}
+
+    /** 静态缓存，类加载时通过反射扫描 @Tool 注解自动构建 */
+    public static final Map<String, ToolMeta> TOOL_META_CACHE;
+
+    static {
+        TOOL_META_CACHE = new LinkedHashMap<>();
+        for (Method method : PluginFileTool.class.getDeclaredMethods()) {
+            Tool tool = method.getAnnotation(Tool.class);
+            if (tool == null) continue;
+            Map<String, String> params = new LinkedHashMap<>();
+            for (Parameter param : method.getParameters()) {
+                ToolParam tp = param.getAnnotation(ToolParam.class);
+                if (tp != null) {
+                    params.put(param.getName(), tp.description());
+                }
+            }
+            TOOL_META_CACHE.put(method.getName(), new ToolMeta(tool.description(), params));
+        }
+    }
+
+    /**
+     * 将 ToolCall 转为前端 tool_call 事件的数据。
+     * 所有工具调用统一走这个方法，以后无需在调用方写 switch。
+     */
+    public static Map<String, Object> buildEventData(AssistantMessage.ToolCall tc, ObjectMapper mapper) {
+        ToolMeta meta = TOOL_META_CACHE.get(tc.name());
+        JsonNode args;
+        try {
+            args = mapper.readTree(tc.arguments());
+        } catch (IOException e) {
+            throw new RuntimeException("解析工具参数失败: " + tc.name(), e);
+        }
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("method", tc.name());
+        data.put("description", meta != null ? meta.description() : tc.name());
+        data.put("params", meta != null ? meta.params() : Map.of());
+        data.put("arguments", mapper.convertValue(args, Map.class));
+        return data;
+    }
+
+    // ==================== 实例字段 ====================
 
     @Value("${plugin.template.pom-path}")
     private String pomTemplatePath;

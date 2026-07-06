@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.demo.ai.ai.client.DynamicChatClientFactory;
 import com.example.demo.ai.ai.mapper.AIChatMessageMapper;
 import com.example.demo.ai.ai.mapper.CodeMapper;
+import com.example.demo.ai.ai.mcp.PluginFileTool;
 import com.example.demo.ai.ai.pojo.dto.AIChatMessageDto;
 import com.example.demo.ai.ai.pojo.dto.CompileCodeDto;
 import com.example.demo.ai.ai.pojo.entity.AIChatMessage;
@@ -17,7 +18,6 @@ import com.example.demo.config.DefaultProperties;
 import com.example.demo.pojo.entity.plugin.PluginInfo;
 import com.example.demo.pojo.entity.plugin.PluginVersion;
 import com.example.demo.service.PluginService;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -132,9 +132,6 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
         List<Message> springMessages = AIUtil.buildMessages(messages);
         String codeAbstract = buildCodeAbstract(newMessage.getCodes());
 
-        // ==================== 调用 AI ====================
-        onEvent.accept("message_change", "正在连接 AI");
-
         // 1. 构建用户提示词（messageId + 已有代码摘要 + 用户需求）
         StringBuilder userPrompt = new StringBuilder();
         userPrompt.append("messageId: ").append(newMessage.getId()).append("\n\n");
@@ -164,30 +161,11 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
 
                     var output = chatResponse.getResult().getOutput();
 
-                    // ── 工具调用：提取参数推给前端 ──
+                    // ── 工具调用：统一通过 PluginFileTool 构建事件数据 ──
                     var toolCalls = output.getToolCalls();
                     if (!toolCalls.isEmpty()) {
                         for (var tc : toolCalls) {
-                            JsonNode args;
-                            try {
-                                args = objectMapper.readTree(tc.arguments());
-                            } catch (IOException e) {
-                                throw new RuntimeException("解析工具参数失败", e);
-                            }
-
-                             switch (tc.name()) {
-                                case "saveCode" -> {
-                                    String path = args.get("path").asText();
-                                    onEvent.accept("message_change", "正在保存文件: " + path);
-                                }
-                                case "deleteCode" -> {
-                                    String codeId = args.get("codeId").asText();
-                                    onEvent.accept("message_change", "正在删除文件: " + codeId);
-                                }
-                                case "updatePom" ->
-                                        onEvent.accept("message_change", "正在更新依赖配置");
-                            }
-
+                            onEvent.accept("tool_call", PluginFileTool.buildEventData(tc, objectMapper));
                         }
                         return;
                     }
