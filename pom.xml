@@ -53,12 +53,6 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
-        <!-- Spring Boot WebSocket Starter，用于 AI 插件生成的浏览器端实时流式连接 -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-websocket</artifactId>
-        </dependency>
-
         <!-- Spring AI 核心（ChatClient、Prompt、Message 等） -->
         <dependency>
             <groupId>org.springframework.ai</groupId>

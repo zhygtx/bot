@@ -117,6 +117,8 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
     @Transactional
     public List<AIChatMessage> aiGenerate(String message, String conversationId, String userId,
                                           BiConsumer<String, Object> onEvent, AtomicBoolean cancelled) throws IOException {
+
+        // 0. 查询历史消息记录
         List<AIChatMessage> messages = new ArrayList<>();
         if (conversationId != null) {
             aiChatMessageMapper.update(new LambdaUpdateWrapper<AIChatMessage>()
