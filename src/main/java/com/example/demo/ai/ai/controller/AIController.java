@@ -1,5 +1,6 @@
 package com.example.demo.ai.ai.controller;
 
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.example.demo.ai.ai.pojo.dto.CompileCodeDto;
 import com.example.demo.ai.ai.pojo.entity.AIChatMessage;
 import com.example.demo.ai.ai.service.AIService;
@@ -40,8 +41,22 @@ public class AIController {
      */
     @PostMapping
     public Result<?> undo(String conversationId, Integer round) {
-        aiService.undo(conversationId, round);
-        return Result.success(null);
+        Boolean undo = aiService.undo(conversationId, round);
+        return undo ? Result.success(null,null) : Result.error(400, "撤销失败", null);
+    }
+
+    @PutMapping
+    public Result<?> update(@AuthenticationPrincipal UserPrincipal user, @RequestBody AIChatMessage aiChatMessage) {
+        LambdaUpdateWrapper<AIChatMessage> updateWrapper = new LambdaUpdateWrapper<AIChatMessage>()
+                .eq(AIChatMessage::getId, aiChatMessage.getId())
+                .eq(AIChatMessage::getUserId, user.userId())
+                .set(AIChatMessage::getPluginName, aiChatMessage.getPluginName())
+                .set(AIChatMessage::getPluginDescription, aiChatMessage.getPluginDescription())
+                .set(AIChatMessage::getVersion, aiChatMessage.getVersion())
+                .set(AIChatMessage::getChangelog, aiChatMessage.getChangelog())
+                .set(AIChatMessage::getIsPublic, aiChatMessage.getIsPublic());
+        boolean update = aiService.update(null, updateWrapper);
+        return update ? Result.success(null,null) : Result.error(400, "更新失败", null);
     }
 
     /**

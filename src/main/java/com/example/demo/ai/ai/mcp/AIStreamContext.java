@@ -1,6 +1,7 @@
 package com.example.demo.ai.ai.mcp;
 
 import com.example.demo.ai.ai.pojo.entity.AIToolCallRecord;
+import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -16,8 +17,11 @@ import java.util.function.BiConsumer;
  */
 public class AIStreamContext {
 
+    @Getter
     private final String conversationId;
+    @Getter
     private final String assistantMessageId;
+    @Getter
     private final Integer round;
     private final BiConsumer<String, Object> onEvent;
 
@@ -32,10 +36,6 @@ public class AIStreamContext {
         this.round = round;
         this.onEvent = onEvent;
     }
-
-    public String getConversationId() { return conversationId; }
-    public String getAssistantMessageId() { return assistantMessageId; }
-    public Integer getRound() { return round; }
 
     /**
      * 推送 SSE 事件到前端（无需同步，fire-and-forget）。

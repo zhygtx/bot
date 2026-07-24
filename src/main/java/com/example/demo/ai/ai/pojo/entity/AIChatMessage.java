@@ -77,7 +77,7 @@ public class AIChatMessage {
     /**
      * 是否公开
      */
-    private Boolean isPublic;
+    private Boolean isPublic = false;
 
     /**
      * 版本变更说明

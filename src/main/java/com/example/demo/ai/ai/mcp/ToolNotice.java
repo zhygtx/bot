@@ -2,7 +2,6 @@ package com.example.demo.ai.ai.mcp;
 
 import com.example.demo.ai.ai.pojo.entity.Code;
 
-import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -107,24 +106,6 @@ public class ToolNotice {
     }
 
     /**
-     * 读取当前消息下所有生成的文件。
-     */
-    public static ToolNotice getCode(String messageId) {
-        return new ToolNotice(
-                "getCode",
-                "读取生成文件",
-                "根据消息ID获取生成的代码与相关内容",
-                "file",
-                List.of(previewText("messageId", "消息ID", messageId)),
-                result -> {
-                    Collection<?> col = (Collection<?>) result;
-                    int count = col == null ? 0 : col.size();
-                    return ResultSummary.ok("共 " + count + " 个文件", Map.of("count", count));
-                }
-        );
-    }
-
-    /**
      * 按代码 ID 查看单个代码文件。
      */
     public static ToolNotice getCodeById(String codeId) {
@@ -165,20 +146,23 @@ public class ToolNotice {
     /**
      * 读取插件 pom 模板。
      */
-    public static ToolNotice getPomTemplate() {
+    public static ToolNotice getPom(String messageId) {
         return new ToolNotice(
-                "getPomTemplate",
-                "读取POM模板",
-                "获取插件POM模板",
+                "getPom",
+                "读取配置依赖",
+                "获取插件配置依赖",
                 "dependency",
-                List.of(),
+                List.of(previewText("messageId", "消息ID", messageId)),
                 result -> {
                     String text = (String) result;
-                    if (text != null && text.contains("失败")) {
-                        return ResultSummary.fail(text);
+                    if (text == null || text.isEmpty()) {
+                        return ResultSummary.fail("读取 pom.xml 失败：内容为空或文件不存在");
                     }
-                    return ResultSummary.ok("读取成功",
-                            Map.of("lines", countLines(text), "size", text == null ? 0 : text.length()));
+                    return ResultSummary.ok("读取成功", Map.of(
+                            "content", text,
+                            "lines", countLines(text),
+                            "size", text.length()
+                    ));
                 }
         );
     }
@@ -195,6 +179,29 @@ public class ToolNotice {
                 List.of(
                         previewText("messageId", "消息ID", messageId),
                         previewLargeText("pomContent", "POM内容", pomContent)
+                ),
+                result -> {
+                    boolean ok = Boolean.TRUE.equals(result);
+                    return ok ? ResultSummary.ok("更新成功") : ResultSummary.fail("更新失败");
+                }
+        );
+    }
+
+    /**
+     * 更新插件描述。
+     */
+    public static ToolNotice updatePluginDescription(String messageId, String pluginName, String pluginDescription, String version, String changelog) {
+        return new ToolNotice(
+                "updatePluginDescription",
+                "更新插件描述",
+                "根据消息ID更新此次对话插件描述内容",
+                "plugin",
+                List.of(
+                        previewText("messageId", "消息ID", messageId),
+                        previewText("pluginName", "插件名称", pluginName),
+                        previewText("pluginDescription", "插件简介", pluginDescription),
+                        previewText("version", "版本号", version),
+                        previewLargeText("changelog", "更新日志", changelog)
                 ),
                 result -> {
                     boolean ok = Boolean.TRUE.equals(result);

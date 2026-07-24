@@ -50,5 +50,5 @@ public interface AIService extends IService<AIChatMessage> {
     /**
      * 撤销指定轮次的对话记录，同时删除关联的代码文件和工具调用记录。
      */
-    void undo(String conversationId, Integer round);
+    Boolean undo(String conversationId, Integer round);
 }

@@ -6,21 +6,14 @@ import com.example.demo.ai.ai.pojo.entity.AIChatMessage;
 import com.example.demo.ai.ai.pojo.entity.Code;
 import com.example.demo.ai.ai.service.AIService;
 import com.example.demo.ai.ai.service.CodeService;
-import com.example.demo.ai.ai.util.AIUtil;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
-import java.util.List;
 import java.util.UUID;
 
 @Component
 public class PluginFileTool {
-
-    @Value("${plugin.template.pom-path}")
-    private String pomTemplatePath;
 
     private final AIService aiService;
     private final CodeService codeService;
@@ -41,6 +34,44 @@ public class PluginFileTool {
                 () -> doSaveCode(messageId, path, content, description));
     }
 
+    @Tool(description = "根据代码ID获取代码内容")
+    public Code getCodeById(@ToolParam(description = "代码ID") String codeId) {
+        return toolCallNotifier.call(null, ToolNotice.getCodeById(codeId),
+                () -> codeService.getById(codeId));
+    }
+
+    @Tool(description = "根据代码 ID 删除代码与相关内容")
+    public Boolean deleteCode(@ToolParam(description = "代码ID") String codeId) {
+        return toolCallNotifier.call(null, ToolNotice.deleteCode(codeId),
+                () -> codeService.removeById(codeId));
+    }
+
+    @Tool(description = "根据消息 ID 获取插件pom模板")
+    public String getPomTemplate(@ToolParam(description = "消息 ID") String messageId) {
+        return toolCallNotifier.call(null, ToolNotice.getPom(messageId),
+                () -> aiService.getById(messageId).getPom());
+    }
+
+    @Tool(description = "根据消息ID更新此次对话插件pom依赖内容")
+    public Boolean updatePom(@ToolParam(description = "消息 ID") String messageId,
+                             @ToolParam(description = "pom依赖内容") String pomContent) {
+        return toolCallNotifier.call(messageId, ToolNotice.updatePom(messageId, pomContent),
+                () -> doUpdatePom(messageId, pomContent));
+    }
+
+    @Tool(description = "根据消息 ID 更新此次对话插件描述内容")
+    public Boolean updatePluginDescription(@ToolParam(description = "消息 ID") String messageId,
+                                           @ToolParam(description = "插件名称") String pluginName,
+                                           @ToolParam(description = "插件描述") String pluginDescription,
+                                           @ToolParam(description = "插件版本") String version,
+                                           @ToolParam(description = "插件更新日志") String changelog) {
+        return toolCallNotifier.call(messageId, ToolNotice.updatePluginDescription(messageId, pluginName, pluginDescription, version, changelog),
+                () -> doUpdatePluginDescription(messageId, pluginName, pluginDescription, version, changelog));
+    }
+
+    /**
+     * 根据消息 ID 获取根据此次用户需求生成的代码与相关内容
+     */
     private Boolean doSaveCode(String messageId, String path, String content, String description) {
         Code existing = codeService.getOne(new LambdaQueryWrapper<Code>()
                 .eq(Code::getMessageId, messageId)
@@ -59,54 +90,26 @@ public class PluginFileTool {
         return codeService.save(code);
     }
 
-    @Tool(description = "根据消息 ID 获取根据此次用户需求生成的代码与相关内容")
-    public List<Code> getCode(@ToolParam(description = "消息 ID") String messageId) {
-        return toolCallNotifier.call(messageId, ToolNotice.getCode(messageId),
-                () -> doGetCode(messageId));
-    }
-
-    private List<Code> doGetCode(String messageId) {
-        return codeService.getBaseMapper()
-                .selectList(new LambdaQueryWrapper<Code>()
-                        .eq(Code::getMessageId, messageId));
-    }
-
-    @Tool(description = "根据代码ID获取代码内容")
-    public Code getCodeById(@ToolParam(description = "代码ID") String codeId) {
-        return toolCallNotifier.call(null, ToolNotice.getCodeById(codeId),
-                () -> codeService.getById(codeId));
-    }
-
-    @Tool(description = "根据代码 ID 删除代码与相关内容")
-    public Boolean deleteCode(@ToolParam(description = "代码ID") String codeId) {
-        return toolCallNotifier.call(null, ToolNotice.deleteCode(codeId),
-                () -> codeService.removeById(codeId));
-    }
-
-    @Tool(description = "获取插件pom模板")
-    public String getPomTemplate() {
-        return toolCallNotifier.call(null, ToolNotice.getPomTemplate(), this::loadPomTemplate);
-    }
-
-    private String loadPomTemplate() {
-        try {
-            return AIUtil.loadTemplate(pomTemplatePath);
-        } catch (IOException e) {
-            return "获取插件pom模板失败：" + e.getMessage();
-        }
-    }
-
-    @Tool(description = "根据消息ID更新此次对话插件pom依赖内容")
-    public Boolean updatePom(@ToolParam(description = "消息 ID") String messageId,
-                             @ToolParam(description = "pom依赖内容") String pomContent) {
-        return toolCallNotifier.call(messageId, ToolNotice.updatePom(messageId, pomContent),
-                () -> doUpdatePom(messageId, pomContent));
-    }
-
+    /**
+     * 根据消息ID更新此次对话插件pom依赖内容
+     */
     private Boolean doUpdatePom(String messageId, String pomContent) {
         LambdaUpdateWrapper<AIChatMessage> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.eq(AIChatMessage::getId, messageId)
                 .set(AIChatMessage::getPom, pomContent);
+        return aiService.update(updateWrapper);
+    }
+
+    /**
+     * 根据消息 ID 更新此次对话插件描述内容
+     */
+    private Boolean doUpdatePluginDescription(String messageId, String pluginName, String pluginDescription, String version, String changelog) {
+        LambdaUpdateWrapper<AIChatMessage> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(AIChatMessage::getId, messageId)
+                .set(AIChatMessage::getPluginName, pluginName)
+                .set(AIChatMessage::getPluginDescription, pluginDescription)
+                .set(AIChatMessage::getVersion, version)
+                .set(AIChatMessage::getChangelog, changelog);
         return aiService.update(updateWrapper);
     }
 }
