@@ -304,7 +304,6 @@ CREATE TABLE `ai_chat_message`(
     `user_id`            VARCHAR(36)  NOT NULL COMMENT '创建者用户 ID',
     `round`              INT          NOT NULL DEFAULT 1 COMMENT '对话轮次，从 1 开始',
     `user_message`       TEXT         DEFAULT NULL COMMENT '用户指令文本',
-    `ai_message`         TEXT         DEFAULT NULL COMMENT 'AI 回复文本',
     `message_parts`      LONGTEXT     DEFAULT NULL COMMENT 'AI 回复分段内容（JSON 数组，用于 Markdown 文本中穿插工具调用卡片）',
     `status`             VARCHAR(32)  NOT NULL DEFAULT 'DRAFT' COMMENT '状态: DRAFT-未发布, PUBLISHED-已发布, PUBLISHED_DRAFT-更新未发布',
     `create_time`        DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',

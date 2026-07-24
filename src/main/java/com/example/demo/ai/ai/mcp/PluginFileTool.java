@@ -37,7 +37,7 @@ public class PluginFileTool {
                             @ToolParam(description = "文件路径") String path,
                             @ToolParam(description = "代码内容") String content,
                             @ToolParam(description = "文件简介") String description) {
-        return toolCallNotifier.call(ToolNotice.saveCode(path, content, description),
+        return toolCallNotifier.call(messageId, ToolNotice.saveCode(path, content, description),
                 () -> doSaveCode(messageId, path, content, description));
     }
 
@@ -61,27 +61,31 @@ public class PluginFileTool {
 
     @Tool(description = "根据消息 ID 获取根据此次用户需求生成的代码与相关内容")
     public List<Code> getCode(@ToolParam(description = "消息 ID") String messageId) {
-        return toolCallNotifier.call(ToolNotice.getCode(messageId),
-                () -> codeService.getBaseMapper()
-                        .selectList(new LambdaQueryWrapper<Code>()
-                                .eq(Code::getMessageId, messageId)));
+        return toolCallNotifier.call(messageId, ToolNotice.getCode(messageId),
+                () -> doGetCode(messageId));
+    }
+
+    private List<Code> doGetCode(String messageId) {
+        return codeService.getBaseMapper()
+                .selectList(new LambdaQueryWrapper<Code>()
+                        .eq(Code::getMessageId, messageId));
     }
 
     @Tool(description = "根据代码ID获取代码内容")
     public Code getCodeById(@ToolParam(description = "代码ID") String codeId) {
-        return toolCallNotifier.call(ToolNotice.getCodeById(codeId),
+        return toolCallNotifier.call(null, ToolNotice.getCodeById(codeId),
                 () -> codeService.getById(codeId));
     }
 
     @Tool(description = "根据代码 ID 删除代码与相关内容")
     public Boolean deleteCode(@ToolParam(description = "代码ID") String codeId) {
-        return toolCallNotifier.call(ToolNotice.deleteCode(codeId),
+        return toolCallNotifier.call(null, ToolNotice.deleteCode(codeId),
                 () -> codeService.removeById(codeId));
     }
 
     @Tool(description = "获取插件pom模板")
     public String getPomTemplate() {
-        return toolCallNotifier.call(ToolNotice.getPomTemplate(), this::loadPomTemplate);
+        return toolCallNotifier.call(null, ToolNotice.getPomTemplate(), this::loadPomTemplate);
     }
 
     private String loadPomTemplate() {
@@ -95,7 +99,7 @@ public class PluginFileTool {
     @Tool(description = "根据消息ID更新此次对话插件pom依赖内容")
     public Boolean updatePom(@ToolParam(description = "消息 ID") String messageId,
                              @ToolParam(description = "pom依赖内容") String pomContent) {
-        return toolCallNotifier.call(ToolNotice.updatePom(messageId, pomContent),
+        return toolCallNotifier.call(messageId, ToolNotice.updatePom(messageId, pomContent),
                 () -> doUpdatePom(messageId, pomContent));
     }
 

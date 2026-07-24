@@ -39,12 +39,8 @@ public class AIChatMessage {
     private String userMessage;
 
     /**
-     * AI 回复文本
-     */
-    private String aiMessage;
-
-    /**
      * AI 回复分段内容（JSON 数组），用于在 Markdown 文本中穿插工具调用卡片。
+     * 前端从此字段重建文本和工具调用卡片，无需额外的全文字段。
      */
     private String messageParts;
 

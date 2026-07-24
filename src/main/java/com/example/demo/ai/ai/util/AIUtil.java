@@ -1,6 +1,7 @@
 package com.example.demo.ai.ai.util;
 
 import com.example.demo.ai.ai.pojo.entity.AIChatMessage;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.UserMessage;
@@ -10,9 +11,12 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 public class AIUtil {
+
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     // ==================== 模板加载 ====================
 
@@ -38,8 +42,34 @@ public class AIUtil {
         List<Message> springMessages = new ArrayList<>();
         for (AIChatMessage message : messages) {
             springMessages.add(new UserMessage(message.getUserMessage()));
-            springMessages.add(new UserMessage(message.getAiMessage()));
+            springMessages.add(new UserMessage(extractAiText(message)));
         }
         return springMessages;
+    }
+
+    /**
+     * 从 messageParts JSON 中提取纯文本内容。
+     */
+    private static String extractAiText(AIChatMessage message) {
+        String partsJson = message.getMessageParts();
+        if (partsJson == null || partsJson.isBlank()) {
+            return "";
+        }
+        try {
+            List<?> parts = objectMapper.readValue(partsJson, List.class);
+            StringBuilder sb = new StringBuilder();
+            for (Object part : parts) {
+                if (part instanceof Map<?, ?> map && "text".equals(map.get("type"))) {
+                    Object content = map.get("content");
+                    if (content != null) {
+                        sb.append(content);
+                    }
+                }
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            log.warn("解析 messageParts 失败: {}", e.getMessage());
+            return "";
+        }
     }
 }

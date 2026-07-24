@@ -16,6 +16,8 @@ import com.example.demo.ai.ai.pojo.entity.Code;
 import com.example.demo.ai.ai.service.AIService;
 import com.example.demo.ai.ai.util.AIUtil;
 import com.example.demo.ai.ai.util.CompileUtil;
+import com.example.demo.ai.ai.mcp.AIStreamContext;
+import com.example.demo.ai.ai.service.AIToolCallRecordService;
 import com.example.demo.config.DefaultProperties;
 import com.example.demo.pojo.entity.plugin.PluginInfo;
 import com.example.demo.pojo.entity.plugin.PluginVersion;
@@ -63,9 +65,10 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
     private final PluginService pluginService;
     private final CodeMapper codeMapper;
     private final AIToolCallRecordMapper toolCallRecordMapper;
+    private final AIToolCallRecordService toolCallRecordService;
     private final ToolCallNotifier toolCallNotifier;
 
-    public AIServiceImpl(AIChatMessageMapper aiChatMessageMapper, DynamicChatClientFactory dynamicChatClientFactory, DefaultProperties defaultProperties, DynamicChatClientFactory chatClientFactory, ObjectMapper objectMapper, CompileUtil compileUtil, PluginService pluginService, CodeMapper codeMapper, AIToolCallRecordMapper toolCallRecordMapper, ToolCallNotifier toolCallNotifier) {
+    public AIServiceImpl(AIChatMessageMapper aiChatMessageMapper, DynamicChatClientFactory dynamicChatClientFactory, DefaultProperties defaultProperties, DynamicChatClientFactory chatClientFactory, ObjectMapper objectMapper, CompileUtil compileUtil, PluginService pluginService, CodeMapper codeMapper, AIToolCallRecordMapper toolCallRecordMapper, AIToolCallRecordService toolCallRecordService, ToolCallNotifier toolCallNotifier) {
         this.aiChatMessageMapper = aiChatMessageMapper;
         this.dynamicChatClientFactory = dynamicChatClientFactory;
         this.defaultProperties = defaultProperties;
@@ -75,6 +78,7 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
         this.pluginService = pluginService;
         this.codeMapper = codeMapper;
         this.toolCallRecordMapper = toolCallRecordMapper;
+        this.toolCallRecordService = toolCallRecordService;
         this.toolCallNotifier = toolCallNotifier;
     }
 
@@ -112,18 +116,17 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
 
     /**
      * 启动流式 AI 生成任务。
-     * 流式生成插件代码，并同步持久化 AI 文本分段与真实工具调用记录。
+     * 流式生成插件代码，流式完成后一次性持久化 AI 文本分段与工具调用记录。
      *
      * @param message        用户指令文本
      * @param conversationId 会话 ID
      * @param userId         用户 ID
      * @param onEvent        事件消费函数，(事件类型, 数据) → 推给前端
-     * @return 包含 user + assistant 的完整消息列表
+     * @return 本轮生成的 assistant 消息（含 messageParts/codes/toolCalls）
      */
     @Override
-    @Transactional
-    public List<AIChatMessage> aiGenerate(String message, String conversationId, String userId,
-                                          BiConsumer<String, Object> onEvent, AtomicBoolean cancelled) throws IOException {
+    public AIChatMessage aiGenerate(String message, String conversationId, String userId,
+                                    BiConsumer<String, Object> onEvent, AtomicBoolean cancelled) throws IOException {
 
         // 查询历史消息记录
         List<AIChatMessage> messages = new ArrayList<>();
@@ -163,11 +166,11 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
 
         // 获取 ChatClient（已注册 PluginFileTool）
         ChatClient chatClient = dynamicChatClientFactory.getPluginChatClient(userId);
-        StringBuilder aiResponse = new StringBuilder();
-        List<Map<String, Object>> messageParts = new ArrayList<>();
 
-        // 流式调用，文本和工具调用都交给通知器追加 part 并推送前端。
-        toolCallNotifier.startSession(newMessage.getConversationId(), newMessage.getId(), newMessage.getRound(), messageParts, onEvent);
+        // 流式阶段：startContext 返回收集器，Reactor 线程上推 SSE + 收集事件到内存
+        String assistantMessageId = newMessage.getId();
+        AIStreamContext ctx = toolCallNotifier.startContext(
+                newMessage.getConversationId(), assistantMessageId, newMessage.getRound(), onEvent);
         try {
             chatClient.prompt(new Prompt(promptMessages))
                     .stream()
@@ -180,27 +183,33 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
                         var output = chatResponse.getResult().getOutput();
                         String text = output.getText();
                         if (text != null && !text.isEmpty()) {
-                            aiResponse.append(text);
-                            toolCallNotifier.appendAssistantText(text);
+                            toolCallNotifier.appendAssistantText(assistantMessageId, text);
                         }
                     })
                     .blockLast();
         } finally {
-            toolCallNotifier.closeSession();
+            toolCallNotifier.closeContext(assistantMessageId);
         }
 
-        String aiResponseString = aiResponse.toString();
-        // 持久化 AI 回复与分段结构。
-        newMessage.setAiMessage(aiResponseString);
-        newMessage.setMessageParts(toJson(messageParts));
+        // 持久化阶段：从上下文读取快照，一次性写入 DB
+        List<Map<String, Object>> partsSnapshot = ctx.getMessagePartsSnapshot();
+        List<AIToolCallRecord> toolCallsSnapshot = ctx.getToolCallRecordsSnapshot();
+
+        newMessage.setMessageParts(toJson(partsSnapshot));
         aiChatMessageMapper.update(new LambdaUpdateWrapper<AIChatMessage>()
-                .set(AIChatMessage::getAiMessage, aiResponseString)
                 .set(AIChatMessage::getMessageParts, newMessage.getMessageParts())
                 .eq(AIChatMessage::getId, newMessage.getId()));
-        attachToolCalls(List.of(newMessage));
-        messages.add(newMessage);
 
-        return messages;
+        if (!toolCallsSnapshot.isEmpty()) {
+            toolCallRecordService.saveBatch(toolCallsSnapshot);
+        }
+        newMessage.setToolCalls(toolCallsSnapshot);
+
+        // 重新查询 codes：AI 可能在流式过程中通过 saveCode 工具创建了新文件
+        newMessage.setCodes(codeMapper.selectList(new LambdaQueryWrapper<Code>()
+                .eq(Code::getMessageId, newMessage.getId())));
+
+        return newMessage;
     }
 
 
@@ -247,7 +256,6 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
                 .userId(userId)
                 .round(conversationId == null ? 1 : messages.isEmpty() ? 1 : messages.get(messages.size() - 1).getRound() + 1)
                 .userMessage(message)
-                .aiMessage(null)
                 .status(conversationId == null ? AIChatMessage.Status.DRAFT : messages.isEmpty() ? AIChatMessage.Status.DRAFT : messages.get(messages.size() - 1).getStatus())
                 .createTime(LocalDateTime.now())
                 .build();
@@ -310,5 +318,21 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
             log.warn("AI 消息分段序列化失败", e);
             return "[]";
         }
+    }
+
+    /**
+     * 撤销指定轮次的对话记录，同时删除关联的代码文件和工具调用记录。
+     */
+    @Override
+    @Transactional
+    public void undo(String conversationId, Integer round) {
+        AIChatMessage message = aiChatMessageMapper.selectOne(new LambdaQueryWrapper<AIChatMessage>()
+                .eq(AIChatMessage::getConversationId, conversationId)
+                .eq(AIChatMessage::getRound, round));
+        if (message == null) return;
+        codeMapper.delete(new LambdaQueryWrapper<Code>().eq(Code::getMessageId, message.getId()));
+        toolCallRecordMapper.delete(new LambdaQueryWrapper<AIToolCallRecord>()
+                .eq(AIToolCallRecord::getAssistantMessageId, message.getId()));
+        aiChatMessageMapper.deleteById(message.getId());
     }
 }

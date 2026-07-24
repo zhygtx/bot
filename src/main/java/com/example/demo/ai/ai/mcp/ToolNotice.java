@@ -12,7 +12,7 @@ import java.util.Map;
  * 新增工具时，只需添加一个静态工厂方法，把显示文案和结果转换 lambda 写好即可。
  * 无需再修改任何 switch 语句。
  *
- * <p>调用方式：{@code toolCallNotifier.call(ToolNotice.xxx(...), () -> doSomething(...))}</p>
+ * <p>调用方式：{@code toolCallNotifier.call(messageId, ToolNotice.xxx(...), () -> doSomething(...))}</p>
  */
 public class ToolNotice {
 

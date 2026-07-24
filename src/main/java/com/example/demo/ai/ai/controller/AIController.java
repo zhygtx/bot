@@ -1,6 +1,5 @@
 package com.example.demo.ai.ai.controller;
 
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.example.demo.ai.ai.pojo.dto.CompileCodeDto;
 import com.example.demo.ai.ai.pojo.entity.AIChatMessage;
 import com.example.demo.ai.ai.service.AIService;
@@ -14,7 +13,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -42,10 +40,8 @@ public class AIController {
      */
     @PostMapping
     public Result<?> undo(String conversationId, Integer round) {
-        boolean remove = aiService.remove(Wrappers.lambdaQuery(AIChatMessage.class)
-                .eq(AIChatMessage::getConversationId, conversationId)
-                .eq(AIChatMessage::getRound, round));
-        return remove ? Result.success(null) : Result.error(400, "撤销失败");
+        aiService.undo(conversationId, round);
+        return Result.success(null);
     }
 
     /**
@@ -97,16 +93,16 @@ public class AIController {
 
         generationExecutor.execute(() -> {
             try {
-                List<AIChatMessage> messages = aiService.aiGenerate(
+                AIChatMessage assistantMessage = aiService.aiGenerate(
                         message, conversationId, user.userId(),
                         (type, data) -> sendSseEvent(emitter, type, data), null);
 
-                sendSseEvent(emitter, "done", messages);
+                sendSseEvent(emitter, "done", assistantMessage);
                 emitter.complete();
             } catch (Exception e) {
                 log.error("AI 生成任务执行异常", e);
                 try {
-                    sendSseEvent(emitter, "error", Map.of("message", e.getMessage()));
+                    sendSseEvent(emitter, "error", Map.of("message", e.getMessage() == null ? "AI 生成失败" : e.getMessage()));
                 } catch (Exception ignored) {}
                 emitter.completeWithError(e);
             }
@@ -147,7 +143,10 @@ public class AIController {
         try {
             emitter.send(SseEmitter.event().name(eventName).data(data == null ? Map.of() : data));
         } catch (IOException e) {
-            throw new RuntimeException("SSE 发送失败", e);
+            throw new RuntimeException("SSE 发送失败: " + eventName, e);
+        } catch (Exception e) {
+            // IllegalStateException 等（emitter 已关闭/已完成）
+            throw new RuntimeException("SSE 发送异常(" + eventName + "): " + e.getMessage(), e);
         }
     }
 }

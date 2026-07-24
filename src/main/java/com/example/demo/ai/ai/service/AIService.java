@@ -34,10 +34,10 @@ public interface AIService extends IService<AIChatMessage> {
      * @param conversationId 会话 ID
      * @param userId 用户 ID
      * @param onEvent 事件消费函数，第一个参数为事件类型，第二个参数为事件数据
-     * @return 生成任务 ID
+     * @return 本轮生成的 assistant 消息（含 messageParts/codes/toolCalls）
      */
-    List<AIChatMessage> aiGenerate(String message, String conversationId, String userId,
-                                   BiConsumer<String, Object> onEvent, AtomicBoolean cancelled) throws IOException;
+    AIChatMessage aiGenerate(String message, String conversationId, String userId,
+                             BiConsumer<String, Object> onEvent, AtomicBoolean cancelled) throws IOException;
 
     /**
      * 编译代码。
@@ -46,4 +46,9 @@ public interface AIService extends IService<AIChatMessage> {
      * @return 插件ID
      */
     String compileCode(CompileCodeDto compileCodeDto, BiConsumer<String, Object> onEvent) throws Exception;
+
+    /**
+     * 撤销指定轮次的对话记录，同时删除关联的代码文件和工具调用记录。
+     */
+    void undo(String conversationId, Integer round);
 }
