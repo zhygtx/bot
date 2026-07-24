@@ -7,7 +7,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -33,43 +32,43 @@ public class CompileUtil {
      * 创建代码文件。
      * @param message 会话消息记录
      */
-    public void createCodeFile(AIChatMessage message) throws Exception {
-        JsonNode codeJson = objectMapper.readTree(message.getCode());
-        JsonNode codeFiles = codeJson.get("files");
-        JsonNode dependenciesNode = codeJson.get("dependencies");
-
-        // 创建插件目录
-        Path pluginDir = Path.of(workDir, message.getConversationId());
-        // 先删除旧目录（如果存在）
-        if (Files.exists(pluginDir)) {
-            deleteDirectoryRecursively(pluginDir);
-        }
-        Files.createDirectories(pluginDir);
-
-        if (codeFiles == null || !codeFiles.isArray()) {
-            throw new RuntimeException("代码内容丢失，请重新生成");
-        }
-
-        for (JsonNode file : codeFiles) {
-            String rawPath = file.get("path").asText();
-            String code = file.get("content").asText();
-
-            // 分离扩展名，只替换包名部分中的 .
-            int lastDot = rawPath.lastIndexOf('.');
-            if (lastDot > 0) {
-                String packagePart = rawPath.substring(0, lastDot);
-                String extPart = rawPath.substring(lastDot);  // 含点，如 ".java"
-                rawPath = packagePart.replace(".", File.separator) + extPart;
-            }
-
-            Path filePath = pluginDir.resolve(rawPath);
-            Files.createDirectories(filePath.getParent());
-            Files.writeString(filePath, code);
-        }
-
-        // 3. 生成 pom.xml（根据 dependencies 动态注入依赖）
-        generatePomXml(pluginDir, dependenciesNode);
-    }
+//    public void createCodeFile(AIChatMessage message) throws Exception {
+//        JsonNode codeJson = objectMapper.readTree(message.getCode());
+//        JsonNode codeFiles = codeJson.get("files");
+//        JsonNode dependenciesNode = codeJson.get("dependencies");
+//
+//        // 创建插件目录
+//        Path pluginDir = Path.of(workDir, message.getConversationId());
+//        // 先删除旧目录（如果存在）
+//        if (Files.exists(pluginDir)) {
+//            deleteDirectoryRecursively(pluginDir);
+//        }
+//        Files.createDirectories(pluginDir);
+//
+//        if (codeFiles == null || !codeFiles.isArray()) {
+//            throw new RuntimeException("代码内容丢失，请重新生成");
+//        }
+//
+//        for (JsonNode file : codeFiles) {
+//            String rawPath = file.get("path").asText();
+//            String code = file.get("content").asText();
+//
+//            // 分离扩展名，只替换包名部分中的 .
+//            int lastDot = rawPath.lastIndexOf('.');
+//            if (lastDot > 0) {
+//                String packagePart = rawPath.substring(0, lastDot);
+//                String extPart = rawPath.substring(lastDot);  // 含点，如 ".java"
+//                rawPath = packagePart.replace(".", File.separator) + extPart;
+//            }
+//
+//            Path filePath = pluginDir.resolve(rawPath);
+//            Files.createDirectories(filePath.getParent());
+//            Files.writeString(filePath, code);
+//        }
+//
+//        // 3. 生成 pom.xml（根据 dependencies 动态注入依赖）
+//        generatePomXml(pluginDir, dependenciesNode);
+//    }
 
     /**
      * 编译代码。

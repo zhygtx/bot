@@ -305,6 +305,7 @@ CREATE TABLE `ai_chat_message`(
     `round`              INT          NOT NULL DEFAULT 1 COMMENT '对话轮次，从 1 开始',
     `user_message`       TEXT         DEFAULT NULL COMMENT '用户指令文本',
     `ai_message`         TEXT         DEFAULT NULL COMMENT 'AI 回复文本',
+    `message_parts`      LONGTEXT     DEFAULT NULL COMMENT 'AI 回复分段内容（JSON 数组，用于 Markdown 文本中穿插工具调用卡片）',
     `status`             VARCHAR(32)  NOT NULL DEFAULT 'DRAFT' COMMENT '状态: DRAFT-未发布, PUBLISHED-已发布, PUBLISHED_DRAFT-更新未发布',
     `create_time`        DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     `pom`                TEXT         DEFAULT NULL COMMENT '代码依赖（pom.xml 内容）',
@@ -319,6 +320,36 @@ CREATE TABLE `ai_chat_message`(
     INDEX `idx_user_id` (`user_id`),
     CONSTRAINT `fk_message_user_id` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT ='AI 聊天消息表';
+
+-- ============================================
+-- AI Tool Call Record 工具调用记录表
+-- ============================================
+CREATE TABLE `ai_tool_call_record` (
+    `id`                     VARCHAR(36)  NOT NULL COMMENT '工具调用 ID',
+    `conversation_id`        VARCHAR(36)  NOT NULL COMMENT '会话 ID',
+    `assistant_message_id`   VARCHAR(36)  NOT NULL COMMENT '所属 AI 消息 ID',
+    `round`                  INT          NOT NULL COMMENT '对话轮次',
+    `sequence`               INT          NOT NULL COMMENT '该 AI 消息内的工具调用顺序',
+    `part_index`             INT          NOT NULL COMMENT '在 message_parts 数组中的位置',
+    `method`                 VARCHAR(128) NOT NULL COMMENT '后端工具方法名',
+    `display_name`           VARCHAR(128) NOT NULL COMMENT '前端展示名称',
+    `description`            TEXT         DEFAULT NULL COMMENT '工具说明',
+    `category`               VARCHAR(64)  DEFAULT NULL COMMENT '工具分类',
+    `arguments_preview_json` TEXT         DEFAULT NULL COMMENT '参数预览 JSON（通用结构，长文本脱敏/摘要）',
+    `result_preview_json`    TEXT         DEFAULT NULL COMMENT '结果预览 JSON',
+    `status`                 VARCHAR(32)  NOT NULL DEFAULT 'RUNNING' COMMENT '状态: RUNNING/SUCCESS/ERROR',
+    `error_message`          TEXT         DEFAULT NULL COMMENT '失败原因',
+    `started_at`             DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '开始时间',
+    `finished_at`            DATETIME     DEFAULT NULL COMMENT '结束时间',
+    `duration_ms`            BIGINT       DEFAULT NULL COMMENT '耗时（毫秒）',
+    PRIMARY KEY (`id`),
+    INDEX `idx_tool_call_conversation` (`conversation_id`, `round`, `sequence`),
+    INDEX `idx_tool_call_message` (`assistant_message_id`, `part_index`),
+    CONSTRAINT `fk_tool_call_message_id`
+        FOREIGN KEY (`assistant_message_id`) REFERENCES `ai_chat_message` (`id`)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT ='AI 工具调用记录表';
 
 -- ============================================
 -- Code 代码表（子表）

@@ -71,11 +71,7 @@ public class AIController {
      */
     @GetMapping("/{conversationId}")
     public Result<?> findByConversationId(@PathVariable String conversationId) {
-        List<AIChatMessage> aiChatMessages = aiService.lambdaQuery()
-                .eq(AIChatMessage::getConversationId, conversationId)
-                .orderByAsc(AIChatMessage::getRound)
-                .list();
-        return Result.success(null, aiChatMessages);
+        return Result.success(null, aiService.findByConversationId(conversationId));
     }
 
     // ────────── SSE 端点 ──────────
@@ -85,8 +81,10 @@ public class AIController {
      * <p>
      * 事件类型：
      * <ul>
-     *   <li>{@code delta} — 增量文本（打字机效果）</li>
-     *   <li>{@code tool_call} — 工具调用事件</li>
+     *   <li>{@code assistant_text_delta} — AI 文本 part 增量，含 messageId / partIndex</li>
+     *   <li>{@code tool_call_start} — 工具调用开始，data 为可直接展示的工具卡片数据</li>
+     *   <li>{@code tool_call_finish} — 工具调用成功完成</li>
+     *   <li>{@code tool_call_error} — 工具调用失败</li>
      *   <li>{@code done} — 生成完成，data 为完整消息列表</li>
      *   <li>{@code error} — 出错，data 含 message 字段</li>
      * </ul>

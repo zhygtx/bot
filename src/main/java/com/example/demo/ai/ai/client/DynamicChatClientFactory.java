@@ -28,7 +28,7 @@ public class DynamicChatClientFactory {
     private final Map<String, ChatClient> cache = new ConcurrentHashMap<>();
 
     public DynamicChatClientFactory(DefaultProperties defaultProperties, UserAIConfigMapper userAIConfigMapper,
-                                     PluginFileTool pluginFileTool) {
+                                     @org.springframework.context.annotation.Lazy PluginFileTool pluginFileTool) {
         this.defaultProperties = defaultProperties;
         this.userAIConfigMapper = userAIConfigMapper;
         this.pluginFileTool = pluginFileTool;

@@ -33,7 +33,7 @@ public interface AIService extends IService<AIChatMessage> {
      * @param message 用户指令文本
      * @param conversationId 会话 ID
      * @param userId 用户 ID
-     * @param onEvent 事件消费函数，第一个参数为事件类型（"delta" / "file_start" / "file_end"），第二个参数为事件数据
+     * @param onEvent 事件消费函数，第一个参数为事件类型，第二个参数为事件数据
      * @return 生成任务 ID
      */
     List<AIChatMessage> aiGenerate(String message, String conversationId, String userId,

@@ -44,6 +44,11 @@ public class AIChatMessage {
     private String aiMessage;
 
     /**
+     * AI 回复分段内容（JSON 数组），用于在 Markdown 文本中穿插工具调用卡片。
+     */
+    private String messageParts;
+
+    /**
      * 'draft': 未发布（从未发布过）
      * 'published': 已发布
      * 'published_draft': 更新未发布（曾经发布过，当前又有改动未发布）
@@ -88,6 +93,12 @@ public class AIChatMessage {
      */
     @TableField(exist = false)
     private List<Code> codes;
+
+    /**
+     * 本轮 AI 回复中的工具调用记录。
+     */
+    @TableField(exist = false)
+    private List<AIToolCallRecord> toolCalls;
 
     public enum Status {
         DRAFT,             // 未发布（草稿）
