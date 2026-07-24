@@ -119,11 +119,11 @@ public class ConfigService extends PluginServiceBase {
 你可以使用以下工具来操作代码文件和项目配置。**只在需要产出或修改实际文件时调用，讨论和方案阶段不需要调用。**
 
 ### 查看
-- **getCodeById(codeId)** — 根据代码ID获取代码内容。用于查看已生成的代码文件内容。
+- **getCodeById(messageId, codeId)** — 根据代码ID获取代码内容。用于查看已生成的代码文件内容。
 
 ### 修改
 - **saveCode(messageId, path, content, description)** — 保存代码文件。如果该路径下已有文件则更新内容，否则新建。path 例如 `src/main/java/com/example/entity/User.java`。
-- **deleteCode(codeId)** — 删除指定 id 的代码文件。
+- **deleteCode(messageId, codeId)** — 删除指定 id 的代码文件。
 
 ### 依赖
 

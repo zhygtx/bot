@@ -35,20 +35,22 @@ public class PluginFileTool {
     }
 
     @Tool(description = "根据代码ID获取代码内容")
-    public Code getCodeById(@ToolParam(description = "代码ID") String codeId) {
-        return toolCallNotifier.call(null, ToolNotice.getCodeById(codeId),
+    public Code getCodeById(@ToolParam(description = "消息 ID（即会话ID）") String messageId,
+                            @ToolParam(description = "代码ID") String codeId) {
+        return toolCallNotifier.call(messageId, ToolNotice.getCodeById(codeId),
                 () -> codeService.getById(codeId));
     }
 
     @Tool(description = "根据代码 ID 删除代码与相关内容")
-    public Boolean deleteCode(@ToolParam(description = "代码ID") String codeId) {
-        return toolCallNotifier.call(null, ToolNotice.deleteCode(codeId),
+    public Boolean deleteCode(@ToolParam(description = "消息 ID（即会话ID）") String messageId,
+                              @ToolParam(description = "代码ID") String codeId) {
+        return toolCallNotifier.call(messageId, ToolNotice.deleteCode(codeId),
                 () -> codeService.removeById(codeId));
     }
 
     @Tool(description = "根据消息 ID 获取插件pom模板")
     public String getPomTemplate(@ToolParam(description = "消息 ID") String messageId) {
-        return toolCallNotifier.call(null, ToolNotice.getPom(messageId),
+        return toolCallNotifier.call(messageId, ToolNotice.getPom(messageId),
                 () -> aiService.getById(messageId).getPom());
     }
 

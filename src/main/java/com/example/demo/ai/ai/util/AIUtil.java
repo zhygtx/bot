@@ -137,7 +137,6 @@ public class AIUtil {
             ObjectNode codeNode = codesArray.addObject();
             codeNode.put("id", code.getId());
             codeNode.put("path", code.getPath());
-            codeNode.put("content", code.getContent());
             codeNode.put("description", code.getDescription());
         }
         try {
