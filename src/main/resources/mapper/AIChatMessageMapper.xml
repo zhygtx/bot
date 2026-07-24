@@ -12,6 +12,44 @@
         <result column="update_time" property="updateTime"/>
     </resultMap>
 
+
+    <resultMap id="AIChatMessageWithToolCallsResultMap" type="com.example.demo.ai.ai.pojo.entity.AIChatMessage">
+        <id column="msg_id" property="id"/>
+        <result column="conversation_id" property="conversationId"/>
+        <result column="plugin_id" property="pluginId"/>
+        <result column="user_id" property="userId"/>
+        <result column="round" property="round"/>
+        <result column="user_message" property="userMessage"/>
+        <result column="message_parts" property="messageParts"/>
+        <result column="status" property="status"/>
+        <result column="create_time" property="createTime"/>
+        <result column="pom" property="pom"/>
+        <result column="plugin_name" property="pluginName"/>
+        <result column="plugin_description" property="pluginDescription"/>
+        <result column="version" property="version"/>
+        <result column="is_public" property="isPublic"/>
+        <result column="changelog" property="changelog"/>
+        <collection property="toolCalls" ofType="com.example.demo.ai.ai.pojo.entity.AIToolCallRecord">
+            <id column="tc_id" property="id"/>
+            <result column="tc_conversation_id" property="conversationId"/>
+            <result column="assistant_message_id" property="assistantMessageId"/>
+            <result column="tc_round" property="round"/>
+            <result column="sequence" property="sequence"/>
+            <result column="part_index" property="partIndex"/>
+            <result column="method" property="method"/>
+            <result column="display_name" property="displayName"/>
+            <result column="tc_description" property="description"/>
+            <result column="category" property="category"/>
+            <result column="arguments_preview_json" property="argumentsPreviewJson"/>
+            <result column="result_preview_json" property="resultPreviewJson"/>
+            <result column="tc_status" property="status"/>
+            <result column="error_message" property="errorMessage"/>
+            <result column="started_at" property="startedAt"/>
+            <result column="finished_at" property="finishedAt"/>
+            <result column="duration_ms" property="durationMs"/>
+        </collection>
+    </resultMap>
+
     <select id="selectByUserId" resultMap="AIChatMessageDtoResultMap">
         SELECT
             conv.conversation_id,
@@ -43,5 +81,44 @@
                  LEFT JOIN plugin_info p ON latest.plugin_id = p.id
         ORDER BY latest.create_time DESC
         LIMIT #{offset}, #{count}
+    </select>
+
+    <select id="selectByConversationIdWithToolCalls" resultMap="AIChatMessageWithToolCallsResultMap">
+        SELECT m.id              AS msg_id,
+               m.conversation_id,
+               m.plugin_id,
+               m.user_id,
+               m.round,
+               m.user_message,
+               m.message_parts,
+               m.status,
+               m.create_time,
+               m.pom,
+               m.plugin_name,
+               m.plugin_description,
+               m.version,
+               m.is_public,
+               m.changelog,
+               t.id              AS tc_id,
+               t.conversation_id AS tc_conversation_id,
+               t.assistant_message_id,
+               t.round           AS tc_round,
+               t.sequence,
+               t.part_index,
+               t.method,
+               t.display_name,
+               t.description     AS tc_description,
+               t.category,
+               t.arguments_preview_json,
+               t.result_preview_json,
+               t.status          AS tc_status,
+               t.error_message,
+               t.started_at,
+               t.finished_at,
+               t.duration_ms
+        FROM ai_chat_message m
+                 LEFT JOIN ai_tool_call_record t ON m.id = t.assistant_message_id
+        WHERE m.conversation_id = #{conversationId}
+        ORDER BY m.round, t.part_index, t.sequence
     </select>
 </mapper>

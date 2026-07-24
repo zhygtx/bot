@@ -89,16 +89,7 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
      */
     @Override
     public List<AIChatMessage> findByConversationId(String conversationId) {
-        List<AIChatMessage> aiChatMessages = aiChatMessageMapper.selectList(new LambdaQueryWrapper<AIChatMessage>()
-                .eq(AIChatMessage::getConversationId, conversationId)
-                .orderByAsc(AIChatMessage::getRound));
-        if (!aiChatMessages.isEmpty()) {
-            List<Code> codes = codeMapper.selectList(new LambdaQueryWrapper<Code>()
-                    .eq(Code::getMessageId, aiChatMessages.get(aiChatMessages.size() - 1).getId()));
-            aiChatMessages.get(aiChatMessages.size() - 1).setCodes(codes);
-            attachToolCalls(aiChatMessages);
-        }
-        return aiChatMessages;
+        return aiChatMessageMapper.selectByConversationIdWithToolCalls(conversationId);
     }
 
     /**
@@ -130,6 +121,7 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
 
         // 查询历史消息记录
         List<AIChatMessage> messages = new ArrayList<>();
+        List<Code> codes = new ArrayList<>();
         if (conversationId != null) {
             aiChatMessageMapper.update(new LambdaUpdateWrapper<AIChatMessage>()
                     .set(AIChatMessage::getStatus, AIChatMessage.Status.PUBLISHED_DRAFT)
@@ -138,17 +130,22 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
             messages = aiChatMessageMapper.selectList(new LambdaQueryWrapper<AIChatMessage>()
                     .eq(AIChatMessage::getConversationId, conversationId)
                     .orderByAsc(AIChatMessage::getRound));
+            codes = codeMapper.selectList(new LambdaQueryWrapper<Code>()
+                    .eq(Code::getMessageId, messages.get(messages.size() - 1).getId()));
         }
         String template = AIUtil.loadTemplate(pluginTemplatePath);
         AIChatMessage newMessage = buildNewMessage(message, conversationId, userId, messages);
         aiChatMessageMapper.insert(newMessage);
-        if (newMessage.getCodes() != null) {
-            for (Code code : newMessage.getCodes()) {
-                codeMapper.insert(code);
+
+        if (codes != null) {
+            for (Code code : codes) {
+                code.setId(UUID.randomUUID().toString());
+                code.setMessageId(newMessage.getId());
             }
+            codeMapper.insert(codes);
         }
         List<Message> springMessages = AIUtil.buildMessages(messages);
-        String codeAbstract = buildCodeAbstract(newMessage.getCodes());
+        String codeAbstract = buildCodeAbstract(codes);
 
         // 构建用户提示词（messageId + 已有代码摘要 + 用户需求）
         StringBuilder userPrompt = new StringBuilder();
@@ -205,10 +202,6 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
         }
         newMessage.setToolCalls(toolCallsSnapshot);
 
-        // 重新查询 codes：AI 可能在流式过程中通过 saveCode 工具创建了新文件
-        newMessage.setCodes(codeMapper.selectList(new LambdaQueryWrapper<Code>()
-                .eq(Code::getMessageId, newMessage.getId())));
-
         return newMessage;
     }
 
@@ -249,6 +242,15 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
     }
 
 
+    /**
+     * 构建新消息。
+     *
+     * @param message        用户指令文本
+     * @param conversationId 会话 ID
+     * @param userId         用户 ID
+     * @param messages       历史消息记录
+     * @return 新消息
+     */
     private AIChatMessage buildNewMessage(String message, String conversationId, String userId, List<AIChatMessage> messages) {
         AIChatMessage messageBuilder = AIChatMessage.builder()
                 .id(UUID.randomUUID().toString())
@@ -269,17 +271,15 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
             messageBuilder.setVersion(last.getVersion());
             messageBuilder.setIsPublic(last.getIsPublic());
             messageBuilder.setChangelog(last.getChangelog());
-            List<Code> codes = codeMapper.selectList(new LambdaQueryWrapper<Code>()
-                    .eq(Code::getMessageId, last.getId()));
-            for (Code code : codes) {
-                code.setId(UUID.randomUUID().toString());
-                code.setMessageId(messageBuilder.getId());
-            }
-            messageBuilder.setCodes(codes);
         }
         return messageBuilder;
     }
 
+    /**
+     * 构建代码摘要。
+     * @param codes 代码列表
+     * @return 代码摘要 JSON 字符串
+     */
     public String buildCodeAbstract(List<Code> codes) {
         ObjectMapper mapper = new ObjectMapper();
         ObjectNode rootNode = mapper.createObjectNode();
@@ -298,16 +298,6 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
             return mapper.writeValueAsString(rootNode);
         } catch (Exception e) {
             throw new RuntimeException("JSON 序列化失败", e);
-        }
-    }
-
-    private void attachToolCalls(List<AIChatMessage> messages) {
-        for (AIChatMessage message : messages) {
-            List<AIToolCallRecord> toolCalls = toolCallRecordMapper.selectList(new LambdaQueryWrapper<AIToolCallRecord>()
-                    .eq(AIToolCallRecord::getAssistantMessageId, message.getId())
-                    .orderByAsc(AIToolCallRecord::getPartIndex)
-                    .orderByAsc(AIToolCallRecord::getSequence));
-            message.setToolCalls(toolCalls);
         }
     }
 

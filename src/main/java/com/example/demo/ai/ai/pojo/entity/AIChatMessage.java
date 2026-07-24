@@ -85,12 +85,6 @@ public class AIChatMessage {
     private String changelog;
 
     /**
-     * 代码变更列表
-     */
-    @TableField(exist = false)
-    private List<Code> codes;
-
-    /**
      * 本轮 AI 回复中的工具调用记录。
      */
     @TableField(exist = false)
