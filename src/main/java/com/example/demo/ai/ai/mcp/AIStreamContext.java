@@ -45,22 +45,34 @@ public class AIStreamContext {
     }
 
     /**
-     * 追加 AI 文本回复：分片推送 SSE + 收集到 messageParts。
+     * 追加 AI 文本回复：整段推送 SSE + 收集到 messageParts。
      */
     public synchronized void appendText(String text) {
         if (text == null || text.isEmpty()) return;
-        for (int i = 0; i < text.length(); i += 8) {
-            int end = Math.min(i + 8, text.length());
-            String chunk = text.substring(i, end);
-            int partIndex = addTextPart(chunk);
-            onEvent.accept("assistant_text_delta", Map.of(
-                    "messageId", assistantMessageId,
-                    "conversationId", conversationId,
-                    "round", round,
-                    "partIndex", partIndex,
-                    "content", chunk
-            ));
-        }
+        int partIndex = addTextPart(text);
+        onEvent.accept("assistant_text_delta", Map.of(
+                "messageId", assistantMessageId,
+                "conversationId", conversationId,
+                "round", round,
+                "partIndex", partIndex,
+                "content", text
+        ));
+    }
+
+    /**
+     * 追加 AI 思考内容（reasoningContent）：整段推送 SSE + 收集到 messageParts。
+     * 思考内容不进入 LLM 上下文，仅展示给用户。
+     */
+    public synchronized void appendThinking(String text) {
+        if (text == null || text.isEmpty()) return;
+        int partIndex = addThinkingPart(text);
+        onEvent.accept("assistant_thinking_delta", Map.of(
+                "messageId", assistantMessageId,
+                "conversationId", conversationId,
+                "round", round,
+                "partIndex", partIndex,
+                "content", text
+        ));
     }
 
     /**
@@ -115,6 +127,24 @@ public class AIStreamContext {
         }
         Map<String, Object> part = new LinkedHashMap<>();
         part.put("type", "text");
+        part.put("content", chunk);
+        messageParts.add(part);
+        return messageParts.size() - 1;
+    }
+
+    /**
+     * 添加思考 part，返回 partIndex。如果最后一个 part 是 thinking 类型则追加到它。
+     */
+    private synchronized int addThinkingPart(String chunk) {
+        if (!messageParts.isEmpty()) {
+            Map<String, Object> lastPart = messageParts.get(messageParts.size() - 1);
+            if ("thinking".equals(lastPart.get("type"))) {
+                lastPart.put("content", lastPart.getOrDefault("content", "") + chunk);
+                return messageParts.size() - 1;
+            }
+        }
+        Map<String, Object> part = new LinkedHashMap<>();
+        part.put("type", "thinking");
         part.put("content", chunk);
         messageParts.add(part);
         return messageParts.size() - 1;

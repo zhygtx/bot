@@ -175,10 +175,12 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
                             throw new RuntimeException("任务已取消");
                         }
 
-                        var output = chatResponse.getResult().getOutput();
-                        String text = output.getText();
-                        if (text != null && !text.isEmpty()) {
-                            toolCallNotifier.appendAssistantText(assistantMessageId, text);
+                        StreamChunk chunk = StreamChunk.from(chatResponse.getResult().getOutput());
+                        if (chunk.hasThinking()) {
+                            toolCallNotifier.appendAssistantThinking(assistantMessageId, chunk.thinking());
+                        }
+                        if (chunk.hasText()) {
+                            toolCallNotifier.appendAssistantText(assistantMessageId, chunk.text());
                         }
                     })
                     .blockLast();
@@ -254,5 +256,44 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
                 .eq(AIChatMessage::getConversationId, conversationId)
                 .eq(AIChatMessage::getRound, round);
         return aiChatMessageMapper.delete(queryWrapper) > 0;
+    }
+
+    /**
+     * 流式 chunk 的提取结果：思考内容与正文文本。
+     *
+     * <p>统一 OpenAI/Anthropic 两种协议的处理逻辑：</p>
+     * <ul>
+     *   <li>OpenAI/DeepSeek: reasoningContent 放在 metadata，getText() 只返回正文</li>
+     *   <li>Anthropic: thinking 内容直接放在 getText()，metadata 含 signature 标记</li>
+     * </ul>
+     */
+    private record StreamChunk(String thinking, String text) {
+
+        static StreamChunk from(org.springframework.ai.chat.messages.AssistantMessage output) {
+            Map<String, Object> metadata = output.getMetadata();
+            String text = output.getText();
+            String thinking = null;
+
+            Object reasoning = metadata.get("reasoningContent");
+            if (reasoning == null) {
+                reasoning = metadata.get("reasoning_content");
+            }
+            if (reasoning != null) {
+                thinking = reasoning.toString();
+            } else if (metadata.containsKey("signature") && text != null && !text.isEmpty()) {
+                // Anthropic thinking chunk：getText() 即思考内容
+                thinking = text;
+                text = null;
+            }
+            return new StreamChunk(thinking, text);
+        }
+
+        boolean hasThinking() {
+            return thinking != null && !thinking.isEmpty();
+        }
+
+        boolean hasText() {
+            return text != null && !text.isEmpty();
+        }
     }
 }

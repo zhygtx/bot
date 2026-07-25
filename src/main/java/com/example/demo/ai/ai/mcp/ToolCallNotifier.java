@@ -72,6 +72,19 @@ public class ToolCallNotifier {
     }
 
     /**
+     * 追加 AI 思考内容（reasoningContent）并推送增量事件。
+     */
+    public void appendAssistantThinking(String assistantMessageId, String text) {
+        AIStreamContext ctx = assistantMessageId == null ? null : contexts.get(assistantMessageId);
+        if (ctx == null) {
+            log.warn("appendAssistantThinking 找不到上下文，assistantMessageId={}, text 长度={}",
+                    assistantMessageId, text == null ? 0 : text.length());
+            return;
+        }
+        ctx.appendThinking(text);
+    }
+
+    /**
      * 执行一次工具调用：先推送开始事件，再执行业务方法，最后收集记录到内存。
      *
      * @param assistantMessageId 当前 AI 回复消息 ID，用于找回上下文；为 null 时直接执行不记录

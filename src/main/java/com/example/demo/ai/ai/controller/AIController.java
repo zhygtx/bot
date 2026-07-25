@@ -92,6 +92,7 @@ public class AIController {
      * <p>
      * 事件类型：
      * <ul>
+     *   <li>{@code assistant_thinking_delta} — AI 思考 part 增量（reasoningContent），含 messageId / partIndex / content</li>
      *   <li>{@code assistant_text_delta} — AI 文本 part 增量，含 messageId / partIndex</li>
      *   <li>{@code tool_call_start} — 工具调用开始，data 为可直接展示的工具卡片数据</li>
      *   <li>{@code tool_call_finish} — 工具调用成功完成</li>
