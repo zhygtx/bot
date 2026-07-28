@@ -19,11 +19,4 @@ public interface AIChatMessageMapper extends BaseMapper<AIChatMessage> {
      */
     List<AIChatMessageDto> selectByUserId(@Param("userId") String userId, @Param("offset") Integer offset, @Param("count") Integer count);
 
-    /**
-     * 根据 conversationId 一次查询消息及关联的工具调用记录（LEFT JOIN + collection 映射）。
-     * @param conversationId 会话 ID
-     * @return 已挂载工具调用记录的消息列表
-     */
-    List<AIChatMessage> selectByConversationIdWithToolCalls(@Param("conversationId") String conversationId);
-
 }

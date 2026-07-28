@@ -11,6 +11,7 @@ import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -155,7 +156,8 @@ public class AIUtil {
         return "插件名称: " + aiChatMessage.getPluginName() + "\n" +
                 "插件介绍: " + aiChatMessage.getPluginDescription() + "\n" +
                 "版本号: " + aiChatMessage.getVersion() + "\n" +
-                "插件更新日志: " + aiChatMessage.getChangelog() + "\n";
+                "插件更新日志: " + aiChatMessage.getChangelog() + "\n" +
+                "插件推送状态: " + aiChatMessage.getStatus();
     }
 
     /**
@@ -167,6 +169,26 @@ public class AIUtil {
         } catch (Exception e) {
             log.warn("AI 消息分段序列化失败", e);
             return "[]";
+        }
+    }
+
+    /**
+     * 统一的 SSE 事件推送方法。
+     * 集中处理 IOException / IllegalStateException（emitter 已关闭/已完成）等异常，
+     * 避免在每个调用点重复 try-catch。
+     *
+     * @param emitter   SSE emitter
+     * @param eventName 事件名称（如 delta / done / error）
+     * @param data      事件数据，null 时推送空对象
+     */
+    public void sendSseEvent(SseEmitter emitter, String eventName, Object data) {
+        try {
+            emitter.send(SseEmitter.event().name(eventName).data(data == null ? Map.of() : data));
+        } catch (IOException e) {
+            throw new RuntimeException("SSE 发送失败: " + eventName, e);
+        } catch (Exception e) {
+            // IllegalStateException 等（emitter 已关闭/已完成）
+            throw new RuntimeException("SSE 发送异常(" + eventName + "): " + e.getMessage(), e);
         }
     }
 }

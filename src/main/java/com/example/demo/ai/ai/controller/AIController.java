@@ -13,7 +13,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -90,14 +89,19 @@ public class AIController {
     /**
      * SSE 流式代码生成。
      * <p>
+     * Controller 只负责创建 emitter、调度异步任务、异常兜底。
+     * 所有 SSE 事件（delta / done / error）由 AIService 通过 ChatStream 统一推送。
+     * </p>
      * 事件类型：
      * <ul>
-     *   <li>{@code assistant_thinking_delta} — AI 思考 part 增量（reasoningContent），含 messageId / partIndex / content</li>
-     *   <li>{@code assistant_text_delta} — AI 文本 part 增量，含 messageId / partIndex</li>
-     *   <li>{@code tool_call_start} — 工具调用开始，data 为可直接展示的工具卡片数据</li>
-     *   <li>{@code tool_call_finish} — 工具调用成功完成</li>
-     *   <li>{@code tool_call_error} — 工具调用失败</li>
-     *   <li>{@code done} — 生成完成，data 为完整消息列表</li>
+     *   <li>{@code delta} — 统一增量事件，data.type 区分 thinking / text / tool_call：
+     *     <ul>
+     *       <li>thinking: { type:"thinking", content:"..." }</li>
+     *       <li>text: { type:"text", content:"..." }</li>
+     *       <li>tool_call: { type:"tool_call", name:"...", status:"RUNNING"|"SUCCESS"|"ERROR" }</li>
+     *     </ul>
+     *   </li>
+     *   <li>{@code done} — 生成完成，data 为完整消息对象</li>
      *   <li>{@code error} — 出错，data 含 message 字段</li>
      * </ul>
      */
@@ -109,17 +113,10 @@ public class AIController {
 
         generationExecutor.execute(() -> {
             try {
-                AIChatMessage assistantMessage = aiService.aiGenerate(
-                        message, conversationId, user.userId(),
-                        (type, data) -> sendSseEvent(emitter, type, data), null);
-
-                sendSseEvent(emitter, "done", assistantMessage);
+                aiService.aiGenerate(message, conversationId, user.userId(), emitter);
                 emitter.complete();
             } catch (Exception e) {
                 log.error("AI 生成任务执行异常", e);
-                try {
-                    sendSseEvent(emitter, "error", Map.of("message", e.getMessage() == null ? "AI 生成失败" : e.getMessage()));
-                } catch (Exception ignored) {}
                 emitter.completeWithError(e);
             }
         });
@@ -129,6 +126,10 @@ public class AIController {
 
     /**
      * SSE 流式编译上传。
+     * <p>
+     * Controller 只负责创建 emitter、调度异步任务、异常兜底。
+     * 所有 SSE 事件由 AIService.compileCode 通过 ChatStream 统一推送。
+     * </p>
      */
     @PostMapping(value = "/compile", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter compile(@RequestBody CompileCodeDto compileCodeDto) {
@@ -136,33 +137,14 @@ public class AIController {
 
         generationExecutor.execute(() -> {
             try {
-                String pluginId = aiService.compileCode(compileCodeDto,
-                        (type, data) -> sendSseEvent(emitter, type, data));
-
-                sendSseEvent(emitter, "done", pluginId);
+                aiService.compileCode(compileCodeDto, emitter);
                 emitter.complete();
             } catch (Exception e) {
                 log.error("编译任务执行异常", e);
-                try {
-                    sendSseEvent(emitter, "error", Map.of("message", e.getMessage()));
-                } catch (Exception ignored) {}
                 emitter.completeWithError(e);
             }
         });
 
         return emitter;
-    }
-
-    // ────────── 私有工具方法 ──────────
-
-    private void sendSseEvent(SseEmitter emitter, String eventName, Object data) {
-        try {
-            emitter.send(SseEmitter.event().name(eventName).data(data == null ? Map.of() : data));
-        } catch (IOException e) {
-            throw new RuntimeException("SSE 发送失败: " + eventName, e);
-        } catch (Exception e) {
-            // IllegalStateException 等（emitter 已关闭/已完成）
-            throw new RuntimeException("SSE 发送异常(" + eventName + "): " + e.getMessage(), e);
-        }
     }
 }

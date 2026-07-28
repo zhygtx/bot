@@ -5,18 +5,14 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.demo.ai.ai.client.DynamicChatClientFactory;
 import com.example.demo.ai.ai.mapper.AIChatMessageMapper;
-import com.example.demo.ai.ai.mapper.AIToolCallRecordMapper;
 import com.example.demo.ai.ai.mapper.CodeMapper;
-import com.example.demo.ai.ai.mcp.AIStreamContext;
-import com.example.demo.ai.ai.mcp.ToolCallNotifier;
 import com.example.demo.ai.ai.pojo.dto.AIChatMessageDto;
 import com.example.demo.ai.ai.pojo.dto.CompileCodeDto;
 import com.example.demo.ai.ai.pojo.entity.AIChatMessage;
-import com.example.demo.ai.ai.pojo.entity.AIToolCallRecord;
 import com.example.demo.ai.ai.pojo.entity.Code;
 import com.example.demo.ai.ai.service.AIService;
-import com.example.demo.ai.ai.service.AIToolCallRecordService;
 import com.example.demo.ai.ai.util.AIUtil;
+import com.example.demo.ai.ai.util.ChatStream;
 import com.example.demo.ai.ai.util.CompileUtil;
 import com.example.demo.config.DefaultProperties;
 import com.example.demo.pojo.entity.plugin.PluginInfo;
@@ -32,14 +28,10 @@ import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.BiConsumer;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -59,12 +51,9 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
     private final DynamicChatClientFactory chatClientFactory;
     private final PluginService pluginService;
     private final CodeMapper codeMapper;
-    private final AIToolCallRecordMapper toolCallRecordMapper;
-    private final AIToolCallRecordService toolCallRecordService;
-    private final ToolCallNotifier toolCallNotifier;
     private final AIUtil aiUtil;
 
-    public AIServiceImpl(AIChatMessageMapper aiChatMessageMapper, DynamicChatClientFactory dynamicChatClientFactory, DefaultProperties defaultProperties, DynamicChatClientFactory chatClientFactory, CompileUtil compileUtil, PluginService pluginService, CodeMapper codeMapper, AIToolCallRecordMapper toolCallRecordMapper, AIToolCallRecordService toolCallRecordService, ToolCallNotifier toolCallNotifier, AIUtil aiUtil) {
+    public AIServiceImpl(AIChatMessageMapper aiChatMessageMapper, DynamicChatClientFactory dynamicChatClientFactory, DefaultProperties defaultProperties, DynamicChatClientFactory chatClientFactory, CompileUtil compileUtil, PluginService pluginService, CodeMapper codeMapper, AIUtil aiUtil) {
         this.aiChatMessageMapper = aiChatMessageMapper;
         this.dynamicChatClientFactory = dynamicChatClientFactory;
         this.defaultProperties = defaultProperties;
@@ -72,9 +61,6 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
         this.compileUtil = compileUtil;
         this.pluginService = pluginService;
         this.codeMapper = codeMapper;
-        this.toolCallRecordMapper = toolCallRecordMapper;
-        this.toolCallRecordService = toolCallRecordService;
-        this.toolCallNotifier = toolCallNotifier;
         this.aiUtil = aiUtil;
     }
 
@@ -85,7 +71,9 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
      */
     @Override
     public List<AIChatMessage> findByConversationId(String conversationId) {
-        return aiChatMessageMapper.selectByConversationIdWithToolCalls(conversationId);
+        return aiChatMessageMapper.selectList(new LambdaQueryWrapper<AIChatMessage>()
+                .eq(AIChatMessage::getConversationId, conversationId)
+                .orderByAsc(AIChatMessage::getRound));
     }
 
     /**
@@ -103,106 +91,119 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
 
     /**
      * 启动流式 AI 生成任务。
-     * 流式生成插件代码，流式完成后一次性持久化 AI 文本分段与工具调用记录。
+     * 流式生成插件代码，流式完成后一次性持久化 AI 文本分段（含工具调用信息）。
+     *
+     * <p>所有 SSE 事件（delta / done / error）都通过 {@link ChatStream} 统一推送，
+     * Controller 只负责创建 emitter 和 emitter.complete()。</p>
+     *
+     * <p>失败清理：如果生成过程中或生成开始时失败，清理预处理阶段产生的数据
+     * （newMessage、复制的 codes、历史消息状态回滚），避免残留脏数据。</p>
      *
      * @param message        用户指令文本
      * @param conversationId 会话 ID
      * @param userId         用户 ID
-     * @param onEvent        事件消费函数，(事件类型, 数据) → 推给前端
-     * @return 本轮生成的 assistant 消息（含 messageParts/codes/toolCalls）
+     * @param emitter        SSE emitter，由本方法通过 ChatStream 直接消费
      */
     @Override
-    public AIChatMessage aiGenerate(String message, String conversationId, String userId,
-                                    BiConsumer<String, Object> onEvent, AtomicBoolean cancelled) throws IOException {
+    public void aiGenerate(String message, String conversationId, String userId,
+                           SseEmitter emitter) throws IOException {
 
-        // 查询历史消息记录
-        List<AIChatMessage> messages = new ArrayList<>();
-        List<Code> codes = new ArrayList<>();
-        if (conversationId != null) {
-            aiChatMessageMapper.update(new LambdaUpdateWrapper<AIChatMessage>()
-                    .set(AIChatMessage::getStatus, AIChatMessage.Status.PUBLISHED_DRAFT)
-                    .eq(AIChatMessage::getConversationId, conversationId)
-                    .eq(AIChatMessage::getStatus, AIChatMessage.Status.PUBLISHED));
-            messages = aiChatMessageMapper.selectList(new LambdaQueryWrapper<AIChatMessage>()
-                    .eq(AIChatMessage::getConversationId, conversationId)
-                    .orderByAsc(AIChatMessage::getRound));
-            codes = codeMapper.selectList(new LambdaQueryWrapper<Code>()
-                    .eq(Code::getMessageId, messages.get(messages.size() - 1).getId()));
-        }
-        String template = aiUtil.loadTemplate(pluginTemplatePath);
-        AIChatMessage newMessage = aiUtil.buildNewMessage(message, conversationId, userId, messages);
-        aiChatMessageMapper.insert(newMessage);
-
-        if (codes != null) {
-            for (Code code : codes) {
-                code.setId(UUID.randomUUID().toString());
-                code.setMessageId(newMessage.getId());
-            }
-            codeMapper.insert(codes);
-        }
-        List<Message> springMessages = aiUtil.buildMessages(messages);
-        String codeAbstract = aiUtil.buildCodeAbstract(codes);
-        String pluginAbstract = aiUtil.buildPluginAbstract(newMessage);
-
-        // 构建用户提示词（messageId + 已有代码摘要 + 用户需求）
-        StringBuilder userPrompt = new StringBuilder();
-        userPrompt.append("messageId: ").append(newMessage.getId()).append("\n\n");
-        if (codeAbstract != null && !codeAbstract.isBlank() && !codeAbstract.equals("{\"codes\":[]}")) {
-            userPrompt.append("当前已有代码：\n").append(codeAbstract).append("\n\n");
-        }
-        userPrompt.append("当前插件摘要：\n").append(pluginAbstract).append("\n\n");
-        userPrompt.append("用户需求：\n").append(message);
-
-        // 组装完整消息列表：系统提示词 + 历史对话 + 当前用户消息
-        List<Message> promptMessages = new ArrayList<>();
-        promptMessages.add(new SystemMessage(template));
-        promptMessages.addAll(springMessages);
-        promptMessages.add(new UserMessage(userPrompt.toString()));
-
-        // 获取 ChatClient（已注册 PluginFileTool）
-        ChatClient chatClient = dynamicChatClientFactory.getPluginChatClient(userId);
-
-        // 流式阶段：startContext 返回收集器，Reactor 线程上推 SSE + 收集事件到内存
-        String assistantMessageId = newMessage.getId();
-        AIStreamContext ctx = toolCallNotifier.startContext(
-                newMessage.getConversationId(), assistantMessageId, newMessage.getRound(), onEvent);
+        AIChatMessage newMessage = null;
+        ChatStream stream = null;
         try {
+            // ===== 预处理阶段 =====
+            List<AIChatMessage> messages = new ArrayList<>();
+            List<Code> codes = new ArrayList<>();
+            if (conversationId != null) {
+                aiChatMessageMapper.update(new LambdaUpdateWrapper<AIChatMessage>()
+                        .set(AIChatMessage::getStatus, AIChatMessage.Status.PUBLISHED_DRAFT)
+                        .eq(AIChatMessage::getConversationId, conversationId)
+                        .eq(AIChatMessage::getStatus, AIChatMessage.Status.PUBLISHED));
+                messages = aiChatMessageMapper.selectList(new LambdaQueryWrapper<AIChatMessage>()
+                        .eq(AIChatMessage::getConversationId, conversationId)
+                        .orderByAsc(AIChatMessage::getRound));
+                codes = codeMapper.selectList(new LambdaQueryWrapper<Code>()
+                        .eq(Code::getMessageId, messages.get(messages.size() - 1).getId()));
+            }
+            String template = aiUtil.loadTemplate(pluginTemplatePath);
+            newMessage = aiUtil.buildNewMessage(message, conversationId, userId, messages);
+            aiChatMessageMapper.insert(newMessage);
+
+            if (codes != null) {
+                for (Code code : codes) {
+                    code.setId(UUID.randomUUID().toString());
+                    code.setMessageId(newMessage.getId());
+                }
+                codeMapper.insert(codes);
+            }
+
+            // ===== 构建提示词 =====
+            List<Message> springMessages = aiUtil.buildMessages(messages);
+            String codeAbstract = aiUtil.buildCodeAbstract(codes);
+            String pluginAbstract = aiUtil.buildPluginAbstract(newMessage);
+
+            StringBuilder userPrompt = new StringBuilder();
+            userPrompt.append("messageId: ").append(newMessage.getId()).append("\n\n");
+            if (codeAbstract != null && !codeAbstract.isBlank() && !codeAbstract.equals("{\"codes\":[]}")) {
+                userPrompt.append("当前已有代码：\n").append(codeAbstract).append("\n\n");
+            }
+            userPrompt.append("当前插件摘要：\n").append(pluginAbstract).append("\n\n");
+            userPrompt.append("用户需求：\n").append(message);
+
+            List<Message> promptMessages = new ArrayList<>();
+            promptMessages.add(new SystemMessage(template));
+            promptMessages.addAll(springMessages);
+            promptMessages.add(new UserMessage(userPrompt.toString()));
+
+            // ===== 流式生成阶段 =====
+            ChatClient chatClient = dynamicChatClientFactory.getPluginChatClient(userId);
+            ChatStream localStream = new ChatStream(emitter, aiUtil);
+            stream = localStream;
+
+            // 通过 Spring AI 原生 ToolContext 把 stream 传给 @Tool 方法，
+            // 由 @Tool 方法在执行业务前主动推送 tool_call 事件
+            Map<String, Object> toolContext = new HashMap<>();
+            toolContext.put("stream", localStream);
+
             chatClient.prompt(new Prompt(promptMessages))
+                    .toolContext(toolContext)
                     .stream()
                     .chatResponse()
                     .doOnNext(chatResponse -> {
-                        if (cancelled != null && cancelled.get()) {
-                            throw new RuntimeException("任务已取消");
-                        }
-
-                        StreamChunk chunk = StreamChunk.from(chatResponse.getResult().getOutput());
-                        if (chunk.hasThinking()) {
-                            toolCallNotifier.appendAssistantThinking(assistantMessageId, chunk.thinking());
-                        }
-                        if (chunk.hasText()) {
-                            toolCallNotifier.appendAssistantText(assistantMessageId, chunk.text());
-                        }
+                        // chunk 中不含工具调用信息（Spring AI 内部消费），统一交给 consume 处理 thinking/text
+                        localStream.consume(chatResponse.getResult().getOutput());
                     })
                     .blockLast();
-        } finally {
-            toolCallNotifier.closeContext(assistantMessageId);
+
+            // ===== 成功：持久化 messageParts + 推送 done =====
+            newMessage.setMessageParts(stream.toJson());
+            aiChatMessageMapper.update(new LambdaUpdateWrapper<AIChatMessage>()
+                    .set(AIChatMessage::getMessageParts, newMessage.getMessageParts())
+                    .eq(AIChatMessage::getId, newMessage.getId()));
+            stream.done(newMessage);
+
+        } catch (RuntimeException e) {
+            // 失败：推送 error 事件 + 清理预处理数据
+            if (stream != null) {
+                stream.error(e.getMessage());
+            }
+            try {
+                if (newMessage != null && newMessage.getId() != null) {
+                    codeMapper.delete(new LambdaQueryWrapper<Code>()
+                            .eq(Code::getMessageId, newMessage.getId()));
+                    aiChatMessageMapper.deleteById(newMessage.getId());
+                }
+                if (conversationId != null) {
+                    aiChatMessageMapper.update(new LambdaUpdateWrapper<AIChatMessage>()
+                            .set(AIChatMessage::getStatus, AIChatMessage.Status.PUBLISHED)
+                            .eq(AIChatMessage::getConversationId, conversationId)
+                            .eq(AIChatMessage::getStatus, AIChatMessage.Status.PUBLISHED_DRAFT));
+                }
+            } catch (Exception cleanupEx) {
+                log.error("清理生成数据失败", cleanupEx);
+            }
+            throw e;
         }
-
-        // 持久化阶段：从上下文读取快照，一次性写入 DB
-        List<Map<String, Object>> partsSnapshot = ctx.getMessagePartsSnapshot();
-        List<AIToolCallRecord> toolCallsSnapshot = ctx.getToolCallRecordsSnapshot();
-
-        newMessage.setMessageParts(aiUtil.toJson(partsSnapshot));
-        aiChatMessageMapper.update(new LambdaUpdateWrapper<AIChatMessage>()
-                .set(AIChatMessage::getMessageParts, newMessage.getMessageParts())
-                .eq(AIChatMessage::getId, newMessage.getId()));
-
-        if (!toolCallsSnapshot.isEmpty()) {
-            toolCallRecordService.saveBatch(toolCallsSnapshot);
-        }
-        newMessage.setToolCalls(toolCallsSnapshot);
-
-        return newMessage;
     }
 
 
@@ -210,13 +211,12 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
      * 编译代码。
      *
      * @param compileCodeDto 编译参数-
-     * @param onEvent        事件消费函数，第一个参数为事件类型，第二个参数为事件数据
+     * @param emitter        SSE emitter，由本方法直接消费
      * @return 插件ID
      */
     @Override
-    public String compileCode(CompileCodeDto compileCodeDto, BiConsumer<String, Object> onEvent) throws Exception{
+    public void compileCode(CompileCodeDto compileCodeDto, SseEmitter emitter) throws Exception{
 
-        return null;
     }
 
     /**
@@ -256,44 +256,5 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
                 .eq(AIChatMessage::getConversationId, conversationId)
                 .eq(AIChatMessage::getRound, round);
         return aiChatMessageMapper.delete(queryWrapper) > 0;
-    }
-
-    /**
-     * 流式 chunk 的提取结果：思考内容与正文文本。
-     *
-     * <p>统一 OpenAI/Anthropic 两种协议的处理逻辑：</p>
-     * <ul>
-     *   <li>OpenAI/DeepSeek: reasoningContent 放在 metadata，getText() 只返回正文</li>
-     *   <li>Anthropic: thinking 内容直接放在 getText()，metadata 含 signature 标记</li>
-     * </ul>
-     */
-    private record StreamChunk(String thinking, String text) {
-
-        static StreamChunk from(org.springframework.ai.chat.messages.AssistantMessage output) {
-            Map<String, Object> metadata = output.getMetadata();
-            String text = output.getText();
-            String thinking = null;
-
-            Object reasoning = metadata.get("reasoningContent");
-            if (reasoning == null) {
-                reasoning = metadata.get("reasoning_content");
-            }
-            if (reasoning != null) {
-                thinking = reasoning.toString();
-            } else if (metadata.containsKey("signature") && text != null && !text.isEmpty()) {
-                // Anthropic thinking chunk：getText() 即思考内容
-                thinking = text;
-                text = null;
-            }
-            return new StreamChunk(thinking, text);
-        }
-
-        boolean hasThinking() {
-            return thinking != null && !thinking.isEmpty();
-        }
-
-        boolean hasText() {
-            return text != null && !text.isEmpty();
-        }
     }
 }
