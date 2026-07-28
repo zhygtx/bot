@@ -65,10 +65,36 @@ public class AIUtil {
     /** 解析 JSON 字符串为 JsonNode，避免调用方直接依赖 ObjectMapper */
     public JsonNode parseJson(String content) {
         try {
-            return objectMapper.readTree(content);
+            return objectMapper.readTree(stripCodeFence(content));
         } catch (Exception e) {
-            throw new RuntimeException("JSON 解析失败", e);
+            throw new RuntimeException("JSON 解析失败: " + e.getMessage() + " content=" + content, e);
         }
+    }
+
+    /**
+     * 去除 AI 返回内容中的 markdown 代码块包裹（```json ... ``` 或 ``` ... ```）。
+     * 仅处理首尾的 ``` 行，不影响 JSON 内部内容。
+     */
+    private String stripCodeFence(String content) {
+        if (content == null) return "";
+        String trimmed = content.trim();
+        if (!trimmed.startsWith("`")) return trimmed;
+        // 去除开头的 ``` 或 ```json
+        String[] lines = trimmed.split("\n", -1);
+        int start = 0;
+        int end = lines.length - 1;
+        if (lines[start].trim().matches("^```.*$")) {
+            start++;
+        }
+        if (end >= 0 && lines[end].trim().matches("^```\\s*$")) {
+            end--;
+        }
+        StringBuilder sb = new StringBuilder();
+        for (int i = start; i <= end; i++) {
+            if (sb.length() > 0) sb.append("\n");
+            sb.append(lines[i]);
+        }
+        return sb.toString().trim();
     }
 
     /**

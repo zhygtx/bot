@@ -82,6 +82,8 @@ public class CompileUtil {
         );
         pb.directory(projectDir.toFile());
         pb.redirectErrorStream(true);  // 合并 stderr → stdout
+        // 强制 Maven 用 UTF-8 输出，避免 Windows 默认 GBK 导致中文错误信息乱码
+        pb.environment().put("MAVEN_OPTS", "-Dfile.encoding=UTF-8 -Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8");
 
         log.info("开始编译: {}", projectDir);
         Process process = pb.start();

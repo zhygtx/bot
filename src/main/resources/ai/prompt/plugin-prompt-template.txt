@@ -42,14 +42,66 @@
 | 基本类型 | `byte` `short` `int` `long` `float` `double` `char` `boolean` |
 | 包装类 | `Byte` `Short` `Integer` `Long` `Float` `Double` `Character` `Boolean` |
 | 常用类 | `String` `Object` |
-| 集合类型 | `List` `ArrayList` `LinkedList` `Set` `HashSet` `TreeSet` `Map` `HashMap` `TreeMap` `Collection` `Queue` `ArrayDeque` |
 
-> **返回值类型无此限制**，可返回任意 POJO 或以上类型，主项目会自动扫描返回对象字段并平铺展示。
+> **禁止使用任何集合类型（`List` `Map` `Set` 及其子类）作为方法参数**：主项目通过反射调用方法时，无法将前端传入的 JSON 数组/对象正确转换为目标集合类型，会导致类型转换异常。如需接收多个值，请改用 JSON 字符串参数（类型为 `String`），在方法内部自行解析。
+
+> **返回值类型无此限制**，可返回任意 POJO、集合类型或以上类型，主项目会自动扫描返回对象字段并平铺展示。
 
 ### @Param nullable 约束
 - `nullable` 默认 `false`（不允许为 null）
 - **基本类型**（`byte` `short` `int` `long` `float` `double` `char` `boolean`）**禁止**标记 `nullable = true`，因为 Java 反射调用无法传递 null 给基本类型
 - 包装类（`Integer` `Long` 等）和 `String` 可标记 `nullable = true`
+
+### SDK API 参考（持久化）
+
+继承 `PluginServiceBase` 后通过 `sqlService` 字段操作数据。`sqlService` 类型为 `SQLService`，操作的核心实体为 `PluginData`。**严禁凭空调用 SDK 中不存在的方法**，必须严格按下列签名使用。
+
+#### PluginData 字段
+```java
+public class PluginData {
+    private Integer id;                  // 自增主键
+    private String  userId;             // 用户 ID（由主项目注入）
+    private String  pluginId;           // 插件 ID（由主项目注入）
+    private String  dataIndex;          // 数据索引（业务自定义，唯一约束）
+    private String  data;               // JSON 格式数据内容
+    private LocalDateTime createTime;    // 创建时间
+    private LocalDateTime updateTime;    // 更新时间
+    // getter/setter 由 Lombok @Data 生成
+}
+```
+
+#### SQLService 方法签名
+
+> **使用优先级**：在功能等价的情况下，**优先使用 MyBatis-Plus 风格方法**（`selectList` / `selectOne` / `selectCount` / `selectPage` / `update(Wrapper, PluginData)` / `delete(Wrapper)`），它们支持条件构造器，更灵活且能复用 `QueryWrapper` / `LambdaQueryWrapper` 能力；仅在场景简单（按索引/ID 增删改查）时才用对应的方法。
+
+| 类别 | 方法签名 | 说明 |
+| --- | --- | --- |
+| 新增 | `int insert(String data)` | 自动生成索引插入单条 |
+| 新增 | `int insert(String index, String data)` | 按指定索引插入，已存在则覆盖 |
+| 新增 | `int insert(List<String> data)` | 批量插入 |
+| 新增 | `int insert(String index, List<String> data)` | 按同一索引批量插入 |
+| 新增 | `int insert(Map<String, String> data)` | 按索引-数据映射批量插入 |
+| 新增 | `int insertByIndexMap(Map<String, List<String>> data)` | 按索引-数据列表映射批量插入 |
+| 删除 | `int delete()` | 删除当前用户+插件的所有数据 |
+| 删除 | `int delete(Integer id)` | 按主键 ID 删除 |
+| 删除 | `int delete(String index)` | 按索引删除 |
+| 删除 | `int delete(List<String> index)` | 按索引列表批量删除 |
+| 删除 | `int deleteByIds(List<Integer> ids)` | 按 ID 列表批量删除 |
+| 删除 | `int delete(Wrapper<PluginData> wrapper)` | **MyBatis-Plus** 按条件删除 |
+| 修改 | `int update(Integer id, String data)` | 按 ID 更新 data 字段 |
+| 修改 | `int update(String index, String data)` | 按索引更新 data 字段 |
+| 修改 | `int update(List<PluginData> list)` | 批量更新（按实体主键） |
+| 修改 | `int update(Wrapper<PluginData> wrapper, PluginData entity)` | **MyBatis-Plus** 按条件更新 |
+| 查询 | `List<PluginData> select()` | 查询所有数据 |
+| 查询 | `PluginData selectById(Integer id)` | 按 ID 查询 |
+| 查询 | `PluginData selectByIndex(String index)` | 按索引查询单条 |
+| 查询 | `List<PluginData> select(String index)` | 按索引查询列表 |
+| 查询 | `List<PluginData> selectList(Wrapper<PluginData> wrapper)` | **MyBatis-Plus** 按条件查询列表 |
+| 查询 | `PluginData selectOne(Wrapper<PluginData> wrapper)` | **MyBatis-Plus** 按条件查询单条 |
+| 查询 | `int selectCount(Wrapper<PluginData> wrapper)` | **MyBatis-Plus** 按条件计数 |
+| 查询 | `IPage<PluginData> selectPage(Page<PluginData> page, Wrapper<PluginData> wrapper)` | **MyBatis-Plus** 分页查询 |
+
+> Wrapper / Page / IPage 均来自 MyBatis-Plus（`com.baomidou.mybatisplus.core.conditions.Wrapper` 等），可直接使用 `QueryWrapper<PluginData>()` / `new LambdaQueryWrapper<PluginData>()` 构造条件。
 
 ### 代码示例
 ```java
@@ -132,6 +184,8 @@ public class ConfigService extends PluginServiceBase {
 | 项 | 说明 |
 | --- | --- |
 | `generalbot-api`（provided） | 提供全部插件 SDK 能力：`@Entity` `@Attribute` `@MethodClass` `@Method` `@Param` 注解、`PluginServiceBase` 基类、`PluginData` POJO、`sqlService` 数据访问接口 |
+| `lombok`（provided） | 已预置，可直接使用 `@Data` `@Getter` `@Setter` `@Builder` 等注解，无需声明 |
+| `mybatis-plus`（provided） | 已预置，可直接使用 `Wrapper<T>` / `QueryWrapper<T>` / `LambdaQueryWrapper<T>` / `Page<T>` / `IPage<T>` 等条件构造器与分页类 |
 | Java 21 编译目标 | `maven.compiler.source/target = 21`，可使用 21 及以下语法特性 |
 | jitpack 仓库 | 已配置，可通过 `com.github.xxx` 坐标引入 jitpack 上的依赖 |
 

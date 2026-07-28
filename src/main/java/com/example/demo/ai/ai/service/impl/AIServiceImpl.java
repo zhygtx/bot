@@ -228,7 +228,8 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
                 JsonNode jsonNode = aiUtil.parseJson(s);
                 if (!jsonNode.path("passed").asBoolean()) {
                     // review 未通过是业务分支，不是异常，单独推送 review_failed 事件
-                    stream.send("review_failed", jsonNode.path("issues").toString());
+                    // 直接传 issues 节点（SseStream 会序列化为 JSON），前端按结构化展示
+                    stream.send("review_failed", jsonNode.path("issues"));
                     return;
                 }
             }
