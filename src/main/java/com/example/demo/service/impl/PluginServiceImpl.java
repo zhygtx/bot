@@ -3,7 +3,6 @@ package com.example.demo.service.impl;
 import com.example.demo.mapper.plugin.*;
 import com.example.demo.mapper.workflow.WorkflowInfoMapper;
 import com.example.demo.pojo.dto.PluginInfoDto;
-import com.example.demo.pojo.entity.Result;
 import com.example.demo.pojo.entity.plugin.*;
 import com.example.demo.service.PluginService;
 import com.example.demo.service.WorkflowCacheService;
@@ -19,6 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
+import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -66,7 +67,7 @@ public class PluginServiceImpl implements PluginService {
      */
     @Override
     @Transactional
-    public Result<?> add(PluginInfo pluginInfo, MultipartFile file) {
+    public PluginInfo add(PluginInfo pluginInfo, MultipartFile file) throws IOException, NoSuchAlgorithmException {
         //初始化插件版本信息
         PluginVersion pluginVersion = pluginInfo.getPluginVersionList().get(0);
         //初始化插件信息
@@ -89,14 +90,14 @@ public class PluginServiceImpl implements PluginService {
         if (!authorDir.exists()) {
             if (!authorDir.mkdirs()) {
                 log.error("创建插件作者目录失败: {}", authorPath);
-                return Result.error(500, "创建作者目录失败");
+                throw new RuntimeException("创建作者目录失败");
             }
         }
 
         if (!pluginDir.exists()) {
             if (!pluginDir.mkdirs()) {
                 log.error("创建插件目录失败: {}", pluginDirPath);
-                return Result.error(500, "创建插件目录失败");
+                throw new RuntimeException("创建插件目录失败");
             }
         }
 
@@ -112,7 +113,7 @@ public class PluginServiceImpl implements PluginService {
                 // 修复：检查 mkdirs() 的返回值
                 if (!parentDir.mkdirs()) {
                     log.error("创建文件父目录失败: {}", parentDir.getAbsolutePath());
-                    return Result.error(500, "创建文件目录失败");
+                    throw new RuntimeException("创建文件父目录失败");
                 }
             }
 
@@ -143,14 +144,14 @@ public class PluginServiceImpl implements PluginService {
                     .map(MethodInfo::getParameters)
                     .flatMap(List::stream)
                     .toList();
-            
+
             // 收集所有 Attribute 信息
             List<Attribute> attributeList = entityInfoList.stream()
                     .map(EntityInfo::getAttributes)
                     .filter(Objects::nonNull)
                     .flatMap(List::stream)
                     .toList();
-            
+
             // 校验所有参数类型是否合法
             for (ParameterInfo parameter : parameterInfoList) {
                 if (!parameter.isValidType()) {
@@ -161,7 +162,7 @@ public class PluginServiceImpl implements PluginService {
                             log.error("删除已存在文件失败：{}", jarFile.getAbsolutePath());
                         }
                     }
-                    return Result.error(400, parameter.getInvalidTypeMessage());
+                    throw new RuntimeException(parameter.getInvalidTypeMessage());
                 }
             }
 
@@ -174,7 +175,7 @@ public class PluginServiceImpl implements PluginService {
                             log.error("删除已存在文件失败：{}", jarFile.getAbsolutePath());
                         }
                     }
-                    return Result.error(400, parameter.getInvalidNullableMessage());
+                    throw new RuntimeException(parameter.getInvalidNullableMessage());
                 }
             }
 
@@ -195,17 +196,17 @@ public class PluginServiceImpl implements PluginService {
             sqlResult += methodInfoList.isEmpty() ? 0 : methodInfoMapper.insert(methodInfoList);
             sqlResult += parameterInfoList.isEmpty() ? 0 : parameterInfoMapper.insert(parameterInfoList);
 
-            if (sqlResult == 0) {
+            if (sqlResult <= 0) {
                 // 如果数据库插入失败，删除已保存的文件
                 if (jarFile.exists()) {
                     if (!jarFile.delete()){
                         log.error("删除文件失败: {}", jarFile.getAbsolutePath());
                     }
                 }
-                return Result.error(500, "保存插件信息失败");
+                throw new RuntimeException("保存插件信息失败");
             }
 
-            return Result.success();
+            return pluginInfo;
 
         } catch (Exception e) {
             log.error("插件上传处理失败: {}", filePath, e);
@@ -215,7 +216,7 @@ public class PluginServiceImpl implements PluginService {
                     log.error("删除已存在文件失败: {}", jarFile.getAbsolutePath());
                 }
             }
-            throw new RuntimeException("插件上传失败：" + e.getMessage(), e);
+            throw e;
         }
     }
 

@@ -21,6 +21,7 @@ public class DefaultProperties {
         Assert.hasText(plugin.baseUrl, "ai.default.plugin.base-url不得为空");
         Assert.hasText(plugin.apiKey, "ai.default.plugin.api-key不得为空");
         Assert.hasText(plugin.pluginModel, "ai.default.plugin.plugin-model不得为空");
+        Assert.hasText(plugin.promptTemplatePath, "ai.default.plugin.prompt-template-path不得为空");
 
         // review 仅在 enabled=true 时要求填写
         if (Boolean.TRUE.equals(review.enabled)) {
@@ -28,6 +29,7 @@ public class DefaultProperties {
             Assert.hasText(review.baseUrl, "ai.default.review.base-url当启用编译前审查时不得为空");
             Assert.hasText(review.apiKey, "ai.default.review.api-key当启用编译前审查时不得为空");
             Assert.hasText(review.reviewModel, "ai.default.review.review-model当启用编译前审查时不得为空");
+            Assert.hasText(review.promptTemplatePath, "ai.default.review.prompt-template-path当启用编译前审查时不得为空");
         }
     }
 
@@ -37,14 +39,16 @@ public class DefaultProperties {
         private String baseUrl;
         private String apiKey;
         private String pluginModel;
+        private String promptTemplatePath;
     }
 
     @Data
     public static class Review {
-        private Boolean enabled;
+        private Boolean enabled = false;
         private String provider;
         private String baseUrl;
         private String apiKey;
         private String reviewModel;
+        private String promptTemplatePath;
     }
 }

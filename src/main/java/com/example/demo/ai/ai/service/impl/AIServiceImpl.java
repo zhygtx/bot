@@ -4,62 +4,52 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.demo.ai.ai.factory.DynamicChatClientFactory;
+import com.example.demo.ai.ai.factory.SseStreamFactory;
 import com.example.demo.ai.ai.mapper.AIChatMessageMapper;
 import com.example.demo.ai.ai.mapper.CodeMapper;
 import com.example.demo.ai.ai.pojo.dto.AIChatMessageDto;
-import com.example.demo.ai.ai.pojo.dto.CompileCodeDto;
 import com.example.demo.ai.ai.pojo.entity.AIChatMessage;
 import com.example.demo.ai.ai.pojo.entity.Code;
 import com.example.demo.ai.ai.service.AIService;
 import com.example.demo.ai.ai.util.AIUtil;
 import com.example.demo.ai.ai.util.CompileUtil;
 import com.example.demo.ai.ai.util.SseStream;
-import com.example.demo.ai.ai.factory.SseStreamFactory;
 import com.example.demo.config.DefaultProperties;
 import com.example.demo.pojo.entity.plugin.PluginInfo;
-import com.example.demo.pojo.entity.plugin.PluginVersion;
 import com.example.demo.service.PluginService;
+import com.example.demo.util.PathMultipartFile;
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 
 @Slf4j
 @Service
 public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessage> implements AIService {
 
-    @Value("${plugin.compiler.work-dir}")
-    private String workDir;
-    @Value("${ai.default.plugin.prompt-template-path}")
-    private String pluginTemplatePath;
-    @Value("${ai.default.review.prompt-template-path}")
-    private String reviewPromptTemplatePath;
-
     private final CompileUtil compileUtil;
     private final DefaultProperties defaultProperties;
     private final DynamicChatClientFactory dynamicChatClientFactory;
     private final AIChatMessageMapper aiChatMessageMapper;
-    private final DynamicChatClientFactory chatClientFactory;
     private final PluginService pluginService;
     private final CodeMapper codeMapper;
     private final AIUtil aiUtil;
     private final SseStreamFactory sseStreamFactory;
 
-    public AIServiceImpl(AIChatMessageMapper aiChatMessageMapper, DynamicChatClientFactory dynamicChatClientFactory, DefaultProperties defaultProperties, DynamicChatClientFactory chatClientFactory, CompileUtil compileUtil, PluginService pluginService, CodeMapper codeMapper, AIUtil aiUtil, SseStreamFactory sseStreamFactory) {
+    public AIServiceImpl(AIChatMessageMapper aiChatMessageMapper, DynamicChatClientFactory dynamicChatClientFactory, DefaultProperties defaultProperties, CompileUtil compileUtil, PluginService pluginService, CodeMapper codeMapper, AIUtil aiUtil, SseStreamFactory sseStreamFactory) {
         this.aiChatMessageMapper = aiChatMessageMapper;
         this.dynamicChatClientFactory = dynamicChatClientFactory;
         this.defaultProperties = defaultProperties;
-        this.chatClientFactory = chatClientFactory;
         this.compileUtil = compileUtil;
         this.pluginService = pluginService;
         this.codeMapper = codeMapper;
@@ -128,7 +118,7 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
                 codes = codeMapper.selectList(new LambdaQueryWrapper<Code>()
                         .eq(Code::getMessageId, messages.get(messages.size() - 1).getId()));
             }
-            String template = aiUtil.loadTemplate(pluginTemplatePath);
+            String template = aiUtil.loadTemplate(defaultProperties.getPlugin().getPromptTemplatePath());
             newMessage = aiUtil.buildNewMessage(message, conversationId, userId, messages);
             aiChatMessageMapper.insert(newMessage);
 
@@ -213,39 +203,63 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
     /**
      * 编译代码。
      *
-     * @param conversationId 会话 ID
+     * @param messageId       会话消息 ID
      * @param emitter        SSE emitter，由本方法直接消费
      */
     @Override
-    public void compileCode(String conversationId, SseEmitter emitter) throws Exception{
+    public void compileCode(String messageId, SseEmitter emitter) throws Exception {
+        SseStream stream = sseStreamFactory.create(emitter);
+        PluginInfo pluginInfo;
+        try {
+            AIChatMessage message = aiChatMessageMapper.selectById(messageId);
+            List<Code> codes = codeMapper.selectList(new LambdaQueryWrapper<Code>()
+                    .eq(Code::getMessageId, messageId));
+            if (defaultProperties.getReview().getEnabled()){
+                stream.send("compile", "正在使用AI审核代码");
+                ChatClient chatClient = dynamicChatClientFactory.getReviewChatClient();
+                String reviewPrompt = aiUtil.loadTemplate(defaultProperties.getReview().getPromptTemplatePath());
+                List<Message> promptMessages = new ArrayList<>();
+                promptMessages.add(new SystemMessage(reviewPrompt));
+                promptMessages.add(new UserMessage(aiUtil.toJson(codes)));
 
-    }
+                String s = chatClient.prompt(new Prompt(promptMessages))
+                        .call()
+                        .content();
+                JsonNode jsonNode = aiUtil.parseJson(s);
+                if (!jsonNode.path("passed").asBoolean()) {
+                    // review 未通过是业务分支，不是异常，单独推送 review_failed 事件
+                    stream.send("review_failed", jsonNode.path("issues").toString());
+                    return;
+                }
+            }
 
-    /**
-     * 获取插件信息。
-     * @param compileCodeDto 编译参数
-     * @return 插件信息
-     */
-    private @NotNull PluginInfo getPluginInfo(CompileCodeDto compileCodeDto) {
-        PluginInfo pluginInfo = new PluginInfo();
+            stream.send("compile", "正在将代码写入文件");
+            compileUtil.createCodeFile(codes, message);
 
-        // 新建 vs 更新：有 pluginId → 更新已有插件；无 pluginId → 新建
-        if (compileCodeDto.getPluginId() != null && !compileCodeDto.getPluginId().isBlank()) {
-            pluginInfo.setId(compileCodeDto.getPluginId());
+            stream.send("compile", "正在编译代码");
+            Path jarPath = compileUtil.compileCode(message.getConversationId());
+
+            stream.send("compile", "正在上传插件");
+            pluginInfo = compileUtil.getPluginInfo(message);
+            PathMultipartFile file = new PathMultipartFile(jarPath);
+            PluginInfo added = pluginService.add(pluginInfo, file);
+            LambdaUpdateWrapper<AIChatMessage> updateWrapper = new LambdaUpdateWrapper<AIChatMessage>()
+                    .eq(AIChatMessage::getConversationId, message.getConversationId())
+                    .set(AIChatMessage::getStatus, AIChatMessage.Status.PUBLISHED)
+                    .set(AIChatMessage::getPluginId, added.getId());
+            aiChatMessageMapper.update(null, updateWrapper);
+
+        } catch (Exception e) {
+            // try-catch 保护，避免 SSE 发送失败掩盖原始异常
+            try {
+                stream.error(e.getMessage());
+            } catch (Exception sendEx) {
+                log.error("SSE 推送 error 事件失败", sendEx);
+            }
+            throw e;
         }
-        pluginInfo.setName(compileCodeDto.getPluginName());
-        pluginInfo.setDescription(compileCodeDto.getPluginDescription());
-        pluginInfo.setAuthorId(compileCodeDto.getUserId());
-        pluginInfo.setIsPublic(compileCodeDto.getIsPublic() != null ? compileCodeDto.getIsPublic() : false);
 
-        // 2. 组装 PluginVersion
-        PluginVersion pluginVersion = new PluginVersion();
-        pluginVersion.setVersion(compileCodeDto.getPluginVersion());
-        pluginVersion.setChangelog(compileCodeDto.getPluginChangeDescription());
-        pluginVersion.setEntityPackage(compileCodeDto.getEntityPackage());
-        pluginVersion.setMethodPackage(compileCodeDto.getMethodPackage());
-        pluginInfo.setPluginVersionList(List.of(pluginVersion));
-        return pluginInfo;
+        stream.done(pluginInfo);
     }
 
     /**

@@ -1,17 +1,19 @@
 package com.example.demo.ai.ai.util;
 
 import com.example.demo.ai.ai.pojo.entity.AIChatMessage;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.example.demo.ai.ai.pojo.entity.Code;
+import com.example.demo.pojo.entity.plugin.PluginInfo;
+import com.example.demo.pojo.entity.plugin.PluginVersion;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.List;
 
 @Slf4j
 @Component
@@ -22,61 +24,52 @@ public class CompileUtil {
     @Value("${plugin.compiler.mvn-command:mvn}")
     private String mvnCommand;
 
-    private final ObjectMapper objectMapper;
+    /**
+     * 创建代码文件。
+     * @param codes 代码列表
+     * @param message 会话消息记录（含 pom 依赖）
+     */
+    public void createCodeFile(List<Code> codes, AIChatMessage message) throws Exception {
+        // 创建插件目录
+        Path pluginDir = Path.of(workDir, message.getConversationId());
+        // 先删除旧目录（如果存在）
+        if (Files.exists(pluginDir)) {
+            deleteDirectoryRecursively(pluginDir);
+        }
+        Files.createDirectories(pluginDir);
 
-    public CompileUtil(ObjectMapper objectMapper) {
-        this.objectMapper = objectMapper;
+        for (Code code : codes) {
+            String rawPath = code.getPath();
+            String content = code.getContent();
+
+            // 分离扩展名，只替换包名部分中的 .
+            int lastDot = rawPath.lastIndexOf('.');
+            if (lastDot > 0) {
+                String packagePart = rawPath.substring(0, lastDot);
+                String extPart = rawPath.substring(lastDot);  // 含点，如 ".java"
+                rawPath = packagePart.replace(".", File.separator) + extPart;
+            }
+
+            Path filePath = pluginDir.resolve(rawPath);
+            Files.createDirectories(filePath.getParent());
+            Files.writeString(filePath, content);
+        }
+
+        // 生成 pom.xml
+        String pomContent = message.getPom();
+        if (pomContent != null && !pomContent.isBlank()) {
+            Path pomPath = pluginDir.resolve("pom.xml");
+            Files.writeString(pomPath, pomContent);
+        }
     }
 
     /**
-     * 创建代码文件。
-     * @param message 会话消息记录
-     */
-//    public void createCodeFile(AIChatMessage message) throws Exception {
-//        JsonNode codeJson = objectMapper.readTree(message.getCode());
-//        JsonNode codeFiles = codeJson.get("files");
-//        JsonNode dependenciesNode = codeJson.get("dependencies");
-//
-//        // 创建插件目录
-//        Path pluginDir = Path.of(workDir, message.getConversationId());
-//        // 先删除旧目录（如果存在）
-//        if (Files.exists(pluginDir)) {
-//            deleteDirectoryRecursively(pluginDir);
-//        }
-//        Files.createDirectories(pluginDir);
-//
-//        if (codeFiles == null || !codeFiles.isArray()) {
-//            throw new RuntimeException("代码内容丢失，请重新生成");
-//        }
-//
-//        for (JsonNode file : codeFiles) {
-//            String rawPath = file.get("path").asText();
-//            String code = file.get("content").asText();
-//
-//            // 分离扩展名，只替换包名部分中的 .
-//            int lastDot = rawPath.lastIndexOf('.');
-//            if (lastDot > 0) {
-//                String packagePart = rawPath.substring(0, lastDot);
-//                String extPart = rawPath.substring(lastDot);  // 含点，如 ".java"
-//                rawPath = packagePart.replace(".", File.separator) + extPart;
-//            }
-//
-//            Path filePath = pluginDir.resolve(rawPath);
-//            Files.createDirectories(filePath.getParent());
-//            Files.writeString(filePath, code);
-//        }
-//
-//        // 3. 生成 pom.xml（根据 dependencies 动态注入依赖）
-//        generatePomXml(pluginDir, dependenciesNode);
-//    }
-
-    /**
      * 编译代码。
-     * @param message 会话消息记录
+     * @param conversationId 会话消息id
      * @return 编译产物 JAR 的路径
      */
-    public Path compileCode(AIChatMessage message) throws Exception {
-        Path projectDir = Path.of(workDir, message.getConversationId());
+    public Path compileCode(String conversationId) throws Exception {
+        Path projectDir = Path.of(workDir, conversationId);
 
         // 1. 确认目录存在
         if (!Files.exists(projectDir)) {
@@ -121,6 +114,33 @@ public class CompileUtil {
     }
 
     /**
+     * 构建插件信息。
+     * @param aiChatMessage 会话消息
+     * @return 插件信息
+     */
+    public PluginInfo getPluginInfo(AIChatMessage aiChatMessage) {
+        PluginInfo pluginInfo = new PluginInfo();
+
+        // 新建 vs 更新：有 pluginId → 更新已有插件；无 pluginId → 新建
+        if (aiChatMessage.getPluginId() != null && !aiChatMessage.getPluginId().isBlank()) {
+            pluginInfo.setId(aiChatMessage.getPluginId());
+        }
+        pluginInfo.setName(aiChatMessage.getPluginName());
+        pluginInfo.setDescription(aiChatMessage.getPluginDescription());
+        pluginInfo.setAuthorId(aiChatMessage.getUserId());
+        pluginInfo.setIsPublic(aiChatMessage.getIsPublic() != null ? aiChatMessage.getIsPublic() : false);
+
+        // 2. 组装 PluginVersion
+        PluginVersion pluginVersion = new PluginVersion();
+        pluginVersion.setVersion(aiChatMessage.getVersion());
+        pluginVersion.setChangelog(aiChatMessage.getChangelog());
+        pluginVersion.setEntityPackage("entity");
+        pluginVersion.setMethodPackage("service");
+        pluginInfo.setPluginVersionList(List.of(pluginVersion));
+        return pluginInfo;
+    }
+
+    /**
      * 从 Maven 输出中提取错误信息。
      * 只保留 [ERROR] 开头的关键行，过滤掉无意义的堆栈跟踪。
      */
@@ -151,48 +171,6 @@ public class CompileUtil {
             }
         }
         return sb.toString();
-    }
-
-    /**
-     * 生成 pom.xml，将 AI 指定的依赖注入到模板中
-     */
-    private void generatePomXml(Path projectDir, JsonNode dependenciesNode) throws IOException {
-        // 读取 pom.xml 模板
-        String pomTemplate = Files.readString(
-                Paths.get("src/main/resources/ai/plugin-template/pom.xml"),
-                StandardCharsets.UTF_8
-        );
-
-        // 构建依赖的 XML 片段
-        StringBuilder dependenciesXml = new StringBuilder();
-        if (dependenciesNode != null && dependenciesNode.isArray()) {
-            for (JsonNode dep : dependenciesNode) {
-                String groupId = dep.path("groupId").asText();
-                String artifactId = dep.path("artifactId").asText();
-                String version = dep.path("version").asText();
-                String scope = dep.path("scope").asText("compile");
-
-                dependenciesXml.append(String.format(
-                        """
-                                        <dependency>
-                                            <groupId>%s</groupId>
-                                            <artifactId>%s</artifactId>
-                                            <version>%s</version>
-                                            <scope>%s</scope>
-                                        </dependency>
-                                """,
-                        groupId, artifactId, version, scope
-                ));
-            }
-        }
-
-        // 替换模板中的占位符
-        String finalPom = pomTemplate.replace("<!--AI_DEPENDENCIES-->", dependenciesXml.toString());
-
-        // 写入 pom.xml
-        Path pomPath = projectDir.resolve("pom.xml");
-        Files.writeString(pomPath, finalPom);
-        log.info("pom.xml 已生成: {}", pomPath);
     }
 
     /**

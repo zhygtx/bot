@@ -2,6 +2,7 @@ package com.example.demo.ai.ai.util;
 
 import com.example.demo.ai.ai.pojo.entity.AIChatMessage;
 import com.example.demo.ai.ai.pojo.entity.Code;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -48,6 +49,26 @@ public class AIUtil {
             throw new IOException("找不到提示词模板文件: " + templatePath);
         }
         return new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+    }
+
+    // ==================== JSON 工具 ====================
+
+    /** 序列化为 JSON 字符串，避免调用方直接依赖 ObjectMapper */
+    public String toJson(Object value) {
+        try {
+            return objectMapper.writeValueAsString(value);
+        } catch (Exception e) {
+            throw new RuntimeException("JSON 序列化失败", e);
+        }
+    }
+
+    /** 解析 JSON 字符串为 JsonNode，避免调用方直接依赖 ObjectMapper */
+    public JsonNode parseJson(String content) {
+        try {
+            return objectMapper.readTree(content);
+        } catch (Exception e) {
+            throw new RuntimeException("JSON 解析失败", e);
+        }
     }
 
     /**

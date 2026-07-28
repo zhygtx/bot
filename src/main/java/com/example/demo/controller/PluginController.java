@@ -9,6 +9,9 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
+
 @RestController
 @RequestMapping("/plugin")
 @Slf4j
@@ -22,7 +25,6 @@ public class PluginController {
 
     /**
      * 添加插件
-     * @param request 请求对象
      * @param pluginInfo 插件信息
      * @param file 插件文件
      * @return 添加结果
@@ -33,7 +35,12 @@ public class PluginController {
                          @RequestPart("file") MultipartFile file) {
         String userId = user.userId();
         pluginInfo.setAuthorId(userId);
-        return pluginService.add(pluginInfo, file);
+        try {
+            pluginService.add(pluginInfo, file);
+            return Result.success();
+        } catch (IOException | NoSuchAlgorithmException e) {
+            return Result.error(500, e.getMessage());
+        }
     }
 
     /**

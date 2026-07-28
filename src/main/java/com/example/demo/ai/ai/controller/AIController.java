@@ -3,6 +3,7 @@ package com.example.demo.ai.ai.controller;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.example.demo.ai.ai.pojo.entity.AIChatMessage;
 import com.example.demo.ai.ai.service.AIService;
+import com.example.demo.config.DefaultProperties;
 import com.example.demo.pojo.entity.Result;
 import com.example.demo.security.UserPrincipal;
 import lombok.extern.slf4j.Slf4j;
@@ -21,17 +22,16 @@ import java.util.concurrent.Executors;
 @Slf4j
 public class AIController {
 
-    @Value("${ai.review.enabled:false}")
-    private boolean reviewEnabled;
-
     @Value("${ai.sse.timeout-ms:300000}")
     private long sseTimeout;
 
+    private final DefaultProperties defaultProperties;
     private final AIService aiService;
     private final Executor generationExecutor = Executors.newCachedThreadPool();
 
-    public AIController(AIService aiService) {
+    public AIController(AIService aiService, DefaultProperties defaultProperties) {
         this.aiService = aiService;
+        this.defaultProperties = defaultProperties;
     }
 
     /**
@@ -62,7 +62,7 @@ public class AIController {
      */
     @GetMapping("/config")
     public Result<Map<String, Object>> config() {
-        return Result.success("", Map.of("reviewEnabled", reviewEnabled));
+        return Result.success("", Map.of("reviewEnabled", defaultProperties.getReview().getEnabled()));
     }
 
     /**
@@ -131,12 +131,12 @@ public class AIController {
      * </p>
      */
     @PostMapping(value = "/compile", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter compile(@RequestParam(required = false) String conversationId) {
+    public SseEmitter compile(@RequestParam(required = false) String messageId) {
         SseEmitter emitter = new SseEmitter(sseTimeout);
 
         generationExecutor.execute(() -> {
             try {
-                aiService.compileCode(conversationId, emitter);
+                aiService.compileCode(messageId, emitter);
                 emitter.complete();
             } catch (Exception e) {
                 log.error("编译任务执行异常", e);

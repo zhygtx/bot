@@ -1,11 +1,12 @@
 package com.example.demo.service;
 
 import com.example.demo.pojo.dto.PluginInfoDto;
-import com.example.demo.pojo.entity.Result;
 import com.example.demo.pojo.entity.plugin.PluginInfo;
 import com.github.pagehelper.PageInfo;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Map;
 
@@ -17,7 +18,7 @@ public interface PluginService {
      * @param file 插件文件
      * @return 添加结果
      */
-    Result<?> add(PluginInfo pluginInfo, MultipartFile file);
+    PluginInfo add(PluginInfo pluginInfo, MultipartFile file) throws IOException, NoSuchAlgorithmException;
 
    /**
      * 删除插件

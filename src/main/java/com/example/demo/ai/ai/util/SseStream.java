@@ -142,7 +142,7 @@ public class SseStream {
     }
 
     /** 发送 SSE 事件 */
-    private void send(String event, Object data) {
+    public void send(String event, Object data) {
         try {
             emitter.send(SseEmitter.event().name(event).data(data == null ? Map.of() : data));
         } catch (IOException e) {
