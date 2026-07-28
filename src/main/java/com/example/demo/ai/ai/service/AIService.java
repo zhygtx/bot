@@ -2,7 +2,6 @@ package com.example.demo.ai.ai.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.example.demo.ai.ai.pojo.dto.AIChatMessageDto;
-import com.example.demo.ai.ai.pojo.dto.CompileCodeDto;
 import com.example.demo.ai.ai.pojo.entity.AIChatMessage;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -42,10 +41,10 @@ public interface AIService extends IService<AIChatMessage> {
 
     /**
      * 编译代码。
-     * @param compileCodeDto 编译参数
+     * @param conversationId 会话 ID
      * @param emitter        SSE emitter，由本方法直接消费
      */
-    void compileCode(CompileCodeDto compileCodeDto, SseEmitter emitter) throws Exception;
+    void compileCode(String conversationId, SseEmitter emitter) throws Exception;
 
     /**
      * 撤销指定轮次的对话记录，同时删除关联的代码文件和工具调用记录。

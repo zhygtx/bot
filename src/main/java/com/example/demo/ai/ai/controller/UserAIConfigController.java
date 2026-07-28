@@ -2,7 +2,7 @@ package com.example.demo.ai.ai.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.example.demo.ai.ai.client.DynamicChatClientFactory;
+import com.example.demo.ai.ai.factory.DynamicChatClientFactory;
 import com.example.demo.ai.ai.pojo.entity.UserAIConfig;
 import com.example.demo.ai.ai.service.UserAIConfigService;
 import com.example.demo.pojo.entity.Result;

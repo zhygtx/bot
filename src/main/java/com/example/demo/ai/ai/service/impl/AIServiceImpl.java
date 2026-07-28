@@ -3,7 +3,7 @@ package com.example.demo.ai.ai.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.example.demo.ai.ai.client.DynamicChatClientFactory;
+import com.example.demo.ai.ai.factory.DynamicChatClientFactory;
 import com.example.demo.ai.ai.mapper.AIChatMessageMapper;
 import com.example.demo.ai.ai.mapper.CodeMapper;
 import com.example.demo.ai.ai.pojo.dto.AIChatMessageDto;
@@ -12,8 +12,9 @@ import com.example.demo.ai.ai.pojo.entity.AIChatMessage;
 import com.example.demo.ai.ai.pojo.entity.Code;
 import com.example.demo.ai.ai.service.AIService;
 import com.example.demo.ai.ai.util.AIUtil;
-import com.example.demo.ai.ai.util.ChatStream;
 import com.example.demo.ai.ai.util.CompileUtil;
+import com.example.demo.ai.ai.util.SseStream;
+import com.example.demo.ai.ai.factory.SseStreamFactory;
 import com.example.demo.config.DefaultProperties;
 import com.example.demo.pojo.entity.plugin.PluginInfo;
 import com.example.demo.pojo.entity.plugin.PluginVersion;
@@ -52,8 +53,9 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
     private final PluginService pluginService;
     private final CodeMapper codeMapper;
     private final AIUtil aiUtil;
+    private final SseStreamFactory sseStreamFactory;
 
-    public AIServiceImpl(AIChatMessageMapper aiChatMessageMapper, DynamicChatClientFactory dynamicChatClientFactory, DefaultProperties defaultProperties, DynamicChatClientFactory chatClientFactory, CompileUtil compileUtil, PluginService pluginService, CodeMapper codeMapper, AIUtil aiUtil) {
+    public AIServiceImpl(AIChatMessageMapper aiChatMessageMapper, DynamicChatClientFactory dynamicChatClientFactory, DefaultProperties defaultProperties, DynamicChatClientFactory chatClientFactory, CompileUtil compileUtil, PluginService pluginService, CodeMapper codeMapper, AIUtil aiUtil, SseStreamFactory sseStreamFactory) {
         this.aiChatMessageMapper = aiChatMessageMapper;
         this.dynamicChatClientFactory = dynamicChatClientFactory;
         this.defaultProperties = defaultProperties;
@@ -62,6 +64,7 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
         this.pluginService = pluginService;
         this.codeMapper = codeMapper;
         this.aiUtil = aiUtil;
+        this.sseStreamFactory = sseStreamFactory;
     }
 
     /**
@@ -93,7 +96,7 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
      * 启动流式 AI 生成任务。
      * 流式生成插件代码，流式完成后一次性持久化 AI 文本分段（含工具调用信息）。
      *
-     * <p>所有 SSE 事件（delta / done / error）都通过 {@link ChatStream} 统一推送，
+     * <p>所有 SSE 事件（delta / done / error）都通过 {@link SseStream} 统一推送，
      * Controller 只负责创建 emitter 和 emitter.complete()。</p>
      *
      * <p>失败清理：如果生成过程中或生成开始时失败，清理预处理阶段产生的数据
@@ -102,14 +105,14 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
      * @param message        用户指令文本
      * @param conversationId 会话 ID
      * @param userId         用户 ID
-     * @param emitter        SSE emitter，由本方法通过 ChatStream 直接消费
+     * @param emitter        SSE emitter，由本方法通过 SseStream 直接消费
      */
     @Override
     public void aiGenerate(String message, String conversationId, String userId,
                            SseEmitter emitter) throws IOException {
 
         AIChatMessage newMessage = null;
-        ChatStream stream = null;
+        SseStream stream = null;
         try {
             // ===== 预处理阶段 =====
             List<AIChatMessage> messages = new ArrayList<>();
@@ -157,7 +160,7 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
 
             // ===== 流式生成阶段 =====
             ChatClient chatClient = dynamicChatClientFactory.getPluginChatClient(userId);
-            ChatStream localStream = new ChatStream(emitter, aiUtil);
+            SseStream localStream = sseStreamFactory.create(emitter);
             stream = localStream;
 
             // 通过 Spring AI 原生 ToolContext 把 stream 传给 @Tool 方法，
@@ -210,12 +213,11 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
     /**
      * 编译代码。
      *
-     * @param compileCodeDto 编译参数-
+     * @param conversationId 会话 ID
      * @param emitter        SSE emitter，由本方法直接消费
-     * @return 插件ID
      */
     @Override
-    public void compileCode(CompileCodeDto compileCodeDto, SseEmitter emitter) throws Exception{
+    public void compileCode(String conversationId, SseEmitter emitter) throws Exception{
 
     }
 

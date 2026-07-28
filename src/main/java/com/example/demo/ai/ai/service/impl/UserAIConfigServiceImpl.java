@@ -1,7 +1,7 @@
 package com.example.demo.ai.ai.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.example.demo.ai.ai.client.DynamicChatClientFactory;
+import com.example.demo.ai.ai.factory.DynamicChatClientFactory;
 import com.example.demo.ai.ai.mapper.UserAIConfigMapper;
 import com.example.demo.ai.ai.pojo.entity.UserAIConfig;
 import com.example.demo.ai.ai.service.UserAIConfigService;

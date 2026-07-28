@@ -1,7 +1,6 @@
 package com.example.demo.ai.ai.controller;
 
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import com.example.demo.ai.ai.pojo.dto.CompileCodeDto;
 import com.example.demo.ai.ai.pojo.entity.AIChatMessage;
 import com.example.demo.ai.ai.service.AIService;
 import com.example.demo.pojo.entity.Result;
@@ -90,7 +89,7 @@ public class AIController {
      * SSE 流式代码生成。
      * <p>
      * Controller 只负责创建 emitter、调度异步任务、异常兜底。
-     * 所有 SSE 事件（delta / done / error）由 AIService 通过 ChatStream 统一推送。
+     * 所有 SSE 事件（delta / done / error）由 AIService 通过 SseStream 统一推送。
      * </p>
      * 事件类型：
      * <ul>
@@ -128,16 +127,16 @@ public class AIController {
      * SSE 流式编译上传。
      * <p>
      * Controller 只负责创建 emitter、调度异步任务、异常兜底。
-     * 所有 SSE 事件由 AIService.compileCode 通过 ChatStream 统一推送。
+     * 所有 SSE 事件由 AIService.compileCode 通过 SseStream 统一推送。
      * </p>
      */
     @PostMapping(value = "/compile", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter compile(@RequestBody CompileCodeDto compileCodeDto) {
+    public SseEmitter compile(@RequestParam(required = false) String conversationId) {
         SseEmitter emitter = new SseEmitter(sseTimeout);
 
         generationExecutor.execute(() -> {
             try {
-                aiService.compileCode(compileCodeDto, emitter);
+                aiService.compileCode(conversationId, emitter);
                 emitter.complete();
             } catch (Exception e) {
                 log.error("编译任务执行异常", e);

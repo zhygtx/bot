@@ -1,4 +1,4 @@
-package com.example.demo.ai.ai.client;
+package com.example.demo.ai.ai.factory;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.example.demo.ai.ai.mapper.UserAIConfigMapper;

@@ -1,8 +1,12 @@
 package com.example.demo.ai.ai.util;
 
+import com.example.demo.ai.ai.factory.SseStreamFactory;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -10,14 +14,14 @@ import java.util.Map;
 
 /**
  * SSE 流式推送的统一总线：所有向前端推送的事件（思考 / 正文 / 工具调用 / done / error）
- * 全部收口到这里，调用方不再直接接触 emitter 或 aiUtil.sendSseEvent。
+ * 全部收口到这里，调用方不再直接接触 emitter。
  *
  * <p>同时承担 messageParts 的内存收集（text/thinking/tool_call），
  * 用一把锁（本实例）保证「读末尾 + 追加 + 推送」的原子性。</p>
  *
- * <p>用法：</p>
+ * <p>用法（通过 {@link SseStreamFactory} 创建，避免调用方直接依赖 ObjectMapper）：</p>
  * <pre>
- * ChatStream stream = new ChatStream(emitter, aiUtil);
+ * SseStream stream = sseStreamFactory.create(emitter);
  * stream.consume(output);                              // 自动识别 thinking/text 并推送
  * Map<String, Object> part = stream.toolCallStart("保存代码文件");  // 推送 running
  * stream.toolCallFinish(part, "保存代码文件", "SUCCESS");          // 推送 success/error
@@ -26,15 +30,16 @@ import java.util.Map;
  * String json = stream.toJson();                        // 持久化
  * </pre>
  */
-public class ChatStream {
+@Slf4j
+public class SseStream {
 
     private final SseEmitter emitter;
-    private final AIUtil aiUtil;
     private final List<Map<String, Object>> parts = new ArrayList<>();
+    private final ObjectMapper objectMapper;
 
-    public ChatStream(SseEmitter emitter, AIUtil aiUtil) {
+    public SseStream(SseEmitter emitter, ObjectMapper objectMapper) {
         this.emitter = emitter;
-        this.aiUtil = aiUtil;
+        this.objectMapper = objectMapper;
     }
 
     // ===== 增量 delta =====
@@ -113,11 +118,17 @@ public class ChatStream {
 
     /** 把已收集的 parts 序列化为 JSON 字符串，供持久化使用 */
     public synchronized String toJson() {
-        return aiUtil.toJson(parts);
+        try {
+            return objectMapper.writeValueAsString(parts);
+        } catch (Exception e) {
+            log.warn("AI 消息分段序列化失败", e);
+            return "[]";
+        }
     }
 
     // ===== 内部 =====
 
+    /** 追加一个 text/thinking part */
     private void appendTextPart(String type, String content) {
         if (!parts.isEmpty() && type.equals(parts.get(parts.size() - 1).get("type"))) {
             Map<String, Object> last = parts.get(parts.size() - 1);
@@ -130,7 +141,15 @@ public class ChatStream {
         }
     }
 
+    /** 发送 SSE 事件 */
     private void send(String event, Object data) {
-        aiUtil.sendSseEvent(emitter, event, data);
+        try {
+            emitter.send(SseEmitter.event().name(event).data(data == null ? Map.of() : data));
+        } catch (IOException e) {
+            throw new RuntimeException("SSE 发送失败: " + event, e);
+        } catch (Exception e) {
+            // IllegalStateException 等（emitter 已关闭/已完成）
+            throw new RuntimeException("SSE 发送异常(" + event + "): " + e.getMessage(), e);
+        }
     }
 }

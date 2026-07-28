@@ -6,7 +6,7 @@ import com.example.demo.ai.ai.pojo.entity.AIChatMessage;
 import com.example.demo.ai.ai.pojo.entity.Code;
 import com.example.demo.ai.ai.service.AIService;
 import com.example.demo.ai.ai.service.CodeService;
-import com.example.demo.ai.ai.util.ChatStream;
+import com.example.demo.ai.ai.util.SseStream;
 import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
@@ -87,10 +87,10 @@ public class PluginFileTool {
 
     /**
      * 工具调用通用骨架：toolCallStart 推送 RUNNING → 执行业务 → toolCallFinish 推送 SUCCESS/ERROR。
-     * parts 收集和 SSE 推送全部由 ChatStream 统一处理。
+     * parts 收集和 SSE 推送全部由 SseStream 统一处理。
      */
     private <T> T executeTool(ToolContext toolContext, String name, Supplier<T> action) {
-        ChatStream stream = (ChatStream) toolContext.getContext().get("stream");
+        SseStream stream = (SseStream) toolContext.getContext().get("stream");
         Map<String, Object> part = stream.toolCallStart(name);
         try {
             T result = action.get();
