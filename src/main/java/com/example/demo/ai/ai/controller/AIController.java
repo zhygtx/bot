@@ -1,5 +1,6 @@
 package com.example.demo.ai.ai.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.example.demo.ai.ai.pojo.entity.AIChatMessage;
 import com.example.demo.ai.ai.service.AIService;
@@ -41,6 +42,14 @@ public class AIController {
     public Result<?> undo(String conversationId, Integer round) {
         Boolean undo = aiService.undo(conversationId, round);
         return undo ? Result.success(null,null) : Result.error(400, "撤销失败", null);
+    }
+
+    @DeleteMapping
+    public Result<?> delete(@AuthenticationPrincipal UserPrincipal user, @RequestParam String conversationId) {
+        LambdaQueryWrapper<AIChatMessage> queryWrapper = new LambdaQueryWrapper<AIChatMessage>()
+                .eq(AIChatMessage::getConversationId, conversationId);
+        boolean delete = aiService.remove(queryWrapper);
+        return delete ? Result.success(null,null) : Result.error(400, "删除失败", null);
     }
 
     @PutMapping

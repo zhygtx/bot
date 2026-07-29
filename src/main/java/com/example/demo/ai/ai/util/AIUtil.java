@@ -91,7 +91,7 @@ public class AIUtil {
         }
         StringBuilder sb = new StringBuilder();
         for (int i = start; i <= end; i++) {
-            if (sb.length() > 0) sb.append("\n");
+            if (!sb.isEmpty()) sb.append("\n");
             sb.append(lines[i]);
         }
         return sb.toString().trim();

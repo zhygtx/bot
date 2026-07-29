@@ -13,6 +13,7 @@ public class DefaultProperties {
 
     private Plugin plugin = new Plugin();
     private Review review = new Review();
+    private Compress compress = new Compress();
 
     @PostConstruct
     public void validate() {
@@ -49,6 +50,13 @@ public class DefaultProperties {
         private String baseUrl;
         private String apiKey;
         private String reviewModel;
+        private String promptTemplatePath;
+    }
+
+    @Data
+    public static class Compress {
+        // 上下文压缩触发轮数阈值，默认 15 轮
+        private Integer roundThreshold = 15;
         private String promptTemplatePath;
     }
 }
