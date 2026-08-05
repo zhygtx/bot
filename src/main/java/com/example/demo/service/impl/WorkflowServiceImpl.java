@@ -18,7 +18,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * 工作流服务实现类
+ * 工作流服务实现类。
+ * 保存工作流时删除重建节点树，旧日志由外键级联清理。
  */
 @Service
 @Slf4j
@@ -66,7 +67,7 @@ public class WorkflowServiceImpl implements WorkflowService {
             // 从数据库重新获取完整的工作流信息
             WorkflowInfo savedWorkflow = workflowInfoMapper.getById(workflowInfo.getId());
             if (savedWorkflow != null) {
-                // 添加到Redis
+                // 添加到本地内存缓存
                 workflowCacheService.addWorkflowToCache(savedWorkflow);
                 // 处理定时任务
                 workflowCacheService.addScheduledTask(savedWorkflow);
@@ -85,9 +86,9 @@ public class WorkflowServiceImpl implements WorkflowService {
     public int remove(String id) {
         int result = workflowInfoMapper.deleteById(id);
         if (result > 0) {
-            // 从Redis中删除
+            // 从本地内存缓存删除
             workflowCacheService.removeWorkflowFromCache(id);
-            // 移除定时任务
+            // 移除定时任务（Redis ZSet）
             workflowCacheService.removeScheduledTask(id);
         }
         return result;
@@ -102,19 +103,20 @@ public class WorkflowServiceImpl implements WorkflowService {
     @Transactional
     public int edit(WorkflowInfo workflowInfo) {
         workflowInfo.setUpdateTime(LocalDateTime.now());
-        
-        // 先从Redis中删除旧数据
+
+        // 先从本地内存缓存删除旧数据，并移除定时任务（Redis ZSet）
         workflowCacheService.removeWorkflowFromCache(workflowInfo.getId());
         workflowCacheService.removeScheduledTask(workflowInfo.getId());
-        
+
+        // 删除重建整棵节点树；workflow_log -> node_log -> big_text 外键级联会自动清理旧执行日志
         workflowInfoMapper.deleteById(workflowInfo.getId());
         int result = insert(workflowInfo);
-        
+
         if (result > 0 && workflowInfo.getEnabled()) {
             // 从数据库重新获取完整的工作流信息
             WorkflowInfo updatedWorkflow = workflowInfoMapper.getById(workflowInfo.getId());
             if (updatedWorkflow != null) {
-                // 添加到Redis
+                // 添加到本地内存缓存
                 workflowCacheService.addWorkflowToCache(updatedWorkflow);
                 // 更新定时任务
                 workflowCacheService.addScheduledTask(updatedWorkflow);

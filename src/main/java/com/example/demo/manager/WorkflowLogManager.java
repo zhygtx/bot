@@ -208,7 +208,7 @@ public class WorkflowLogManager {
             return Collections.emptyList();
         }
         return cache.entrySet().stream()
-                .map(entry -> new BigText(entry.getKey(), entry.getValue()))
+                .map(entry -> new BigText(entry.getKey(), entry.getValue(), null))
                 .collect(Collectors.toList());
     }
 

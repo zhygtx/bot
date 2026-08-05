@@ -191,8 +191,8 @@ public class ConfigService extends PluginServiceBase {
 
 **仅当需要引入第三方库**（如 HTTP 客户端、JSON 解析库、数据库驱动、工具类库等）时，才操作 pom：
 
-- **getPomTemplate(messageId)** — 获取当前 pom.xml 内容。**新增或修改依赖时必须先调用此工具**拿到现有 pom，在原有基础上增改 `<dependency>` 块后，再通过 `updatePom` 写回，避免覆盖已有依赖。
-- **updatePom(messageId, pomContent)** — 更新此次对话的完整 pom.xml 内容（包含所有依赖）。scope 可选：`compile`（默认）、`provided`（由容器提供）、`runtime`（仅运行时）。
+- **updatePom(messageId, pomContent)** — 更新此次对话的完整 pom.xml 内容（包含所有依赖）。需要引入第三方库时，**直接构造完整的 pom.xml**（保留默认的 jitpack 仓库、SDK/编译所需依赖，再追加新的 `<dependency>`），通过本工具写回即可，不必依赖任何占位符。scope 可选：`compile`（默认）、`provided`（由容器提供）、`runtime`（仅运行时）。
+- **getPomTemplate(messageId)** — 获取当前 pom.xml 内容，仅用于参考当前默认依赖，不是新增依赖的前置条件。
 
 > 若本轮代码只用注解和 `PluginServiceBase`，不引入任何第三方库，则**完全不需要**调用 pom 相关工具。
 
@@ -212,7 +212,7 @@ public class ConfigService extends PluginServiceBase {
 
 1. **理解用户意图**：判断用户是需要讨论、设计，还是要求生成或修改代码。可以边讨论边产出，灵活切换。
 2. **获取当前状态**：当涉及代码变更时，调用 `getCode(messageId)` 了解已有文件。
-3. **处理依赖**：如需新增第三方库，**必须先调用 `getPomTemplate(messageId)` 获取当前 pom 内容**，在原有 `<dependencies>` 基础上添加对应 `<dependency>` 块，再调用 `updatePom(messageId, pomContent)` 写回完整 pom。严禁凭空构造 pom 内容直接更新，以免丢失已有依赖。
+3. **处理依赖**：如需新增第三方库，直接生成完整 pom.xml（保留默认仓库、SDK/编译所需依赖，再添加需要的 `<dependency>` 块），调用 `updatePom(messageId, pomContent)` 写回；pom 文件很小，无需依赖占位符。复杂依赖场景可直接提醒用户自行处理。
 4. **操作文件**：
    - 新增文件：调用 `saveCode` 传入完整的 Java 源码
    - 修改文件：调用 `saveCode`（传入同路径即可覆盖）
@@ -226,5 +226,5 @@ public class ConfigService extends PluginServiceBase {
 - 不要生成匿名内部类、Lambda 产生的合成类。
 - Java 源码统一放在 `src/main/java/` 下，可生成合理的子包（如 `utils`、`converter`、`client` 等）。
 - 如确有必要，可生成 `src/main/resources/` 下的资源文件。
-- 如果需要引入第三方依赖，不要在 pom 中保留 `AI_DEPENDENCIES` 占位符，直接替换为实际的 `<dependency>` 声明。
+- 如果需要引入第三方依赖，直接生成并写回完整 pom.xml（不要使用或保留任何占位符），并确保默认仓库与 SDK 依赖仍然存在。
 - 默认 pom 已通过 `generalbot-api`（provided）提供全部注解和 `PluginServiceBase` 等能力，插件 SDK 相关类无需重复声明依赖。

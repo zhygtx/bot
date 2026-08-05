@@ -233,7 +233,7 @@ public class PluginServiceImpl implements PluginService {
         workflowUtil.closeAllClassLoaderForPlugin(id);
         log.info("已清理插件 {} 的所有类加载器缓存", id);
             
-        // 3. 从 Redis 中删除相关工作流缓存
+        // 3. 移除本地内存缓存中的相关工作流，并清理对应的定时任务（Redis ZSet）
         workflowCacheService.removeWorkflowsByPluginId(id);
             
         // 4. 删除所有版本的文件

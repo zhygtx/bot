@@ -44,6 +44,7 @@ public class WorkflowLogServiceImpl implements WorkflowLogService {
         }
         nodeLogMapper.insert(nodeLogs);
         if (bigTextList != null && !bigTextList.isEmpty()) {
+            bigTextList.forEach(bigText -> bigText.setWorkflowLogId(workflowLogId));
             bigTextMapper.insertBatch(bigTextList);
         }
     }

@@ -2,7 +2,7 @@ package com.example.demo.ai.ai.factory;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.example.demo.ai.ai.mapper.UserAIConfigMapper;
-import com.example.demo.ai.ai.mcp.PluginFileTool;
+import com.example.demo.ai.ai.tool.PluginFileTool;
 import com.example.demo.ai.ai.pojo.entity.UserAIConfig;
 import com.example.demo.config.DefaultProperties;
 import lombok.extern.slf4j.Slf4j;

@@ -98,7 +98,7 @@ public class BotWorkflowHandler {
         try {
             log.info("处理BOT事件: botQQ={}, eventType={}", botQQ, eventType);
             
-            // 从Redis获取相关工作流
+            // 从本地内存缓存获取相关工作流
             List<WorkflowInfo> workflows = workflowCacheService.getWorkflowsByBotEvent(botQQ, eventType);
             
             if (workflows.isEmpty()) {

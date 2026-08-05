@@ -4,10 +4,10 @@
 <mapper namespace="com.example.demo.mapper.log.BigTextMapper">
 
     <insert id="insertBatch">
-        insert into big_text(`key`, value)
+        insert into big_text(`key`, value, workflow_log_id)
         values
         <foreach collection="bigTextList" item="item" separator=",">
-            (#{item.key}, #{item.value})
+            (#{item.key}, #{item.value}, #{item.workflowLogId})
         </foreach>
     </insert>
 

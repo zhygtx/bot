@@ -1,4 +1,4 @@
-package com.example.demo.ai.ai.mcp;
+package com.example.demo.ai.ai.tool;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;

@@ -265,6 +265,7 @@ CREATE TABLE `workflow_log` (
   `workflow_name` VARCHAR(255) COMMENT '工作流名称',
   `error_log` TEXT COMMENT '工作流报错日志',
   `is_error` TINYINT(1) DEFAULT 0 COMMENT '工作流是否报错',
+  CONSTRAINT `fk_workflow_log_workflow` FOREIGN KEY (`workflow_id`) REFERENCES `workflow_info` (`id`) ON DELETE CASCADE,
   INDEX `idx_user_id_start_time` (`user_id`, `start_time`),
   INDEX `idx_workflow_id_start_time` (`workflow_id`, `start_time`),
   INDEX `idx_workflow_id` (`workflow_id`)
@@ -283,6 +284,7 @@ CREATE TABLE `node_log` (
   `method_name` VARCHAR(255) COMMENT '节点方法名称',
   `method_description` TEXT COMMENT '节点方法描述',
   `is_error` TINYINT(1) DEFAULT 0 COMMENT '节点是否报错',
+  CONSTRAINT `fk_node_log_workflow_log` FOREIGN KEY (`workflow_log_id`) REFERENCES `workflow_log` (`id`) ON DELETE CASCADE,
   INDEX `idx_workflow_log_id_order` (`workflow_log_id`, `order`),
   INDEX `idx_method_id` (`method_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='节点日志表';
@@ -290,7 +292,10 @@ CREATE TABLE `node_log` (
 -- 大数据存储表
 CREATE TABLE `big_text` (
   `key` VARCHAR(128) NOT NULL PRIMARY KEY COMMENT '大数据引用键',
-  `value` LONGTEXT NOT NULL COMMENT '实际数据内容'
+  `value` LONGTEXT NOT NULL COMMENT '实际数据内容',
+  `workflow_log_id` BIGINT NULL COMMENT '关联的工作流日志ID',
+  CONSTRAINT `fk_big_text_workflow_log` FOREIGN KEY (`workflow_log_id`) REFERENCES `workflow_log` (`id`) ON DELETE CASCADE,
+  INDEX `idx_big_text_workflow_log_id` (`workflow_log_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='大数据存储表';
 
 # --------------------------------------------------------------------------------------------------------
