@@ -7,15 +7,18 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 public interface AIService extends IService<AIChatMessage> {
 
     /**
-     * 根据会话 ID 查询所有消息记录。
+     * 分页查询会话消息：初始加载最新一页，beforeRound 向上翻页。
      * @param conversationId 会话 ID
-     * @return 排序后的所有消息记录列表
+     * @param beforeRound    只返回轮次小于该值的消息，null 表示加载最新页
+     * @param pageSize       每页条数
+     * @return 包含 messages（按轮次升序）与 hasMore 的 Map
      */
-    List<AIChatMessage> findByConversationId(String conversationId);
+    Map<String, Object> findPageByConversationId(String conversationId, Integer beforeRound, Integer pageSize);
 
     /**
      * 根据用户 ID 查询所有消息记录。

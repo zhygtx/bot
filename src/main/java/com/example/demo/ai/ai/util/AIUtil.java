@@ -1,6 +1,7 @@
 package com.example.demo.ai.ai.util;
 
 import com.example.demo.ai.ai.pojo.entity.AIChatMessage;
+import com.example.demo.ai.ai.pojo.entity.AIMessageSummary;
 import com.example.demo.ai.ai.pojo.entity.Code;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -8,6 +9,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
@@ -98,15 +100,86 @@ public class AIUtil {
     }
 
     /**
-     * 构建 Spring AI 消息列表
+     * 构建完整 Spring AI 消息列表：系统提示词 + 历史（摘要/尾部）+ 当前轮用户请求。
+     *
+     * @param systemTemplate 写插件系统提示词
+     * @param summary        最新摘要，可为 null（null 时使用全量历史）
+     * @param history        当前请求之前的全部历史消息
+     * @param newMessage     当前轮新消息
+     * @param codes          当前轮代码文件
      */
-    public List<Message> buildMessages(List<AIChatMessage> messages) {
-        List<Message> springMessages = new ArrayList<>();
-        for (AIChatMessage message : messages) {
-            springMessages.add(new UserMessage(message.getUserMessage()));
-            springMessages.add(new UserMessage(extractAiText(message)));
+    public List<Message> buildMessages(String systemTemplate, AIMessageSummary summary,
+                                       List<AIChatMessage> history, AIChatMessage newMessage,
+                                       List<Code> codes) {
+        List<Message> messages = new ArrayList<>();
+        messages.add(new SystemMessage(systemTemplate));
+
+        if (summary == null) {
+            for (AIChatMessage historyMessage : history) {
+                addHistoryMessages(messages, historyMessage);
+            }
+        } else {
+            messages.add(new SystemMessage("历史摘要（覆盖至第 " + summary.getSummaryRound() + " 轮）：\n" + summary.getSummaryContent()));
+            for (AIChatMessage historyMessage : history) {
+                if (historyMessage.getRound() > summary.getSummaryRound()) {
+                    addHistoryMessages(messages, historyMessage);
+                }
+            }
         }
-        return springMessages;
+
+        messages.add(new UserMessage(buildCurrentPrompt(newMessage, codes)));
+        return messages;
+    }
+
+    /** 追加一条历史轮次的用户消息与 AI 文本消息 */
+    private void addHistoryMessages(List<Message> messages, AIChatMessage historyMessage) {
+        messages.add(new UserMessage(historyMessage.getUserMessage()));
+        messages.add(new UserMessage(extractAiText(historyMessage)));
+    }
+
+    /** 构建当前轮用户 prompt：messageId + 代码摘要 + 插件摘要 + 用户需求 */
+    private String buildCurrentPrompt(AIChatMessage newMessage, List<Code> codes) {
+        StringBuilder prompt = new StringBuilder();
+        prompt.append("messageId: ").append(newMessage.getId()).append("\n\n");
+        String codeAbstract = buildCodeAbstract(codes);
+        if (codeAbstract != null && !codeAbstract.isBlank() && !codeAbstract.equals("{\"codes\":[]}")) {
+            prompt.append("当前已有代码：\n").append(codeAbstract).append("\n\n");
+        }
+        prompt.append("当前插件摘要：\n").append(buildPluginAbstract(newMessage)).append("\n\n");
+        prompt.append("用户需求：\n").append(newMessage.getUserMessage());
+        return prompt.toString();
+    }
+
+    /** 组装压缩输入：已有摘要 + 其后新增轮次；没有新增轮次时返回 null 表示无需压缩 */
+    public String buildCompressionInput(List<AIChatMessage> history, AIMessageSummary previous) {
+        StringBuilder input = new StringBuilder();
+        if (previous != null) {
+            input.append("已有历史摘要：\n").append(previous.getSummaryContent()).append("\n\n");
+            boolean hasTail = false;
+            for (AIChatMessage historyMessage : history) {
+                if (historyMessage.getRound() > previous.getSummaryRound()) {
+                    appendRound(input, historyMessage);
+                    hasTail = true;
+                }
+            }
+            if (!hasTail) {
+                return null;
+            }
+        } else {
+            for (AIChatMessage historyMessage : history) {
+                appendRound(input, historyMessage);
+            }
+        }
+        return input.toString();
+    }
+
+    /** 追加一轮对话文本到压缩输入 */
+    private void appendRound(StringBuilder input, AIChatMessage historyMessage) {
+        input.append("用户：").append(historyMessage.getUserMessage()).append("\n");
+        String aiText = extractAiText(historyMessage);
+        if (!aiText.isBlank()) {
+            input.append("AI：").append(aiText).append("\n");
+        }
     }
 
     /**

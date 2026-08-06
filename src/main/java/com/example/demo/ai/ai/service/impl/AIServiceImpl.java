@@ -3,6 +3,8 @@ package com.example.demo.ai.ai.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
 import com.example.demo.ai.ai.factory.DynamicChatClientFactory;
 import com.example.demo.ai.ai.factory.SseStreamFactory;
 import com.example.demo.ai.ai.mapper.AIChatMessageMapper;
@@ -11,6 +13,7 @@ import com.example.demo.ai.ai.pojo.dto.AIChatMessageDto;
 import com.example.demo.ai.ai.pojo.entity.AIChatMessage;
 import com.example.demo.ai.ai.pojo.entity.Code;
 import com.example.demo.ai.ai.service.AIService;
+import com.example.demo.ai.ai.service.ContextCompressionService;
 import com.example.demo.ai.ai.util.AIUtil;
 import com.example.demo.ai.ai.util.CompileUtil;
 import com.example.demo.ai.ai.util.SseStream;
@@ -21,9 +24,11 @@ import com.example.demo.util.PathMultipartFile;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
+import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,8 +50,9 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
     private final CodeMapper codeMapper;
     private final AIUtil aiUtil;
     private final SseStreamFactory sseStreamFactory;
+    private final ContextCompressionService contextCompressionService;
 
-    public AIServiceImpl(AIChatMessageMapper aiChatMessageMapper, DynamicChatClientFactory dynamicChatClientFactory, DefaultProperties defaultProperties, CompileUtil compileUtil, PluginService pluginService, CodeMapper codeMapper, AIUtil aiUtil, SseStreamFactory sseStreamFactory) {
+    public AIServiceImpl(AIChatMessageMapper aiChatMessageMapper, DynamicChatClientFactory dynamicChatClientFactory, DefaultProperties defaultProperties, CompileUtil compileUtil, PluginService pluginService, CodeMapper codeMapper, AIUtil aiUtil, SseStreamFactory sseStreamFactory, ContextCompressionService contextCompressionService) {
         this.aiChatMessageMapper = aiChatMessageMapper;
         this.dynamicChatClientFactory = dynamicChatClientFactory;
         this.defaultProperties = defaultProperties;
@@ -55,18 +61,23 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
         this.codeMapper = codeMapper;
         this.aiUtil = aiUtil;
         this.sseStreamFactory = sseStreamFactory;
+        this.contextCompressionService = contextCompressionService;
     }
 
-    /**
-     * 根据会话 ID 查询所有消息记录。
-     * @param conversationId 会话 ID
-     * @return 排序后的所有消息记录列表
-     */
+    /** 分页查询会话消息：初始加载最新一页，beforeRound 向上翻页 */
     @Override
-    public List<AIChatMessage> findByConversationId(String conversationId) {
-        return aiChatMessageMapper.selectList(new LambdaQueryWrapper<AIChatMessage>()
-                .eq(AIChatMessage::getConversationId, conversationId)
-                .orderByAsc(AIChatMessage::getRound));
+    public Map<String, Object> findPageByConversationId(String conversationId, Integer beforeRound, Integer pageSize) {
+        int limit = pageSize == null || pageSize <= 0 ? 30 : Math.min(pageSize, 100);
+        LambdaQueryWrapper<AIChatMessage> wrapper = new LambdaQueryWrapper<AIChatMessage>()
+                .eq(AIChatMessage::getConversationId, conversationId);
+        if (beforeRound != null) {
+            wrapper.lt(AIChatMessage::getRound, beforeRound);
+        }
+        PageHelper.startPage(1, limit);
+        List<AIChatMessage> messages = aiChatMessageMapper.selectList(wrapper.orderByDesc(AIChatMessage::getRound));
+        PageInfo<AIChatMessage> pageInfo = new PageInfo<>(messages);
+        Collections.reverse(messages);
+        return Map.of("messages", messages, "hasMore", pageInfo.isHasNextPage());
     }
 
     /**
@@ -131,22 +142,7 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
             }
 
             // ===== 构建提示词 =====
-            List<Message> springMessages = aiUtil.buildMessages(messages);
-            String codeAbstract = aiUtil.buildCodeAbstract(codes);
-            String pluginAbstract = aiUtil.buildPluginAbstract(newMessage);
-
-            StringBuilder userPrompt = new StringBuilder();
-            userPrompt.append("messageId: ").append(newMessage.getId()).append("\n\n");
-            if (codeAbstract != null && !codeAbstract.isBlank() && !codeAbstract.equals("{\"codes\":[]}")) {
-                userPrompt.append("当前已有代码：\n").append(codeAbstract).append("\n\n");
-            }
-            userPrompt.append("当前插件摘要：\n").append(pluginAbstract).append("\n\n");
-            userPrompt.append("用户需求：\n").append(message);
-
-            List<Message> promptMessages = new ArrayList<>();
-            promptMessages.add(new SystemMessage(template));
-            promptMessages.addAll(springMessages);
-            promptMessages.add(new UserMessage(userPrompt.toString()));
+            List<Message> promptMessages = contextCompressionService.buildMessages(userId, conversationId, messages, newMessage, codes, template);
 
             // ===== 流式生成阶段 =====
             ChatClient chatClient = dynamicChatClientFactory.getPluginChatClient(userId);
@@ -158,7 +154,7 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
             Map<String, Object> toolContext = new HashMap<>();
             toolContext.put("stream", localStream);
 
-            chatClient.prompt(new Prompt(promptMessages))
+            ChatResponse lastResponse = chatClient.prompt(new Prompt(promptMessages))
                     .toolContext(toolContext)
                     .stream()
                     .chatResponse()
@@ -169,9 +165,13 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
                     .blockLast();
 
             // ===== 成功：持久化 messageParts + 推送 done =====
+            // 记录本次请求的真实 prompt token 用量，供下次生成前判断是否需要压缩
+            Usage usage = lastResponse == null ? null : lastResponse.getMetadata().getUsage();
+            newMessage.setPromptTokens(usage == null ? null : usage.getPromptTokens());
             newMessage.setMessageParts(stream.toJson());
             aiChatMessageMapper.update(new LambdaUpdateWrapper<AIChatMessage>()
                     .set(AIChatMessage::getMessageParts, newMessage.getMessageParts())
+                    .set(AIChatMessage::getPromptTokens, newMessage.getPromptTokens())
                     .eq(AIChatMessage::getId, newMessage.getId()));
             stream.done(newMessage);
 
@@ -265,10 +265,23 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
 
     /**
      * 撤销指定轮次的对话记录，同时删除关联的代码文件和工具调用记录。
+     * 只允许撤销当前最大轮次，保证摘要外键级联与"只撤最后一轮"的约束一致。
      */
     @Override
     @Transactional
     public Boolean undo(String conversationId, Integer round) {
+        if (conversationId == null || round == null) {
+            return false;
+        }
+        Integer maxRound = aiChatMessageMapper.selectList(new LambdaQueryWrapper<AIChatMessage>()
+                        .eq(AIChatMessage::getConversationId, conversationId))
+                .stream()
+                .map(AIChatMessage::getRound)
+                .max(Integer::compareTo)
+                .orElse(null);
+        if (maxRound == null || !maxRound.equals(round)) {
+            return false;
+        }
         LambdaQueryWrapper<AIChatMessage> queryWrapper = new LambdaQueryWrapper<AIChatMessage>()
                 .eq(AIChatMessage::getConversationId, conversationId)
                 .eq(AIChatMessage::getRound, round);

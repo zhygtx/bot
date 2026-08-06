@@ -310,6 +310,7 @@ CREATE TABLE `ai_chat_message`(
     `round`              INT          NOT NULL DEFAULT 1 COMMENT '对话轮次，从 1 开始',
     `user_message`       TEXT         DEFAULT NULL COMMENT '用户指令文本',
     `message_parts`      LONGTEXT     DEFAULT NULL COMMENT 'AI 回复分段内容（JSON 数组，用于 Markdown 文本中穿插工具调用卡片）',
+    `prompt_tokens`      INT          DEFAULT NULL COMMENT '上次生成请求的实际 prompt token 数（OpenAI prompt_tokens / Anthropic input_tokens）',
     `status`             VARCHAR(32)  NOT NULL DEFAULT 'DRAFT' COMMENT '状态: DRAFT-未发布, PUBLISHED-已发布, PUBLISHED_DRAFT-更新未发布',
     `create_time`        DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     `pom`                TEXT         DEFAULT NULL COMMENT '代码依赖（pom.xml 内容）',
@@ -341,6 +342,26 @@ CREATE TABLE `code`(
             ON DELETE CASCADE
             ON UPDATE CASCADE
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT ='代码表';
+
+-- ============================================
+-- AI Message Summary 消息摘要表（上下文压缩，只增不删）
+-- ============================================
+CREATE TABLE `ai_message_summary`(
+    `id`              VARCHAR(36)  NOT NULL COMMENT '记录主键（UUID，每条记录唯一）',
+    `conversation_id` VARCHAR(36)  NOT NULL COMMENT '会话 ID（同一对话中所有记录共享此值）',
+    `user_id`         VARCHAR(36)  NOT NULL COMMENT '创建者用户 ID',
+    `summary_round`   INT          NOT NULL COMMENT '被压缩的最后一轮',
+    `message_id`      VARCHAR(36)  NOT NULL COMMENT '指向 summary_round 那一轮的消息 ID（外键，关联 ai_chat_message.id）',
+    `summary_content` LONGTEXT     NOT NULL COMMENT '压缩结果 JSON',
+    `create_time`     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    PRIMARY KEY (`id`),
+    INDEX `idx_conversation_round` (`conversation_id`, `summary_round`),
+    INDEX `idx_message_id` (`message_id`),
+    CONSTRAINT `fk_summary_message_id`
+        FOREIGN KEY (`message_id`) REFERENCES `ai_chat_message` (`id`)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT ='AI 消息摘要表';
 
 -- AI 配置信息表
 CREATE TABLE `user_ai_config` (

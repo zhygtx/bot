@@ -85,11 +85,13 @@ public class AIController {
     }
 
     /**
-     * 根据会话 ID 获取所有消息记录。
+     * 分页获取会话消息：初始加载最新一页，beforeRound 向上翻页。
      */
     @GetMapping("/{conversationId}")
-    public Result<?> findByConversationId(@PathVariable String conversationId) {
-        return Result.success(null, aiService.findByConversationId(conversationId));
+    public Result<?> findByConversationId(@PathVariable String conversationId,
+                                          @RequestParam(required = false, defaultValue = "30") Integer pageSize,
+                                          @RequestParam(required = false) Integer beforeRound) {
+        return Result.success(null, aiService.findPageByConversationId(conversationId, beforeRound, pageSize));
     }
 
     // ────────── SSE 端点 ──────────

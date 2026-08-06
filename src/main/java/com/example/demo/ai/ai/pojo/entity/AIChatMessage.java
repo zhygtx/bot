@@ -43,6 +43,11 @@ public class AIChatMessage {
     private String messageParts;
 
     /**
+     * 上次生成请求的实际 prompt token 数（OpenAI prompt_tokens / Anthropic input_tokens）
+     */
+    private Integer promptTokens;
+
+    /**
      * 'draft': 未发布（从未发布过）
      * 'published': 已发布
      * 'published_draft': 更新未发布（曾经发布过，当前又有改动未发布）

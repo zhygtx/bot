@@ -42,6 +42,13 @@ public class DynamicChatClientFactory {
         return cache.computeIfAbsent(userId, k -> buildClient(userId));
     }
 
+    /**
+     * 获取用户实际使用的插件模型名（用户配置优先，无配置时用默认配置）。
+     */
+    public String getPluginModel(String userId) {
+        return resolveConfig(userId).getModel();
+    }
+
     public ChatClient getReviewChatClient() {
         var reviewProps = defaultProperties.getReview();
         if (!reviewProps.getEnabled()) {
@@ -70,21 +77,26 @@ public class DynamicChatClientFactory {
     }
 
     private ChatClient buildClient(String userId) {
-        UserAIConfig config = userAIConfigMapper.selectOne(new LambdaQueryWrapper<UserAIConfig>()
-                        .eq(UserAIConfig::getUserId, userId));
-
-        if (config == null) {
-            config = UserAIConfig.builder()
-                    .baseUrl(defaultProperties.getPlugin().getBaseUrl())
-                    .apiKey(defaultProperties.getPlugin().getApiKey())
-                    .model(defaultProperties.getPlugin().getPluginModel())
-                    .apiProvider(UserAIConfig.ApiProvider.valueOf(defaultProperties.getPlugin().getProvider().toUpperCase()))
-                    .build();
-        }
+        UserAIConfig config = resolveConfig(userId);
         if (config.getApiProvider() == UserAIConfig.ApiProvider.ANTHROPIC) {
             return buildAnthropic(config);
         }
         return buildOpenAi(config);  // 默认 openai 格式（含 DeepSeek 等兼容 API）
+    }
+
+    /** 解析用户 AI 配置：优先用户表配置，其次使用默认配置 */
+    private UserAIConfig resolveConfig(String userId) {
+        UserAIConfig config = userAIConfigMapper.selectOne(new LambdaQueryWrapper<UserAIConfig>()
+                .eq(UserAIConfig::getUserId, userId));
+        if (config != null) {
+            return config;
+        }
+        return UserAIConfig.builder()
+                .baseUrl(defaultProperties.getPlugin().getBaseUrl())
+                .apiKey(defaultProperties.getPlugin().getApiKey())
+                .model(defaultProperties.getPlugin().getPluginModel())
+                .apiProvider(UserAIConfig.ApiProvider.valueOf(defaultProperties.getPlugin().getProvider().toUpperCase()))
+                .build();
     }
 
     private ChatClient buildOpenAi(UserAIConfig config) {
