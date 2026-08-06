@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.example.demo.mapper.workflow.DataMapMapper">
+<mapper namespace="com.generalbot.workflow.mapper.DataMapMapper">
 
     <insert id="insert" parameterType="java.util.List">
         insert into data_map(id, node_id, source_node_id, source_path, target_param_name, param_index, target_path, source_type, target_type)

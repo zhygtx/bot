@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.generalbot.workflow.mapper.log.WorkflowLogMapper">
+
+    <resultMap id="workflowLog" type="com.generalbot.workflow.entity.log.WorkflowLog">
+        <id property="id" column="id"/>
+        <result property="workflowId" column="workflow_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="expectedNodeCount" column="expected_node_count"/>
+        <result property="actualNodeCount" column="actual_node_count"/>
+        <result property="executionTime" column="execution_time"/>
+        <result property="startTime" column="start_time"/>
+        <result property="initialContext" column="initial_context"/>
+        <result property="workflowName" column="workflow_name"/>
+        <result property="errorLog" column="error_log"/>
+        <result property="isError" column="is_error"/>
+        <collection property="nodeLogs" ofType="com.generalbot.workflow.entity.log.NodeLog">
+            <id property="id" column="n_id"/>
+            <result property="workflowLogId" column="workflow_log_id"/>
+            <result property="nodeId" column="node_id"/>
+            <result property="methodId" column="method_id"/>
+            <result property="executionTime" column="n_execution_time"/>
+            <result property="order" column="order"/>
+            <result property="input" column="input"/>
+            <result property="output" column="output"/>
+            <result property="methodName" column="method_name"/>
+            <result property="methodDescription" column="method_description"/>
+            <result property="isError" column="n_is_error"/>
+        </collection>
+    </resultMap>
+
+    <sql id="select">
+        select w.id, w.workflow_id, w.user_id, w.expected_node_count, w.actual_node_count, w.execution_time, w.start_time, w.initial_context, w.workflow_name, w.error_log, w.is_error,
+               n.id as n_id, n.workflow_log_id, n.node_id, n.method_id, n.execution_time as n_execution_time, n.order, n.input, n.output, n.method_name, n.method_description, n.is_error as n_is_error
+        from workflow_log as w
+                 left join node_log as n on w.id = n.workflow_log_id
+    </sql>
+
+    <select id="selectByCondition" resultType="com.generalbot.workflow.entity.log.WorkflowLog">
+        SELECT * FROM workflow_log
+        WHERE user_id = #{userId}
+          <if test="workflowId != null and workflowId != ''">
+              AND workflow_id = #{workflowId}
+          </if>
+        <if test="workflowName != null and workflowName != ''">
+            AND workflow_name LIKE CONCAT('%', #{workflowName}, '%')
+        </if>
+        <if test="startTime != null">
+            AND start_time >= #{startTime}
+        </if>
+        <if test="endTime != null">
+            AND #{endTime} >= start_time
+        </if>
+        <if test="status != null and status != ''">
+            <choose>
+                <when test="status == 'success'">
+                    AND is_error = 0
+                </when>
+                <when test="status == 'failed'">
+                    AND is_error = 1
+                </when>
+            </choose>
+        </if>
+        <choose>
+            <when test="sortField != null and sortField != ''">
+                ORDER BY 
+                <choose>
+                    <when test="sortField == 'actualNodeCount'">actual_node_count</when>
+                    <when test="sortField == 'executionTime'">execution_time</when>
+                    <otherwise>start_time</otherwise>
+                </choose>
+                <if test="sortOrder != null and sortOrder == 'asc'"> ASC</if>
+                <if test="sortOrder == null or sortOrder != 'asc'"> DESC</if>
+            </when>
+            <otherwise>
+                ORDER BY start_time DESC
+            </otherwise>
+        </choose>
+    </select>
+
+    <select id="selectStatsByWorkflowIds" resultType="java.util.HashMap">
+        SELECT
+        workflow_id as workflowId,
+        COUNT(*) as executeCount,
+        AVG(execution_time) as averageExecutionTime,
+        AVG(actual_node_count) as averageNodeCount
+        FROM workflow_log
+        WHERE workflow_id IN
+        <foreach collection="workflowIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        GROUP BY workflow_id
+    </select>
+
+    <select id="getLastInsertId" resultType="java.lang.Long">
+        SELECT LAST_INSERT_ID()
+    </select>
+
+    <select id="selectById" resultMap="workflowLog">
+        <include refid="select"/>
+        WHERE w.id = #{id}
+        order by n.id
+    </select>
+</mapper>

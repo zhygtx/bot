@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.example.demo.mapper.plugin.MethodClassInfoMapper">
+<mapper namespace="com.generalbot.plugin.mapper.MethodClassInfoMapper">
 
     <insert id="insert" parameterType="java.util.List">
         insert into method_class_info(id,description,plugin_version_id,class_name,simple_class_name,package_name) values

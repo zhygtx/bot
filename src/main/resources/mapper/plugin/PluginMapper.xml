@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.example.demo.mapper.plugin.PluginMapper">
+<mapper namespace="com.generalbot.plugin.mapper.PluginMapper">
 
     <!-- 插件信息表字段映射 -->
-    <resultMap id="pluginInfoMap" type="com.example.demo.pojo.entity.plugin.PluginInfo">
+    <resultMap id="pluginInfoMap" type="com.generalbot.plugin.entity.PluginInfo">
         <id column="id" property="id"/>
         <result column="name" property="name"/>
         <result column="description" property="description"/>
@@ -15,7 +15,7 @@
         <result column="update_time" property="updateTime"/>
         <result column="is_public" property="isPublic"/>
         <!-- 关联插件版本信息 -->
-        <collection property="pluginVersionList" ofType="com.example.demo.pojo.entity.plugin.PluginVersion">
+        <collection property="pluginVersionList" ofType="com.generalbot.plugin.entity.PluginVersion">
             <id column="plugin_version_id" property="id"/>
             <result column="plugin_version_plugin_id" property="pluginId"/>
             <result column="plugin_version_version" property="version"/>
@@ -28,14 +28,14 @@
             <result column="plugin_version_method_package" property="methodPackage"/>
             <result column="plugin_version_compatible_version" property="compatibleVersion"/>
             <!-- 关联实体类信息 -->
-            <collection property="entityInfoList" ofType="com.example.demo.pojo.entity.plugin.EntityInfo">
+            <collection property="entityInfoList" ofType="com.generalbot.plugin.entity.EntityInfo">
                 <id column="entity_id" property="id"/>
                 <result column="entity_description" property="description"/>
                 <result column="entity_name" property="name"/>
                 <result column="entity_plugin_version_id" property="pluginVersionId"/>
                 <result column="entity_entity_name" property="entityName"/>
                 <!-- 关联属性信息 -->
-                <collection property="attributes" ofType="com.example.demo.pojo.entity.plugin.Attribute">
+                <collection property="attributes" ofType="com.generalbot.plugin.entity.Attribute">
                     <id column="attribute_id" property="id"/>
                     <result column="attribute_description" property="description"/>
                     <result column="attribute_entity_info_id" property="entityInfoId"/>
@@ -44,7 +44,7 @@
                 </collection>
             </collection>
             <!-- 关联方法类信息 -->
-            <collection property="methodClassInfoList" ofType="com.example.demo.pojo.entity.plugin.MethodClassInfo">
+            <collection property="methodClassInfoList" ofType="com.generalbot.plugin.entity.MethodClassInfo">
                 <id column="method_class_id" property="id"/>
                 <result column="method_class_description" property="description"/>
                 <result column="method_class_plugin_version_id" property="pluginVersionId"/>
@@ -52,7 +52,7 @@
                 <result column="method_class_simple_class_name" property="simpleClassName"/>
                 <result column="method_class_package_name" property="packageName"/>
                 <!-- 关联方法信息 -->
-                <collection property="methods" ofType="com.example.demo.pojo.entity.plugin.MethodInfo">
+                <collection property="methods" ofType="com.generalbot.plugin.entity.MethodInfo">
                     <id column="method_id" property="id"/>
                     <result column="method_description" property="description"/>
                     <result column="method_method_class_id" property="methodClassId"/>
@@ -60,7 +60,7 @@
                     <result column="method_return_type" property="returnType"/>
                     <result column="method_return_description" property="returnDescription"/>
                     <!-- 关联参数信息 -->
-                    <collection property="parameters" ofType="com.example.demo.pojo.entity.plugin.ParameterInfo">
+                    <collection property="parameters" ofType="com.generalbot.plugin.entity.ParameterInfo">
                         <id column="parameter_id" property="id"/>
                         <result column="parameter_description" property="description"/>
                         <result column="parameter_method_id" property="methodId"/>
@@ -105,7 +105,7 @@
         LEFT JOIN parameter_info param ON m.id = param.method_id
     </sql>
 
-    <resultMap id="pluginInfoDtoMap" type="com.example.demo.pojo.dto.PluginInfoDto">
+    <resultMap id="pluginInfoDtoMap" type="com.generalbot.plugin.dto.PluginInfoDto">
         <id property="id" column="id"/>
         <result property="name" column="name"/>
         <result property="description" column="description"/>
@@ -114,7 +114,7 @@
         <result property="latestVersion" column="latest_version"/>
         <result property="updateTime" column="update_time"/>
         <result property="isPublic" column="is_public"/>
-        <collection property="pluginVersionList" ofType="com.example.demo.pojo.dto.PluginVersionDto">
+        <collection property="pluginVersionList" ofType="com.generalbot.plugin.dto.PluginVersionDto">
             <id property="id" column="plugin_version_id"/>
             <result property="version" column="plugin_version_version"/>
         </collection>
@@ -130,7 +130,7 @@
     </sql>
 
     <!-- 插入插件信息 -->
-    <insert id="insert" parameterType="com.example.demo.pojo.entity.plugin.PluginInfo">
+    <insert id="insert" parameterType="com.generalbot.plugin.entity.PluginInfo">
         INSERT INTO plugin_info (
             id, name, description, author_id,
             latest_version, version_count,
@@ -143,7 +143,7 @@
     </insert>
 
     <!-- 更新插件信息 -->
-    <update id="update" parameterType="com.example.demo.pojo.entity.plugin.PluginInfo">
+    <update id="update" parameterType="com.generalbot.plugin.entity.PluginInfo">
         UPDATE plugin_info SET
         description = #{description},
         <if test="name != null">name = #{name},</if>

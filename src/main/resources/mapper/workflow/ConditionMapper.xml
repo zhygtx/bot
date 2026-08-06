@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.example.demo.mapper.workflow.ConditionMapper">
+<mapper namespace="com.generalbot.workflow.mapper.ConditionMapper">
 
     <insert id="insert" parameterType="java.util.List">
         insert into `condition`(id, node_id, true_action, false_action)

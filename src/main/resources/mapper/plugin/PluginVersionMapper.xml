@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.example.demo.mapper.plugin.PluginVersionMapper">
+<mapper namespace="com.generalbot.plugin.mapper.PluginVersionMapper">
 
-    <insert id="insert" parameterType="com.example.demo.pojo.entity.plugin.PluginVersion">
+    <insert id="insert" parameterType="com.generalbot.plugin.entity.PluginVersion">
         insert into plugin_version(id, plugin_id, version, path, file_size, file_md5, create_time, changelog, entity_package, method_package, compatible_version)
         values (#{id}, #{pluginId}, #{version}, #{path}, #{fileSize}, #{fileMd5}, #{createTime}, #{changelog}, #{entityPackage}, #{methodPackage}, #{compatibleVersion})
     </insert>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.example.demo.mapper.plugin.ParameterInfoMapper">
+<mapper namespace="com.generalbot.plugin.mapper.ParameterInfoMapper">
     <insert id="insert" parameterType="java.util.List">
         INSERT INTO parameter_info (id, description, method_id, name, type, nullable ,`order`)
         VALUES

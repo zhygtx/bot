@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.generalbot.workflow.mapper.log.NodeLogMapper">
+
+    <insert id="insert">
+        insert into node_log(workflow_log_id, method_id, node_id, execution_time, `order`, input, output, method_name, method_description, is_error)
+        values
+        <foreach collection="nodeLogs" item="nodeLog" separator=",">
+            (#{nodeLog.workflowLogId}, #{nodeLog.methodId}, #{nodeLog.nodeId}, #{nodeLog.executionTime}, #{nodeLog.order}, #{nodeLog.input}, #{nodeLog.output}, #{nodeLog.methodName}, #{nodeLog.methodDescription}, #{nodeLog.isError})
+        </foreach>
+    </insert>
+
+    <select id="selectByWorkflowLogId" resultType="com.generalbot.workflow.entity.log.NodeLog">
+        select * from node_log where workflow_log_id = #{workflowLogId} order by `order`
+    </select>
+</mapper>

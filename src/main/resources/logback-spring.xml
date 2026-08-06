@@ -29,7 +29,7 @@
     </appender>
 
 
-    <logger name="com.example.demo" level="DEBUG" />
+    <logger name="com.generalbot" level="DEBUG" />
 
     <!-- 根日志级别配置 -->
     <root level="INFO">
