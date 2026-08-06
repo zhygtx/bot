@@ -26,7 +26,7 @@ public class BotController {
 
     /**
      * 插入机器人
-     * @param request HTTP请求
+     * @param user 用户对象
      * @param name 机器人名称
      * @param botQQ 机器人QQ
      * @return 插入结果
@@ -61,7 +61,7 @@ public class BotController {
 
     /**
      * 获取机器人信息
-     * @param request HTTP请求
+     * @param user 用户对象
      * @return 机器人信息
      */
     @GetMapping

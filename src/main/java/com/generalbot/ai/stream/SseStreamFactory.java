@@ -1,6 +1,5 @@
 package com.generalbot.ai.stream;
 
-import com.generalbot.ai.stream.SseStream;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;

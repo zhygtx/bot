@@ -1,6 +1,5 @@
 package com.generalbot.ai.stream;
 
-import com.generalbot.ai.stream.SseStreamFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.messages.AssistantMessage;

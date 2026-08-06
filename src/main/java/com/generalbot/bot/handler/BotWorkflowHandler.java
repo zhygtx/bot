@@ -89,33 +89,6 @@ public class BotWorkflowHandler {
     }
 
     /**
-     * 处理BOT事件，执行相关工作流
-     * @param botQQ BOT QQ号
-     * @param eventType 事件类型
-     * @param botEventData BOT事件数据
-     */
-    public void handleBotEvent(Long botQQ, String eventType, Object botEventData) {
-        try {
-            log.info("处理BOT事件: botQQ={}, eventType={}", botQQ, eventType);
-            
-            // 从本地内存缓存获取相关工作流
-            List<WorkflowInfo> workflows = workflowCacheService.getWorkflowsByBotEvent(botQQ, eventType);
-            
-            if (workflows.isEmpty()) {
-                log.info("未找到与BOT事件 {}:{} 相关的工作流", botQQ, eventType);
-                return;
-            }
-            
-            // 执行每个工作流
-            for (WorkflowInfo workflow : workflows) {
-                executeWorkflow(workflow, botEventData);
-            }
-        } catch (Exception e) {
-            log.error("处理BOT事件异常", e);
-        }
-    }
-
-    /**
      * 执行工作流
      * @param workflowInfo 工作流信息
      * @param botEventData BOT事件数据

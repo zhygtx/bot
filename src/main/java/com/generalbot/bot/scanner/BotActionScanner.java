@@ -95,7 +95,6 @@ public class BotActionScanner {
             ActionParam actionParam = param.getAnnotation(ActionParam.class);
 
             String description = actionParam != null ? actionParam.description() : "参数";
-            int order = i;
             boolean nullable = actionParam != null && actionParam.nullable();
             String typeName = FieldScanUtil.getSimpleTypeName(param.getType());
 
@@ -104,7 +103,7 @@ public class BotActionScanner {
                     .name(param.getName())
                     .type(typeName)
                     .description(description)
-                    .order(order)
+                    .order(i)
                     .nullable(nullable)
                     .build();
 
@@ -124,11 +123,11 @@ public class BotActionScanner {
      * 对于嵌套对象字段，递归平铺。
      */
     private List<ParameterFieldInfo> flattenComplexType(Class<?> type, String paramName) {
-        return flattenFields(type, paramName, paramName, new HashSet<>());
+        return flattenFields(type, paramName, new HashSet<>());
     }
 
     private List<ParameterFieldInfo> flattenFields(
-            Class<?> type, String fieldPathPrefix, String paramName, Set<String> visited) {
+            Class<?> type, String fieldPathPrefix, Set<String> visited) {
 
         List<ParameterFieldInfo> result = new ArrayList<>();
 
@@ -159,7 +158,7 @@ public class BotActionScanner {
                 String nestedKey = field.getType().getName();
                 if (visited.add(nestedKey)) {
                     result.addAll(flattenFields(
-                            field.getType(), fullPath, paramName, visited));
+                            field.getType(), fullPath, visited));
                 }
             }
         }
@@ -289,8 +288,7 @@ public class BotActionScanner {
      */
     private Class<?> resolveGenericElementType(Method method) {
         java.lang.reflect.Type genericReturnType = method.getGenericReturnType();
-        if (genericReturnType instanceof ParameterizedType) {
-            ParameterizedType pt = (ParameterizedType) genericReturnType;
+        if (genericReturnType instanceof ParameterizedType pt) {
             java.lang.reflect.Type[] typeArgs = pt.getActualTypeArguments();
             if (typeArgs.length > 0 && typeArgs[0] instanceof Class) {
                 return (Class<?>) typeArgs[0];

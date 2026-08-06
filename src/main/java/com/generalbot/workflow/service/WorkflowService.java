@@ -63,13 +63,6 @@ public interface WorkflowService {
     WorkflowInfo findById(String id);
 
     /**
-     * 判断工作流是否存在
-     * @param id 工作流ID
-     * @return 是否存在
-     */
-    Boolean existsById(String id);
-
-    /**
      * 查询所有定时任务
      * @return 定时任务列表
      */

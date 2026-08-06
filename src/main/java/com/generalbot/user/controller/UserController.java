@@ -70,7 +70,7 @@ public class UserController {
 
     /**
      * 获取当前用户信息
-      * @param request HttpServletRequest对象
+      * @param principal 用户对象
      */
     @GetMapping("/info")
     public Result<User> getCurrentUserInfo(@AuthenticationPrincipal UserPrincipal principal) {

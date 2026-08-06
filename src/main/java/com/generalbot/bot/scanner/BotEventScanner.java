@@ -216,22 +216,4 @@ public class BotEventScanner {
         log.info("内置事件: 定时触发");
     }
 
-    /**
-     * 根据事件类型获取事件元数据。
-     */
-    public EventMetadata getEventByType(String eventType) {
-        return eventMetadataList.stream()
-                .filter(e -> e.getEventType().equals(eventType))
-                .findFirst()
-                .orElse(null);
-    }
-
-    /**
-     * 获取所有启用的事件（排除 scheduledEvent 等特殊事件）。
-     */
-    public List<EventMetadata> getEnabledEvents() {
-        return eventMetadataList.stream()
-                .filter(e -> e.getOrder() >= 0)
-                .toList();
-    }
 }

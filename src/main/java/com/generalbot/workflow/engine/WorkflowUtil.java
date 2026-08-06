@@ -382,7 +382,6 @@ public class WorkflowUtil {
             if (!executionResult.continueExecution()) {
                 log.debug("条件判断结果：结束当前分支（BREAK），跳过节点 {} 的所有后继节点", currentNodeId);
                 skippedNodes.addAll(findAllSuccessors(currentNodeId, nodeMap));
-                continue;
             }
         }
     }

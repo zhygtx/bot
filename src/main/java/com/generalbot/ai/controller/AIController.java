@@ -45,7 +45,7 @@ public class AIController {
     }
 
     @DeleteMapping
-    public Result<?> delete(@AuthenticationPrincipal UserPrincipal user, @RequestParam String conversationId) {
+    public Result<?> delete(@RequestParam String conversationId) {
         LambdaQueryWrapper<AIChatMessage> queryWrapper = new LambdaQueryWrapper<AIChatMessage>()
                 .eq(AIChatMessage::getConversationId, conversationId);
         boolean delete = aiService.remove(queryWrapper);

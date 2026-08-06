@@ -1,6 +1,5 @@
 package com.generalbot.security;
 
-import com.generalbot.security.JWTUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

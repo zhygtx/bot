@@ -29,34 +29,6 @@ public class ReflectionUtil {
     }
 
     /**
-     * 解析方法签名并返回参数类型和返回值类型
-     *
-     * @param method 方法对象
-     * @return 参数类型和返回值类型的映射表
-     */
-    public static Map<String, Object> parseMethodSignature(Method method) {
-        Map<String, Object> result = new HashMap<>();
-
-        // 获取参数信息
-        Parameter[] parameters = method.getParameters();
-        Type[] parameterTypes = method.getGenericParameterTypes();
-
-        for (int i = 0; i < parameters.length; i++) {
-            String paramName = parameters[i].getName();
-            String typeName = getTypeName(parameterTypes[i]);
-            result.put(paramName, typeName);
-        }
-
-
-        // 解析返回值类型
-        Type returnType = method.getGenericReturnType();
-        String returnTypeName = getTypeName(returnType);
-        result.put("returnType", returnTypeName);
-
-        return result;
-    }
-
-    /**
      * 递归处理类及其父类的字段
      */
     private static void processFields(Class<?> clazz, Map<String, Object> attributeMap) {

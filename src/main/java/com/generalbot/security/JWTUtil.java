@@ -117,11 +117,4 @@ public class JWTUtil {
         return decodedJWT.getClaim("userName").asString();
     }
 
-    // 检查令牌是否过期
-    public boolean isTokenExpired(String token) {
-        token = token.replace("Bearer ", "");
-        DecodedJWT decodedJWT = JWT.decode(token);
-        Date expiresAt = decodedJWT.getExpiresAt();
-        return expiresAt.before(new Date());
-    }
 }

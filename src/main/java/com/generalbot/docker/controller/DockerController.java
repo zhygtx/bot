@@ -19,8 +19,8 @@ public class DockerController {
 
     /**
      * 创建容器
-     * @param request HTTP请求
      * @param napcatToken 用户设置的令牌
+     * @param botQQ botQQ号
      */
     @PostMapping
     public Result<?> createContainer(@AuthenticationPrincipal UserPrincipal user, String napcatToken, Long botQQ) {
@@ -33,7 +33,7 @@ public class DockerController {
 
     /**
      * 获取容器信息
-     * @param request HTTP请求
+     * @param user 用户
      */
     @GetMapping
     public Result<?> getContainerInfo(@AuthenticationPrincipal UserPrincipal user) {

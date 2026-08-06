@@ -57,14 +57,6 @@ public interface WorkflowInfoMapper {
     void updateAvailableByWorkflowId(String id, String disableReason);
 
     /**
-     * 判断工作流是否存在
-     * @param id 工作流ID
-     * @return 是否存在
-     */
-    @Select("SELECT EXISTS(SELECT 1 FROM workflow_info WHERE id = #{id})")
-    Boolean existsById(String id);
-
-    /**
      * 获取所有工作流ID
      * @return 工作流ID列表
      */
