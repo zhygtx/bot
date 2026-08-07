@@ -1,14 +1,13 @@
 package com.generalbot.plugin.service.impl;
 
 import com.generalbot.plugin.mapper.*;
-import com.generalbot.workflow.mapper.WorkflowInfoMapper;
 import com.generalbot.plugin.dto.PluginInfoDto;
 import com.generalbot.plugin.entity.*;
 import com.generalbot.plugin.service.PluginService;
-import com.generalbot.workflow.service.WorkflowCacheService;
 import com.generalbot.common.util.MD5Util;
 import com.generalbot.plugin.util.PluginUtil;
-import com.generalbot.workflow.engine.WorkflowUtil;
+import com.generalbot.workflow.engine.CallableRegistry;
+import com.generalbot.workflow.service.WorkflowService;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import lombok.extern.slf4j.Slf4j;
@@ -41,11 +40,10 @@ public class PluginServiceImpl implements PluginService {
     private final ParameterInfoMapper parameterInfoMapper;
     private final PluginVersionMapper pluginVersionMapper;
     private final AttributeMapper attributeMapper;
-    private final WorkflowUtil workflowUtil;
-    private final WorkflowInfoMapper workflowInfoMapper;
-    private final WorkflowCacheService workflowCacheService;
+    private final CallableRegistry callableRegistry;
+    private final WorkflowService workflowService;
 
-    public PluginServiceImpl(PluginUtil pluginUtil, PluginMapper pluginMapper, EntityInfoMapper entityInfoMapper, MethodInfoMapper methodInfoMapper, MethodClassInfoMapper methodClassInfoMapper, ParameterInfoMapper parameterInfoMapper, PluginVersionMapper pluginVersionMapper, AttributeMapper attributeMapper, WorkflowUtil workflowUtil, WorkflowInfoMapper workflowInfoMapper, WorkflowCacheService workflowCacheService) {
+    public PluginServiceImpl(PluginUtil pluginUtil, PluginMapper pluginMapper, EntityInfoMapper entityInfoMapper, MethodInfoMapper methodInfoMapper, MethodClassInfoMapper methodClassInfoMapper, ParameterInfoMapper parameterInfoMapper, PluginVersionMapper pluginVersionMapper, AttributeMapper attributeMapper, CallableRegistry callableRegistry, WorkflowService workflowService) {
         this.pluginUtil = pluginUtil;
         this.pluginMapper = pluginMapper;
         this.entityInfoMapper = entityInfoMapper;
@@ -54,9 +52,8 @@ public class PluginServiceImpl implements PluginService {
         this.parameterInfoMapper = parameterInfoMapper;
         this.pluginVersionMapper = pluginVersionMapper;
         this.attributeMapper = attributeMapper;
-        this.workflowUtil = workflowUtil;
-        this.workflowInfoMapper = workflowInfoMapper;
-        this.workflowCacheService = workflowCacheService;
+        this.callableRegistry = callableRegistry;
+        this.workflowService = workflowService;
     }
 
     /**
@@ -223,20 +220,17 @@ public class PluginServiceImpl implements PluginService {
     @Override
     @Transactional
     public int remove(String id){
-        //0.标注工作流可用性
-        workflowInfoMapper.updateAvailable(id, "部分相关插件已下架");
+        // 0. 禁用依赖该插件的工作流
+        workflowService.disableWorkflowsByPlugin(id, "部分相关插件已下架");
 
         // 1. 查询插件信息
         PluginInfo pluginInfo = pluginMapper.selectById(id);
             
         // 2. 关闭并清理所有相关的类加载器缓存（解决文件被占用的问题）
-        workflowUtil.closeAllClassLoaderForPlugin(id);
+        callableRegistry.closePluginClassLoaders(id);
         log.info("已清理插件 {} 的所有类加载器缓存", id);
             
-        // 3. 移除本地内存缓存中的相关工作流，并清理对应的定时任务（Redis ZSet）
-        workflowCacheService.removeWorkflowsByPluginId(id);
-            
-        // 4. 删除所有版本的文件
+        // 3. 删除所有版本的文件
         pluginInfo.getPluginVersionList().forEach(version -> {
             String filePath = version.getPath();
             File file = new File(filePath);
@@ -247,7 +241,7 @@ public class PluginServiceImpl implements PluginService {
             }
         });
             
-        // 5. 删除数据库记录
+        // 4. 删除数据库记录
         return pluginMapper.delete(id);
     }
 

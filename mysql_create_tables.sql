@@ -131,96 +131,22 @@ CREATE TABLE `parameter_info` (
 
 # -------------------------------------------------------------------------------------------------------------
 
--- 工作流信息表
-CREATE TABLE `workflow_info` (
+-- 工作流表
+CREATE TABLE `workflow` (
   `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '工作流 ID',
   `user_id` VARCHAR(36) NOT NULL COMMENT '工作流创建者 ID',
   `name` VARCHAR(255) NOT NULL COMMENT '工作流名称',
   `enabled` TINYINT DEFAULT 1 COMMENT '工作流是否启用',
   `available` TINYINT DEFAULT 1 COMMENT '工作流是否可用',
   `disable_reason` VARCHAR(255) COMMENT '工作流禁用原因',
+  `trigger_key` VARCHAR(255) COMMENT '触发键（botEvent:{botQQ}:{EventType} 或 schedule:{seconds}）',
+  `definition` LONGTEXT NOT NULL COMMENT '工作流定义（JSON：节点、连线、画布视图）',
   `create_time` DATETIME NOT NULL COMMENT '工作流创建时间',
   `update_time` DATETIME NOT NULL COMMENT '工作流更新时间',
-  FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='工作流信息表';
-
--- 工作流节点表
-CREATE TABLE `node` (
-  `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '节点 ID',
-  `x` INT COMMENT '节点位置（水平位置）',
-  `y` INT COMMENT '节点位置（垂直位置）',
-  `workflow_id` VARCHAR(36) NOT NULL COMMENT '所属工作流 ID',
-  `plugin_id` VARCHAR(36) COMMENT '插件 ID（仅 pluginMethod 节点使用）',
-  `plugin_version_id` VARCHAR(36) COMMENT '插件版本 ID（仅 pluginMethod 节点使用）',
-  `method_class_id` VARCHAR(36) COMMENT '方法类 ID（仅 pluginMethod 节点使用）',
-  `method_id` VARCHAR(36) COMMENT '方法 ID（仅 pluginMethod 节点使用）',
-  `node_type` ENUM('botEvent','pluginMethod','botAction') NOT NULL COMMENT '节点类型',
-  `event_type` VARCHAR(255) COMMENT '事件类型（仅 botEvent 节点使用）',
-  `bot_qq` BIGINT COMMENT 'Bot QQ 号（仅 botEvent 节点使用）',
-  `bot_action_name` VARCHAR(255) COMMENT '动作名称（仅 botAction 节点使用）',
-  `bot_event_name` VARCHAR(255) COMMENT '事件名称（仅 botEvent 节点使用）',
-  `scheduled_time` INT COMMENT '定时时间（秒）（仅 scheduledEvent 节点使用）',
-  `in_degree` INT NOT NULL DEFAULT 0 COMMENT '入度',
-  FOREIGN KEY (`workflow_id`) REFERENCES `workflow_info` (`id`) ON DELETE CASCADE,
-  FOREIGN KEY (`plugin_id`) REFERENCES `plugin_info` (`id`) ON DELETE CASCADE,
-  FOREIGN KEY (`plugin_version_id`) REFERENCES `plugin_version` (`id`) ON DELETE CASCADE,
-  FOREIGN KEY (`method_class_id`) REFERENCES `method_class_info` (`id`) ON DELETE CASCADE,
-  FOREIGN KEY (`method_id`) REFERENCES `method_info` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='工作流节点表';
-
--- 节点前置关系表（处理多对多关系）
-CREATE TABLE `node_pre_relation` (
-  `id` integer NOT NULL auto_increment PRIMARY KEY COMMENT '关系ID',
-  `node_id` VARCHAR(36) NOT NULL COMMENT '节点ID',
-  `pre_node_id` VARCHAR(36) NOT NULL COMMENT '前置节点ID',
-  FOREIGN KEY (`node_id`) REFERENCES `node` (`id`) ON DELETE CASCADE,
-  FOREIGN KEY (`pre_node_id`) REFERENCES `node` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='节点前置关系表';
-
--- 节点后置关系表（处理多对多关系）
-CREATE TABLE `node_next_relation` (
-  `id` integer NOT NULL auto_increment PRIMARY KEY COMMENT '关系ID',
-  `node_id` VARCHAR(36) NOT NULL COMMENT '节点ID',
-  `next_node_id` VARCHAR(36) NOT NULL COMMENT '后置节点ID',
-  FOREIGN KEY (`node_id`) REFERENCES `node` (`id`) ON DELETE CASCADE,
-  FOREIGN KEY (`next_node_id`) REFERENCES `node` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='节点后置关系表';
-
--- 条件表
-CREATE TABLE `condition` (
-  `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '条件ID',
-  `node_id` VARCHAR(36) NOT NULL COMMENT '所判断的节点ID（插件节点）',
-  `true_action` ENUM('CONTINUE', 'BREAK', 'END') NOT NULL COMMENT '插件返回true时执行内容',
-  `false_action` ENUM('CONTINUE', 'BREAK', 'END') NOT NULL COMMENT '插件返回false时执行内容',
-  FOREIGN KEY (`node_id`) REFERENCES `node` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='条件表';
-
--- 数据映射表
-CREATE TABLE `data_map` (
-  `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '映射关系ID',
-  `node_id` VARCHAR(36) NOT NULL COMMENT '所属节点ID',
-  `source_node_id` VARCHAR(36) NOT NULL COMMENT '源数据所属节点',
-  `source_path` VARCHAR(500) NOT NULL COMMENT '源数据字段名称(支持嵌套如：value.id，无嵌套直接映射时为value)',
-  `target_param_name` VARCHAR(255) NOT NULL COMMENT '目标参数名称',
-  `param_index` INT COMMENT '方法的第几个参数',
-  `target_path` VARCHAR(500) COMMENT '目标参数字段名(支持嵌套如：user.id，无嵌套直接映射时为user即和参数名相同)',
-  `source_type` VARCHAR(255) NOT NULL COMMENT '源数据字段类型',
-  `target_type` VARCHAR(255) NOT NULL COMMENT '目标属性方法参数字段类型',
-  FOREIGN KEY (`node_id`) REFERENCES `node` (`id`) ON DELETE CASCADE,
-  FOREIGN KEY (`source_node_id`) REFERENCES `node` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='数据映射表';
-
--- 节点默认值表
-CREATE TABLE `node_defaults` (
-  `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '默认值ID',
-  `node_id` VARCHAR(36) NOT NULL COMMENT '节点ID',
-  `param_index` INT NOT NULL COMMENT '方法的第几个参数',
-  `param_name` VARCHAR(255) COMMENT '方法参数名称',
-  `field_path` VARCHAR(500) COMMENT '字段名(支持嵌套如：user.id，无嵌套直接映射时为user即和参数名相同)',
-  `default_value` TEXT COMMENT '默认值',
-  `default_value_type` ENUM('String', 'Integer', 'Double', 'Boolean', 'Long') NOT NULL COMMENT '默认值类型',
-  FOREIGN KEY (`node_id`) REFERENCES `node` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='节点默认值表';
+  FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE,
+  INDEX `idx_workflow_user` (`user_id`),
+  INDEX `idx_workflow_trigger_key` (`trigger_key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='工作流表';
 
 -- 插件数据存储表
 CREATE TABLE `plugin_data` (
@@ -238,65 +164,28 @@ CREATE TABLE `plugin_data` (
     INDEX idx_data_index (`data_index`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='插件数据存储表';
 
-create table `workflow_canvas_view` (
-  `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT '工作流画布视图ID（自增主键）',
-  `workflow_id` VARCHAR(36) NOT NULL COMMENT '工作流ID',
-  `user_id` VARCHAR(36) NOT NULL COMMENT '用户ID',
-  `offset_x` DOUBLE COMMENT '视图横向偏移（px）',
-  `offset_y` DOUBLE COMMENT '视图纵向偏移（px）',
-  `scale` DOUBLE COMMENT '缩放比例（0.3 ~ 2.0）',
-  FOREIGN KEY (`workflow_id`) REFERENCES `workflow_info` (`id`) ON DELETE CASCADE,
-  FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='工作流画布视图表';
-
-
 # --------------------------------------------------------------------------------------------------------
 
--- 工作流日志表
-CREATE TABLE `workflow_log` (
-  `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT '工作流日志ID（自增主键）',
+-- 工作流执行记录表
+CREATE TABLE `workflow_execution` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT '执行记录ID（自增主键）',
   `workflow_id` VARCHAR(36) NOT NULL COMMENT '工作流ID',
   `user_id` VARCHAR(36) NOT NULL COMMENT '用户ID',
+  `trigger_key` VARCHAR(255) COMMENT '触发键',
+  `workflow_name` VARCHAR(255) COMMENT '工作流名称',
+  `status` VARCHAR(16) NOT NULL COMMENT '状态：SUCCESS/FAILED',
+  `start_time` BIGINT COMMENT '工作流执行开始时间戳',
+  `end_time` BIGINT COMMENT '工作流执行结束时间戳',
+  `duration_ms` BIGINT COMMENT '工作流执行耗时（毫秒）',
   `expected_node_count` INT COMMENT '工作流预计执行节点个数',
   `actual_node_count` INT COMMENT '工作流实际执行节点个数',
-  `execution_time` BIGINT COMMENT '工作流执行耗时（毫秒）',
-  `start_time` BIGINT COMMENT '工作流执行开始时间戳',
-  `initial_context` TEXT COMMENT '工作流初始上下文（JSON格式）',
-  `workflow_name` VARCHAR(255) COMMENT '工作流名称',
-  `error_log` TEXT COMMENT '工作流报错日志',
-  `is_error` TINYINT(1) DEFAULT 0 COMMENT '工作流是否报错',
-  CONSTRAINT `fk_workflow_log_workflow` FOREIGN KEY (`workflow_id`) REFERENCES `workflow_info` (`id`) ON DELETE CASCADE,
+  `error_message` TEXT COMMENT '工作流报错信息',
+  `trace` LONGTEXT NOT NULL COMMENT '节点执行轨迹（JSON）',
+  FOREIGN KEY (`workflow_id`) REFERENCES `workflow` (`id`) ON DELETE CASCADE,
   INDEX `idx_user_id_start_time` (`user_id`, `start_time`),
   INDEX `idx_workflow_id_start_time` (`workflow_id`, `start_time`),
-  INDEX `idx_workflow_id` (`workflow_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='工作流日志表';
-
--- 节点日志表
-CREATE TABLE `node_log` (
-  `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT '节点日志ID（自增主键）',
-  `workflow_log_id` BIGINT NOT NULL COMMENT '工作流日志ID',
-  `method_id` VARCHAR(36) COMMENT '节点使用的插件方法ID',
-  `node_id` VARCHAR(36) NOT NULL COMMENT '节点ID',
-  `execution_time` BIGINT COMMENT '节点执行耗时（毫秒）',
-  `order` INT COMMENT '节点执行次序',
-  `input` text COMMENT '节点输入内容（JSON格式）',
-  `output` text COMMENT '节点输出内容（JSON格式）',
-  `method_name` VARCHAR(255) COMMENT '节点方法名称',
-  `method_description` TEXT COMMENT '节点方法描述',
-  `is_error` TINYINT(1) DEFAULT 0 COMMENT '节点是否报错',
-  CONSTRAINT `fk_node_log_workflow_log` FOREIGN KEY (`workflow_log_id`) REFERENCES `workflow_log` (`id`) ON DELETE CASCADE,
-  INDEX `idx_workflow_log_id_order` (`workflow_log_id`, `order`),
-  INDEX `idx_method_id` (`method_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='节点日志表';
-
--- 大数据存储表
-CREATE TABLE `big_text` (
-  `key` VARCHAR(128) NOT NULL PRIMARY KEY COMMENT '大数据引用键',
-  `value` LONGTEXT NOT NULL COMMENT '实际数据内容',
-  `workflow_log_id` BIGINT NULL COMMENT '关联的工作流日志ID',
-  CONSTRAINT `fk_big_text_workflow_log` FOREIGN KEY (`workflow_log_id`) REFERENCES `workflow_log` (`id`) ON DELETE CASCADE,
-  INDEX `idx_big_text_workflow_log_id` (`workflow_log_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='大数据存储表';
+  INDEX `idx_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='工作流执行记录表';
 
 # --------------------------------------------------------------------------------------------------------
 -- ============================================

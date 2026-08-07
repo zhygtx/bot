@@ -52,6 +52,12 @@
 - **基本类型**（`byte` `short` `int` `long` `float` `double` `char` `boolean`）**禁止**标记 `nullable = true`，因为 Java 反射调用无法传递 null 给基本类型
 - 包装类（`Integer` `Long` 等）和 `String` 可标记 `nullable = true`
 
+### 工作流节点约束（重要）
+- 方法参数值由工作流数据映射直接传入，**系统不做类型转换**。参数类型必须与来源值精确匹配，只允许 Java 自动装箱/拆箱；参数为 `Object` 时可接受任意值。
+- 需要在画布上作为“分支节点”使用的方法，返回值必须为 `Boolean`（`true` = 成功分支，`false` = 失败分支）。
+- 方法抛异常会直接终止整个工作流并将该工作流标记为不可用。除网络不稳定因素外，**不要吞异常、不要用返回 null 表示失败**，错误必须向上抛出。
+- 不要依赖系统自动填充默认值（如 `0`、空字符串、`false`）；未配置的参数应显式报错。
+
 ### SDK API 参考（持久化）
 
 继承 `PluginServiceBase` 后通过 `sqlService` 字段操作数据。`sqlService` 类型为 `SQLService`，操作的核心实体为 `PluginData`。**严禁凭空调用 SDK 中不存在的方法**，必须严格按下列签名使用。

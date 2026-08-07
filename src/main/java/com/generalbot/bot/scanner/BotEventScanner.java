@@ -188,9 +188,9 @@ public class BotEventScanner {
     private void addScheduledEvent() {
         List<FieldMetadata> fields = new ArrayList<>();
         fields.add(FieldMetadata.builder()
-                .fieldName("scheduledTime")
-                .fieldType("Integer")
-                .description("执行间隔时间（秒），最小60秒")
+                .fieldName("cronExpression")
+                .fieldType("String")
+                .description("Cron 表达式，最短执行间隔 5 分钟")
                 .order(0)
                 .required(true)
                 .example("60")

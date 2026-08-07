@@ -1,329 +1,419 @@
 package com.generalbot.workflow.service.impl;
 
-import com.generalbot.workflow.mapper.log.WorkflowLogMapper;
-import com.generalbot.workflow.mapper.*;
+import com.generalbot.plugin.entity.ParameterInfo;
 import com.generalbot.workflow.dto.WorkflowInfoDto;
-import com.generalbot.workflow.entity.*;
-import com.generalbot.workflow.service.WorkflowCacheService;
+import com.generalbot.workflow.engine.CallableRegistry;
+import com.generalbot.workflow.engine.CallableDescriptor;
+import com.generalbot.workflow.engine.TriggerRegistry;
+import com.generalbot.workflow.engine.WorkflowEngine;
+import com.generalbot.workflow.entity.definition.WorkflowDefinition;
+import com.generalbot.workflow.entity.definition.WorkflowEdge;
+import com.generalbot.workflow.entity.definition.WorkflowNode;
+import com.generalbot.workflow.entity.WorkflowInfo;
+import com.generalbot.workflow.mapper.WorkflowExecutionMapper;
+import com.generalbot.workflow.mapper.WorkflowInfoMapper;
 import com.generalbot.workflow.service.WorkflowService;
-import com.generalbot.workflow.engine.WorkflowUtil;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.support.CronExpression;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
+import java.util.UUID;
 
 /**
- * 工作流服务实现类。
- * 保存工作流时删除重建节点树，旧日志由外键级联清理。
+ * 工作流服务实现。定义整体保存，增删改只操作一行记录。
  */
-@Service
 @Slf4j
+@Service
 public class WorkflowServiceImpl implements WorkflowService {
 
-    private final WorkflowUtil workflowUtil;
     private final WorkflowInfoMapper workflowInfoMapper;
-    private final NodeDefaultsMapper nodeDefaultsMapper;
-    private final NodeNextRelationMapper nodeNextRelationMapper;
-    private final NodePreRelationMapper nodePreRelationMapper;
-    private final NodeMapper nodeMapper;
-    private final ConditionMapper conditionMapper;
-    private final DataMapMapper dataMapMapper;
-    private final WorkflowCacheService workflowCacheService;
-    private final WorkflowLogMapper workflowLogMapper;
-    private final WorkflowCanvasViewMapper workflowCanvasViewMapper;
+    private final WorkflowExecutionMapper executionMapper;
+    private final CallableRegistry callableRegistry;
+    private final TriggerRegistry triggerRegistry;
+    private final WorkflowEngine workflowEngine;
 
-    public WorkflowServiceImpl(WorkflowInfoMapper workflowInfoMapper, NodeDefaultsMapper nodeDefaultsMapper, NodeNextRelationMapper nodeNextRelationMapper, NodePreRelationMapper nodePreRelationMapper, NodeMapper nodeMapper, ConditionMapper conditionMapper, DataMapMapper dataMapMapper, WorkflowUtil workflowUtil, WorkflowCacheService workflowCacheService, WorkflowLogMapper workflowLogMapper, WorkflowCanvasViewMapper workflowCanvasViewMapper) {
+    /**
+     * 构造工作流服务。
+     * @param workflowInfoMapper 工作流 Mapper
+     * @param executionMapper 执行记录 Mapper
+     * @param callableRegistry callable 注册表
+     * @param triggerRegistry 触发注册表
+     * @param workflowEngine 执行引擎
+     */
+    public WorkflowServiceImpl(WorkflowInfoMapper workflowInfoMapper,
+                               WorkflowExecutionMapper executionMapper,
+                               CallableRegistry callableRegistry,
+                               TriggerRegistry triggerRegistry,
+                               WorkflowEngine workflowEngine) {
         this.workflowInfoMapper = workflowInfoMapper;
-        this.nodeDefaultsMapper = nodeDefaultsMapper;
-        this.nodeNextRelationMapper = nodeNextRelationMapper;
-        this.nodePreRelationMapper = nodePreRelationMapper;
-        this.nodeMapper = nodeMapper;
-        this.conditionMapper = conditionMapper;
-        this.dataMapMapper = dataMapMapper;
-        this.workflowUtil = workflowUtil;
-        this.workflowCacheService = workflowCacheService;
-        this.workflowLogMapper = workflowLogMapper;
-        this.workflowCanvasViewMapper = workflowCanvasViewMapper;
+        this.executionMapper = executionMapper;
+        this.callableRegistry = callableRegistry;
+        this.triggerRegistry = triggerRegistry;
+        this.workflowEngine = workflowEngine;
     }
 
     /**
-     * 添加工作流
-     * @param workflowInfo 工作流信息
-     * @return 添加结果
+     * 新增工作流：校验定义、计算触发键、插入一行并注册触发。
      */
     @Override
     @Transactional
-    public int add(WorkflowInfo workflowInfo) {
-        workflowInfo.setCreateTime(LocalDateTime.now());
-        workflowInfo.setUpdateTime(LocalDateTime.now());
-
-        int result = insert(workflowInfo);
-        if (result > 0 && workflowInfo.getEnabled()) {
-            // 从数据库重新获取完整的工作流信息
-            WorkflowInfo savedWorkflow = workflowInfoMapper.getById(workflowInfo.getId());
-            if (savedWorkflow != null) {
-                // 添加到本地内存缓存
-                workflowCacheService.addWorkflowToCache(savedWorkflow);
-                // 处理定时任务
-                workflowCacheService.addScheduledTask(savedWorkflow);
-            }
+    public WorkflowInfo add(WorkflowInfo workflowInfo) {
+        if (workflowInfo.getId() == null || workflowInfo.getId().isBlank()) {
+            workflowInfo.setId(UUID.randomUUID().toString());
         }
-        return result;
+        LocalDateTime now = LocalDateTime.now();
+        workflowInfo.setCreateTime(now);
+        workflowInfo.setUpdateTime(now);
+        workflowInfo.setAvailable(true);
+        workflowInfo.setDisableReason(null);
+        workflowInfo.setTriggerKey(validateAndPrepare(workflowInfo));
+        workflowInfoMapper.insert(workflowInfo);
+        WorkflowInfo saved = workflowInfoMapper.selectById(workflowInfo.getId());
+        triggerRegistry.register(saved);
+        return saved;
     }
 
     /**
-     * 删除工作流
-     * @param id 工作流ID
-     * @return 删除结果
+     * 删除工作流：先取消触发注册，再删除记录（执行记录级联删除）。
      */
     @Override
     @Transactional
     public int remove(String id) {
-        int result = workflowInfoMapper.deleteById(id);
-        if (result > 0) {
-            // 从本地内存缓存删除
-            workflowCacheService.removeWorkflowFromCache(id);
-            // 移除定时任务（Redis ZSet）
-            workflowCacheService.removeScheduledTask(id);
-        }
-        return result;
+        triggerRegistry.unregister(id);
+        return workflowInfoMapper.deleteById(id);
     }
 
     /**
-     * 修改工作流
-     * @param workflowInfo 工作流信息
-     * @return 修改结果
+     * 编辑工作流：整份定义原地更新，节点 ID 保持稳定，旧执行记录不丢。
      */
     @Override
     @Transactional
     public int edit(WorkflowInfo workflowInfo) {
         workflowInfo.setUpdateTime(LocalDateTime.now());
+        workflowInfo.setTriggerKey(validateAndPrepare(workflowInfo));
+        triggerRegistry.unregister(workflowInfo.getId());
+        int result = workflowInfoMapper.update(workflowInfo);
+        WorkflowInfo saved = workflowInfoMapper.selectById(workflowInfo.getId());
+        triggerRegistry.register(saved);
+        return result;
+    }
 
-        // 先从本地内存缓存删除旧数据，并移除定时任务（Redis ZSet）
-        workflowCacheService.removeWorkflowFromCache(workflowInfo.getId());
-        workflowCacheService.removeScheduledTask(workflowInfo.getId());
-
-        // 删除重建整棵节点树；workflow_log -> node_log -> big_text 外键级联会自动清理旧执行日志
-        workflowInfoMapper.deleteById(workflowInfo.getId());
-        int result = insert(workflowInfo);
-
-        if (result > 0 && workflowInfo.getEnabled()) {
-            // 从数据库重新获取完整的工作流信息
-            WorkflowInfo updatedWorkflow = workflowInfoMapper.getById(workflowInfo.getId());
-            if (updatedWorkflow != null) {
-                // 添加到本地内存缓存
-                workflowCacheService.addWorkflowToCache(updatedWorkflow);
-                // 更新定时任务
-                workflowCacheService.addScheduledTask(updatedWorkflow);
-            }
+    /**
+     * 启用/禁用工作流，并同步触发注册表。
+     */
+    @Override
+    public int editEnabled(String id, boolean enabled) {
+        triggerRegistry.unregister(id);
+        int result = workflowInfoMapper.updateEnabled(id, enabled);
+        if (enabled && result > 0) {
+            WorkflowInfo workflowInfo = workflowInfoMapper.selectById(id);
+            triggerRegistry.register(workflowInfo);
         }
         return result;
     }
 
     /**
-     * 启用或禁用工作流
-     * @param id 工作流ID
-     * @param enabled 是否启用
-     * @return 启用或禁用结果
+     * 禁用工作流并写入原因，同时取消触发注册。
      */
     @Override
-    public int editEnabled(String id, boolean enabled){
-        if (enabled){
-            WorkflowInfo workflowInfo = workflowInfoMapper.getById(id);
-            if (workflowInfo != null) {
-                workflowCacheService.addWorkflowToCache(workflowInfo);
-                workflowCacheService.addScheduledTask(workflowInfo);
+    public void disable(String id, String disableReason) {
+        triggerRegistry.unregister(id);
+        workflowInfoMapper.disable(id, disableReason);
+    }
+
+    /**
+     * 扫描全部工作流，禁用依赖指定插件的定义。
+     */
+    @Override
+    public void disableWorkflowsByPlugin(String pluginId, String disableReason) {
+        for (WorkflowInfo workflowInfo : workflowInfoMapper.selectAll()) {
+            if (usesPlugin(workflowInfo.getDefinition(), pluginId)) {
+                disable(workflowInfo.getId(), disableReason);
             }
-        }else {
-            workflowCacheService.removeWorkflowFromCache(id);
-            workflowCacheService.removeScheduledTask(id);
         }
-        return workflowInfoMapper.updateEnabled(id, enabled);
     }
 
     /**
-     * 修改工作流禁用原因
-     * @param id 工作流ID
-     * @param disableReason 禁用原因
+     * 分页查询工作流，并聚合执行次数、平均耗时、平均节点数。
      */
     @Override
-    @Transactional
-    public void editDisableReason(String id, String disableReason) {
-        workflowInfoMapper.updateAvailableByWorkflowId(id, disableReason);
-        workflowCacheService.removeScheduledTask(id);
-        workflowCacheService.removeWorkflowFromCache(id);
-    }
-
-
-    /**
-     * 查询所有工作流
-     * @param pageNum 页码
-     * @param pageSize 页大小
-     * @return 工作流列表
-     */
-    @Override
-    public PageInfo<WorkflowInfoDto> findAll(String userId,int pageNum, int pageSize) {
+    public PageInfo<WorkflowInfoDto> findAll(String userId, int pageNum, int pageSize) {
         PageHelper.startPage(pageNum, pageSize);
-        List<String> ids;
-        if (userId != null){
-            ids = workflowInfoMapper.selectIdsByUserId(userId);
-        }else {
-            ids = workflowInfoMapper.selectAllIds();
-        }
-        if (ids.isEmpty()) {
-            return new PageInfo<>(new ArrayList<>());
+        List<WorkflowInfo> all = workflowInfoMapper.selectAll();
+        PageInfo<WorkflowInfo> rawPage = new PageInfo<>(all);
+
+        List<WorkflowInfoDto> dtos = new ArrayList<>();
+        for (WorkflowInfo workflowInfo : all) {
+            WorkflowInfoDto dto = new WorkflowInfoDto();
+            dto.setId(workflowInfo.getId());
+            dto.setUserId(workflowInfo.getUserId());
+            dto.setName(workflowInfo.getName());
+            dto.setEnabled(workflowInfo.getEnabled());
+            dto.setAvailable(workflowInfo.getAvailable());
+            dto.setDisableReason(workflowInfo.getDisableReason());
+            dto.setTriggerKey(workflowInfo.getTriggerKey());
+            dto.setCreateTime(workflowInfo.getCreateTime());
+            dto.setUpdateTime(workflowInfo.getUpdateTime());
+            dto.setNodeCount(workflowInfo.getDefinition() == null
+                    ? 0 : workflowInfo.getDefinition().getNodes().size());
+            dtos.add(dto);
         }
 
-        List<WorkflowInfoDto> workflowInfos = workflowInfoMapper.selectAll(ids);
-        
-        // 获取统计信息
-        List<Map<String, Object>> statsList = workflowLogMapper.selectStatsByWorkflowIds(ids);
-        
-        // 将统计信息转换为 Map，方便查找
-        Map<String, Map<String, Object>> statsMap = new HashMap<>();
-        for (Map<String, Object> stats : statsList) {
-            String workflowId = (String) stats.get("workflowId");
-            statsMap.put(workflowId, stats);
-        }
-        
-        // 填充统计数据到工作流信息中
-        for (WorkflowInfoDto dto : workflowInfos) {
-            Map<String, Object> stats = statsMap.get(dto.getId());
-            if (stats != null) {
-                dto.setExecuteCount(((Number) stats.get("executeCount")).intValue());
-                Object avgExecTime = stats.get("averageExecutionTime");
-                if (avgExecTime != null) {
-                    dto.setAverageExecutionTime(((Number) avgExecTime).intValue());
+        List<String> ids = all.stream().map(WorkflowInfo::getId).toList();
+        if (!ids.isEmpty()) {
+            Map<String, Map<String, Object>> statsMap = new HashMap<>();
+            for (Map<String, Object> stats : executionMapper.selectStatsByWorkflowIds(ids)) {
+                statsMap.put(String.valueOf(stats.get("workflowId")), stats);
+            }
+            for (WorkflowInfoDto dto : dtos) {
+                Map<String, Object> stats = statsMap.get(dto.getId());
+                if (stats != null) {
+                    dto.setExecuteCount(toInt(stats.get("executeCount")));
+                    dto.setAverageExecutionTime(toInt(stats.get("averageExecutionTime")));
+                    dto.setAverageNodeCount(toInt(stats.get("averageNodeCount")));
+                } else {
+                    dto.setExecuteCount(0);
+                    dto.setAverageExecutionTime(0);
+                    dto.setAverageNodeCount(0);
                 }
-                Object avgNodeCount = stats.get("averageNodeCount");
-                if (avgNodeCount != null) {
-                    dto.setAverageNodeCount(((Number) avgNodeCount).intValue());
-                }
-            } else {
-                // 没有执行记录时设置默认值
-                dto.setExecuteCount(0);
-                dto.setAverageExecutionTime(0);
-                dto.setAverageNodeCount(0);
             }
         }
 
-        PageInfo<WorkflowInfoDto> pageInfo = new PageInfo<>(workflowInfos);
-        pageInfo.setTotal(workflowInfoMapper.countAll());
-
+        PageInfo<WorkflowInfoDto> pageInfo = new PageInfo<>(dtos);
+        pageInfo.setTotal(rawPage.getTotal());
+        pageInfo.setPageNum(rawPage.getPageNum());
+        pageInfo.setPageSize(rawPage.getPageSize());
         return pageInfo;
     }
 
     /**
-     * 查询工作流
-     * @param id 工作流ID
-     * @return 工作流信息
+     * 根据 ID 查询工作流完整定义。
      */
     @Override
     public WorkflowInfo findById(String id) {
-        return workflowInfoMapper.getById(id);
+        return workflowInfoMapper.selectById(id);
     }
 
     /**
-     * 查询所有定时任务
-     * @return 定时任务列表
+     * 测试执行工作流，返回执行记录 ID。
      */
     @Override
-    public List<WorkflowInfo> findAllScheduledTask() {
-        return workflowInfoMapper.selectAllScheduledTask();
-    }
-
-    /**
-     * 测试工作流
-     * @param workflowInfo 工作流信息
-     * @return 工作流执行日志 ID
-     */
-    @Override
-    public Long test(WorkflowInfo workflowInfo) throws Exception {
-        return workflowUtil.executeWorkflow(workflowInfo,"",null);
-    }
-
-    /**
-     * 工作流处理
-     * @param workflowInfo 工作流信息
-     * @return 处理结果
-     */
-    private int insert(WorkflowInfo workflowInfo) {
-        WorkflowCanvasView workflowCanvasView = workflowInfo.getWorkflowCanvasView();
-        workflowCanvasView.setWorkflowId(workflowInfo.getId());
-        workflowCanvasView.setUserId(workflowInfo.getUserId());
-
-        List<Node> nodes = workflowInfo.getNodes();
-        Map<String,String> dataMapId = new HashMap<>();
-        for (Node node : nodes){
-            String uuid = UUID.randomUUID().toString();
-            dataMapId.put(node.getId(),uuid);
-            node.setId(uuid);
+    public Long test(String workflowId) {
+        WorkflowInfo workflowInfo = workflowInfoMapper.selectById(workflowId);
+        if (workflowInfo == null) {
+            throw new RuntimeException("工作流不存在：" + workflowId);
         }
-        nodes.forEach(node -> node.setWorkflowId(workflowInfo.getId()));
+        try {
+            return workflowEngine.execute(workflowInfo, "test", null);
+        } catch (Exception e) {
+            throw new RuntimeException("测试工作流失败：" + e.getMessage(), e);
+        }
+    }
 
-        List<NodeDefaults> nodeDefaults = nodes.stream()
-                .flatMap(node -> node.getNodeDefaults()
-                        .stream()
-                        .peek(nodeDefault -> nodeDefault.setId(UUID.randomUUID().toString()))
-                        .peek(nodeDefault -> nodeDefault.setNodeId(node.getId())))
-                .toList();
+    /**
+     * 校验并准备工作流：名称、节点、连线、环、参数输入，最后计算触发键。
+     */
+    private String validateAndPrepare(WorkflowInfo workflowInfo) {
+        if (workflowInfo.getName() == null || workflowInfo.getName().isBlank()) {
+            throw new RuntimeException("工作流名称不能为空");
+        }
+        WorkflowDefinition definition = workflowInfo.getDefinition();
+        if (definition == null || definition.getNodes() == null || definition.getNodes().isEmpty()) {
+            throw new RuntimeException("工作流至少需要一个节点");
+        }
 
-        List<DataMap> dataMaps = nodes.stream()
-                .flatMap(node -> node.getDataMaps()
-                        .stream()
-                        .peek(dataMap -> dataMap.setId(UUID.randomUUID().toString()))
-                        .peek(dataMap -> dataMap.setNodeId(node.getId()))
-                        .peek(dataMap -> dataMap.setSourceNodeId(dataMapId.get(dataMap.getSourceNodeId())))
-                )
-                .toList();
+        Set<String> nodeIds = new HashSet<>();
+        WorkflowNode triggerNode = null;
+        for (WorkflowNode node : definition.getNodes()) {
+            if (!nodeIds.add(node.getId())) {
+                throw new RuntimeException("节点ID重复：" + node.getId());
+            }
+            CallableDescriptor descriptor = callableRegistry.describe(node.getCallable());
+            if (descriptor.getKind() == CallableDescriptor.CallableKind.TRIGGER) {
+                if (triggerNode != null) {
+                    throw new RuntimeException("一个工作流只能有一个触发节点");
+                }
+                triggerNode = node;
+                if (Boolean.TRUE.equals(node.getBranch())) {
+                    throw new RuntimeException("触发节点不能作为分支节点");
+                }
+            } else if (Boolean.TRUE.equals(node.getBranch())
+                    && !"Boolean".equalsIgnoreCase(descriptor.getReturnType())
+                    && !"boolean".equalsIgnoreCase(descriptor.getReturnType())) {
+                throw new RuntimeException("分支节点 " + descriptor.getName() + " 的返回值不是 Boolean");
+            }
+            validateNodeInputs(node, descriptor);
+        }
 
-        List<Condition> conditions = nodes.stream()
-                .filter(node -> node.getCondition() != null)
-                .peek(node -> {
-                    Condition condition = node.getCondition();
-                    condition.setId(UUID.randomUUID().toString());
-                    condition.setNodeId(node.getId());
-                })
-                .map(Node::getCondition)
-                .toList();
+        Map<String, WorkflowNode> nodeMap = new HashMap<>();
+        for (WorkflowNode node : definition.getNodes()) {
+            nodeMap.put(node.getId(), node);
+        }
+        Set<String> edgeKeys = new HashSet<>();
+        for (WorkflowEdge edge : definition.getEdges()) {
+            if (!nodeMap.containsKey(edge.getFrom()) || !nodeMap.containsKey(edge.getTo())) {
+                throw new RuntimeException("连线引用了不存在的节点：" + edge.getFrom() + " -> " + edge.getTo());
+            }
+            String edgeKey = edge.getFrom() + ":" + edge.getTo() + ":" + edge.getPort();
+            if (!edgeKeys.add(edgeKey)) {
+                throw new RuntimeException("重复连线：" + edgeKey);
+            }
+            if (!"success".equals(edge.getPort()) && !"failure".equals(edge.getPort())) {
+                throw new RuntimeException("连线端口只能是 success/failure：" + edge.getPort());
+            }
+            if ("failure".equals(edge.getPort()) && !Boolean.TRUE.equals(nodeMap.get(edge.getFrom()).getBranch())) {
+                throw new RuntimeException("普通节点不能有失败输出连线：" + edge.getFrom());
+            }
+            if (triggerNode != null && triggerNode.getId().equals(edge.getTo())) {
+                throw new RuntimeException("触发节点不能作为连线目标：" + triggerNode.getId());
+            }
+        }
+        checkNoCycle(definition);
+        return computeTriggerKey(triggerNode);
+    }
 
-        Map<String, List<String>> nodeNextRelation = nodes.stream()
-                .collect(Collectors.toMap(
-                        Node::getId,
-                        node -> node.getNextNodeId()
-                                .stream()
-                                .map(dataMapId::get)
-                                .toList()
-                ))
-                .entrySet().stream()
-                .filter(entry -> !entry.getValue().isEmpty())
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    /**
+     * 校验任务节点每个参数的输入：非 nullable 参数必须有来源或默认值。
+     */
+    private void validateNodeInputs(WorkflowNode node, CallableDescriptor descriptor) {
+        if (descriptor.getKind() == CallableDescriptor.CallableKind.TRIGGER) {
+            return;
+        }
+        List<ParameterInfo> parameters = descriptor.getParameters();
+        for (int i = 0; i < parameters.size(); i++) {
+            final int paramIndex = i;
+            ParameterInfo param = parameters.get(i);
+            var input = node.getInputs().stream()
+                    .filter(item -> Integer.valueOf(paramIndex).equals(item.getParamIndex()))
+                    .findFirst()
+                    .orElse(null);
+            boolean hasValue = input != null
+                    && ((input.getSource() != null && !input.getSource().isBlank())
+                    || input.getDefaultValue() != null);
+            if (!hasValue && !param.isNullable()) {
+                throw new RuntimeException("节点 " + descriptor.getName() + " 的参数 "
+                        + param.getName() + " 未配置数据来源或默认值");
+            }
+        }
+    }
 
-        Map<String, List<String>> nodePreRelation = nodes.stream()
-                .collect(Collectors.toMap(
-                        Node::getId,
-                        node -> node.getPreNodeId()
-                                .stream()
-                                .map(dataMapId::get)
-                                .toList()
-                ))
-                .entrySet().stream()
-                .filter(entry -> !entry.getValue().isEmpty())
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    /**
+     * Kahn 拓扑排序检测 DAG 是否有环。
+     */
+    private void checkNoCycle(WorkflowDefinition definition) {
+        Map<String, Integer> inDegree = new HashMap<>();
+        Map<String, List<String>> outgoing = new HashMap<>();
+        for (WorkflowNode node : definition.getNodes()) {
+            inDegree.put(node.getId(), 0);
+            outgoing.put(node.getId(), new ArrayList<>());
+        }
+        for (WorkflowEdge edge : definition.getEdges()) {
+            inDegree.merge(edge.getTo(), 1, Integer::sum);
+            outgoing.get(edge.getFrom()).add(edge.getTo());
+        }
+        Queue<String> queue = new ArrayDeque<>();
+        for (Map.Entry<String, Integer> entry : inDegree.entrySet()) {
+            if (entry.getValue() == 0) {
+                queue.add(entry.getKey());
+            }
+        }
+        int visited = 0;
+        while (!queue.isEmpty()) {
+            String nodeId = queue.poll();
+            visited++;
+            for (String next : outgoing.get(nodeId)) {
+                int remain = inDegree.get(next) - 1;
+                inDegree.put(next, remain);
+                if (remain == 0) {
+                    queue.add(next);
+                }
+            }
+        }
+        if (visited != inDegree.size()) {
+            throw new RuntimeException("工作流存在环，无法保存");
+        }
+    }
 
-        int insertWorkflowInfo = workflowInfoMapper.insert(workflowInfo);
-        int insertWorkflowCanvasView = workflowCanvasViewMapper.insert(workflowCanvasView);
-        int insertNodes = nodeMapper.insert(nodes);
-        int insertNodeDefaults = nodeDefaults.isEmpty() ? 1 : nodeDefaultsMapper.insert(nodeDefaults);
-        int insertDataMaps = dataMaps.isEmpty() ? 1 : dataMapMapper.insert(dataMaps);
-        int insertConditions = conditions.isEmpty() ? 1 : conditionMapper.insert(conditions);
-        int insertNodeNextRelation = nodeNextRelation.isEmpty() ? 1 : nodeNextRelationMapper.insert(nodeNextRelation);
-        int insertNodePreRelation = nodePreRelation.isEmpty() ? 1 : nodePreRelationMapper.insert(nodePreRelation);
-        return (insertWorkflowInfo + insertWorkflowCanvasView + insertNodes + insertNodeDefaults + insertDataMaps + insertConditions + insertNodeNextRelation + insertNodePreRelation) > 0 ? 1 : 0;
+    /**
+     * 根据触发节点计算注册键，例如 botEvent:{botQQ}:{EventType} 或 schedule:{cron}。
+     */
+    private String computeTriggerKey(WorkflowNode triggerNode) {
+        if (triggerNode == null) {
+            return "";
+        }
+        if (triggerNode.getCallable().startsWith("system:botEvent:")) {
+            Object botQQ = triggerNode.getConfig() == null ? null : triggerNode.getConfig().get("botQQ");
+            if (botQQ == null) {
+                throw new RuntimeException("BOT 事件节点缺少 botQQ 配置");
+            }
+            String eventType = triggerNode.getCallable().substring("system:botEvent:".length());
+            return "botEvent:" + botQQ + ":" + eventType;
+        }
+        if (CallableRegistry.SCHEDULE_KEY.equals(triggerNode.getCallable())) {
+            Object cron = triggerNode.getConfig() == null ? null : triggerNode.getConfig().get("cronExpression");
+            if (cron == null || cron.toString().isBlank()) {
+                throw new RuntimeException("定时触发节点缺少 Cron 表达式配置");
+            }
+            String expression = cron.toString().trim();
+            validateCronMinimumInterval(expression);
+            return "schedule:" + expression;
+        }
+        return "";
+    }
+
+    /**
+     * 校验 Cron 表达式语法，并强制两次执行间隔不少于 5 分钟。
+     */
+    private void validateCronMinimumInterval(String expression) {
+        CronExpression cronExpression;
+        try {
+            cronExpression = CronExpression.parse(expression);
+        } catch (Exception e) {
+            throw new RuntimeException("Cron 表达式无效：" + expression);
+        }
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime first = cronExpression.next(now);
+        LocalDateTime second = first == null ? null : cronExpression.next(first);
+        LocalDateTime third = second == null ? null : cronExpression.next(second);
+        if (first == null || second == null || third == null) {
+            throw new RuntimeException("Cron 表达式没有可用的执行时间：" + expression);
+        }
+        long gap1 = Duration.between(first, second).toMinutes();
+        long gap2 = Duration.between(second, third).toMinutes();
+        if (gap1 < 5 || gap2 < 5) {
+            throw new RuntimeException("定时任务最短执行间隔为 5 分钟：" + expression);
+        }
+    }
+
+    /**
+     * 判断工作流定义是否引用了指定插件。
+     */
+    private boolean usesPlugin(WorkflowDefinition definition, String pluginId) {
+        if (definition == null || definition.getNodes() == null) {
+            return false;
+        }
+        String prefix = "plugin:" + pluginId + ":";
+        return definition.getNodes().stream().anyMatch(node -> node.getCallable() != null
+                && node.getCallable().startsWith(prefix));
+    }
+
+    /**
+     * 统计聚合值安全转 int。
+     */
+    private int toInt(Object value) {
+        return value == null ? 0 : ((Number) value).intValue();
     }
 }

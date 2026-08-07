@@ -46,6 +46,11 @@ public class WorkflowInfoDto {
     private String disableReason;
 
     /**
+     * 触发键
+     */
+    private String triggerKey;
+
+    /**
      * 工作流创建时间
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")

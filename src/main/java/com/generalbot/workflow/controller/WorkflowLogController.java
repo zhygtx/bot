@@ -1,35 +1,36 @@
 package com.generalbot.workflow.controller;
 
 import com.generalbot.common.api.Result;
-import com.generalbot.workflow.service.WorkflowLogService;
+import com.generalbot.workflow.entity.execution.WorkflowExecution;
+import com.generalbot.workflow.service.WorkflowExecutionService;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * 工作流日志控制器
+ * 工作流执行记录控制器。
  */
 @RestController
 @RequestMapping("/workflowLog")
 public class WorkflowLogController {
 
-    private final WorkflowLogService workflowLogService;
+    private final WorkflowExecutionService executionService;
 
-    public WorkflowLogController(WorkflowLogService workflowLogService) {
-        this.workflowLogService = workflowLogService;
+    public WorkflowLogController(WorkflowExecutionService executionService) {
+        this.executionService = executionService;
     }
 
     /**
-     * 查询工作流日志
+     * 分页查询执行记录
      * @param userId 用户ID
-     * @param workflowId 工作流ID（可选）
-     * @param workflowName 工作流名称（可选）
-     * @param startTime 开始时间（可选）
-     * @param endTime 结束时间（可选）
-     * @param sortField 排序字段（可选：actualNodeCount, executionTime）
-     * @param sortOrder 排序方式（可选：asc, desc）
-     * @param status 执行状态（可选：success-成功, failed-失败）
+     * @param workflowId 工作流ID
+     * @param workflowName 工作流名称
+     * @param startTime 开始时间
+     * @param endTime 结束时间
+     * @param sortField 排序字段
+     * @param sortOrder 排序方式
+     * @param status 状态
      * @param pageNum 页码
-     * @param pageSize 页大小
-     * @return 工作流日志列表
+     * @param pageSize 每页数量
+     * @return 执行记录分页
      */
     @GetMapping("/findWorkflowLogs")
     public Result<?> findWorkflowLogs(String userId,
@@ -40,38 +41,20 @@ public class WorkflowLogController {
                                       String sortField,
                                       String sortOrder,
                                       String status,
-                                      @RequestParam(required = false,defaultValue = "1") Integer pageNum,
-                                      @RequestParam(required = false,defaultValue = "10") Integer pageSize) {
-        return Result.success(null,workflowLogService.findWorkflowLogs(userId, workflowId, workflowName, startTime, endTime, sortField, sortOrder, status, pageNum, pageSize));
+                                      @RequestParam(defaultValue = "1") Integer pageNum,
+                                      @RequestParam(defaultValue = "10") Integer pageSize) {
+        return Result.success(null, executionService.findExecutions(
+                userId, workflowId, workflowName, startTime, endTime, sortField, sortOrder, status, pageNum, pageSize));
     }
 
     /**
-     * 查询工作流节点日志
-     * @param workflowLogId 工作流日志ID
-     * @return 工作流节点日志列表
-     */
-    @GetMapping("/findNodeLogs")
-    public Result<?> findNodeLogs(Long workflowLogId) {
-        return Result.success(null,workflowLogService.findNodeLogs(workflowLogId));
-    }
-
-    /**
-     * 查询大数据内容
-     * @param key 大数据引用键
-     * @return 大数据内容
-     */
-    @GetMapping("/findBigText")
-    public Result<?> findBigText(String key) {
-        return Result.success(null, workflowLogService.findBigText(key));
-    }
-
-    /**
-     * 根据ID查询工作流日志
-     * @param id 工作流日志ID
-     * @return 工作流日志
+     * 根据ID查询执行记录
+     * @param id 执行记录ID
+     * @return 执行记录
      */
     @GetMapping("{id}")
     public Result<?> getWorkflowLogById(@PathVariable("id") Long id) {
-        return Result.success(null, workflowLogService.findWorkflowLogById(id));
+        WorkflowExecution execution = executionService.findById(id);
+        return Result.success(null, execution);
     }
 }

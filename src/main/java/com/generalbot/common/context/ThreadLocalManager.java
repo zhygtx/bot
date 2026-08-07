@@ -1,161 +1,53 @@
 package com.generalbot.common.context;
 
-import com.generalbot.workflow.entity.log.NodeLog;
-import com.generalbot.workflow.entity.log.WorkflowLog;
-import lombok.extern.slf4j.Slf4j;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 /**
- * ThreadLocal管理工具类，用于安全管理ThreadLocal变量
+ * ThreadLocal 管理工具类，仅保留插件 SQLService 需要的 userId/pluginId 隔离。
  */
-@Slf4j
 public class ThreadLocalManager {
-    
-    public static final String BIG_TEXT_PREFIX = "BIG_TEXT:";
-    public static final int BIG_TEXT_THRESHOLD = 10 * 1024; 
 
-    // 方法实例缓存
-    private static final ThreadLocal<Map<String, Object>> methodInstanceCache = 
-        ThreadLocal.withInitial(HashMap::new);
-    
-    // 执行上下文缓存
-    private static final ThreadLocal<Map<String, Object>> executionContext = 
-        ThreadLocal.withInitial(HashMap::new);
+    private static final ThreadLocal<String> USER_ID = new ThreadLocal<>();
+    private static final ThreadLocal<String> PLUGIN_ID = new ThreadLocal<>();
 
-    // 工作流日志缓存
-    private static final ThreadLocal<WorkflowLog> workflowLog =
-            ThreadLocal.withInitial(WorkflowLog::new);
-
-    // 节点日志缓存
-    private static final ThreadLocal<Map<String, NodeLog>> nodeLogList =
-            ThreadLocal.withInitial(HashMap::new);
-
-    // 大数据缓存（临时存储，工作流结束后统一写入数据库）
-    private static final ThreadLocal<Map<String, String>> bigTextCache =
-            ThreadLocal.withInitial(HashMap::new);
-
-    // 在ThreadLocalManager类中添加
-    private static final String USER_ID_KEY = "userId";
-    private static final String PLUGIN_ID_KEY  = "pluginId";
+    private ThreadLocalManager() {
+    }
 
     /**
-     * 设置用户ID
+     * 设置当前用户ID
      * @param userId 用户ID
      */
     public static void setUserId(String userId) {
-        getExecutionContext().put(USER_ID_KEY, userId);
+        USER_ID.set(userId);
     }
 
     /**
-     * 获取用户ID
+     * 获取当前用户ID
      * @return 用户ID
      */
     public static String getUserId() {
-        return (String) getExecutionContext().get(USER_ID_KEY);
+        return USER_ID.get();
     }
 
     /**
-     * 设置插件ID
+     * 设置当前插件ID
      * @param pluginId 插件ID
      */
     public static void setPluginId(String pluginId) {
-        getExecutionContext().put(PLUGIN_ID_KEY, pluginId);
+        PLUGIN_ID.set(pluginId);
     }
 
     /**
-     * 获取插件ID
+     * 获取当前插件ID
      * @return 插件ID
      */
     public static String getPluginId() {
-        return (String) getExecutionContext().get(PLUGIN_ID_KEY);
-    }
-    
-    /**
-     * 获取方法实例缓存
-     * @return 方法实例缓存
-     */
-    public static Map<String, Object> getMethodInstanceCache() {
-        return methodInstanceCache.get();
-    }
-    
-    /**
-     * 获取执行上下文
-     * @return 执行上下文
-     */
-    public static Map<String, Object> getExecutionContext() {
-        return executionContext.get();
+        return PLUGIN_ID.get();
     }
 
     /**
-     * 获取工作流日志
-     * @return 工作流日志
-     */
-    public static WorkflowLog getWorkflowLog() {
-        return workflowLog.get();
-    }
-
-    /**
-     * 设置工作流日志
-     * @param workflowLog 工作流日志
-     */
-    public static void setWorkflowLog(WorkflowLog workflowLog) {
-        ThreadLocalManager.workflowLog.set(workflowLog);
-    }
-
-    /**
-     * 获取节点日志列表
-     * @return 节点日志列表
-     */
-    public static List<NodeLog> getNodeLogList() {
-        return new ArrayList<>(nodeLogList.get().values());
-    }
-
-    /**
-     * 获取节点日志
-     * @param nodeId 节点ID
-     * @return 节点日志
-     */
-    public static NodeLog getNodeLog(String nodeId) {
-        return nodeLogList.get().get(nodeId);
-    }
-
-    /**
-     * 添加节点日志
-     * @param nodeLog 节点日志
-     */
-    public static void addNodeLog(NodeLog nodeLog) {
-        nodeLogList.get().put(nodeLog.getNodeId(), nodeLog);
-    }
-
-    /**
-     * 获取大数据缓存
-     * @return 大数据缓存
-     */
-    public static Map<String, String> getBigTextCache() {
-        return bigTextCache.get();
-    }
-
-    /**
-     * 添加大数据到缓存
-     * @param key 键
-     * @param value 值
-     */
-    public static void addBigText(String key, String value) {
-        bigTextCache.get().put(key, value);
-    }
-
-    /**
-     * 清理所有ThreadLocal变量
+     * 清理全部线程局部变量
      */
     public static void clear() {
-        methodInstanceCache.remove();
-        executionContext.remove();
-        workflowLog.remove();
-        nodeLogList.remove();
-        bigTextCache.remove();
+        USER_ID.remove();
+        PLUGIN_ID.remove();
     }
 }

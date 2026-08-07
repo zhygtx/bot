@@ -3,423 +3,75 @@
 
 <mapper namespace="com.generalbot.workflow.mapper.WorkflowInfoMapper">
 
-    <!-- 工作流信息结果映射 -->
     <resultMap id="workflowInfoMap" type="com.generalbot.workflow.entity.WorkflowInfo">
-        <id column="workflow_id" property="id"/>
-        <result column="workflow_user_id" property="userId"/>
-        <result column="workflow_name" property="name"/>
-        <result column="workflow_enabled" property="enabled"/>
-        <result column="workflow_available" property="available"/>
-        <result column="workflow_disable_reason" property="disableReason"/>
-        <result column="workflow_create_time" property="createTime"/>
-        <result column="workflow_update_time" property="updateTime"/>
-
-        <!--工作流画布-->
-        <association property="workflowCanvasView" javaType="com.generalbot.workflow.entity.WorkflowCanvasView">
-            <result column="workflow_canvas_view_workflow_id" property="workflowId"/>
-            <result column="workflow_canvas_view_offset_x" property="offsetX"/>
-            <result column="workflow_canvas_view_offset_y" property="offsetY"/>
-            <result column="workflow_canvas_view_scale" property="scale"/>
-            <result column="workflow_canvas_view_user_id" property="userId"/>
-        </association>
-
-        <!-- 工作流节点列表 -->
-        <collection property="nodes" ofType="com.generalbot.workflow.entity.Node">
-            <id column="node_id" property="id"/>
-            <result column="node_x" property="x"/>
-            <result column="node_y" property="y"/>
-            <result column="node_workflow_id" property="workflowId"/>
-            <result column="node_plugin_id" property="pluginId"/>
-            <result column="node_plugin_version_id" property="pluginVersionId"/>
-            <result column="node_method_class_id" property="methodClassId"/>
-            <result column="node_method_id" property="methodId"/>
-            <result column="node_node_type" property="nodeType"/>
-            <result column="node_event_type" property="eventType"/>
-            <result column="node_bot_qq" property="botQQ"/>
-            <result column="node_bot_action_name" property="botActionName"/>
-            <result column="node_bot_event_name" property="botEventName"/>
-            <result column="node_scheduled_time" property="scheduledTime"/>
-            <result column="node_in_degree" property="inDegree"/>
-
-            <!-- 插件信息 -->
-            <association property="pluginInfo" javaType="com.generalbot.plugin.entity.PluginInfo">
-                <id column="plugin_id" property="id"/>
-                <result column="plugin_name" property="name"/>
-                <result column="plugin_description" property="description"/>
-                <result column="plugin_author_id" property="authorId"/>
-                <result column="plugin_latest_version" property="latestVersion"/>
-                <result column="plugin_version_count" property="versionCount"/>
-                <result column="plugin_create_time" property="createTime"/>
-                <result column="plugin_update_time" property="updateTime"/>
-                <result column="plugin_is_public" property="isPublic"/>
-                
-                <!-- 插件版本列表 -->
-                <collection property="pluginVersionList" ofType="com.generalbot.plugin.entity.PluginVersion">
-                    <id column="plugin_version_id" property="id"/>
-                    <result column="plugin_version_plugin_id" property="pluginId"/>
-                    <result column="plugin_version_version" property="version"/>
-                    <result column="plugin_version_path" property="path"/>
-                    <result column="plugin_version_file_size" property="fileSize"/>
-                    <result column="plugin_version_file_md5" property="fileMd5"/>
-                    <result column="plugin_version_create_time" property="createTime"/>
-                    <result column="plugin_version_changelog" property="changelog"/>
-                    <result column="plugin_version_entity_package" property="entityPackage"/>
-                    <result column="plugin_version_method_package" property="methodPackage"/>
-                    <result column="plugin_version_compatible_version" property="compatibleVersion"/>
-                    
-                    <!-- 实体类信息列表 -->
-                    <collection property="entityInfoList" ofType="com.generalbot.plugin.entity.EntityInfo">
-                        <id column="entity_id" property="id"/>
-                        <result column="entity_description" property="description"/>
-                        <result column="entity_name" property="name"/>
-                        <result column="entity_plugin_version_id" property="pluginVersionId"/>
-                        <result column="entity_entity_name" property="entityName"/>
-                        <!-- 关联属性信息 -->
-                        <collection property="attributes" ofType="com.generalbot.plugin.entity.Attribute">
-                            <id column="attribute_id" property="id"/>
-                            <result column="attribute_description" property="description"/>
-                            <result column="attribute_entity_info_id" property="entityInfoId"/>
-                            <result column="attribute_type" property="type"/>
-                            <result column="attribute_name" property="name"/>
-                        </collection>
-                    </collection>
-                    
-                    <!-- 方法类信息列表 -->
-                    <collection property="methodClassInfoList" ofType="com.generalbot.plugin.entity.MethodClassInfo">
-                        <id column="method_class_id" property="id"/>
-                        <result column="method_class_description" property="description"/>
-                        <result column="method_class_plugin_version_id" property="pluginVersionId"/>
-                        <result column="method_class_class_name" property="className"/>
-                        <result column="method_class_simple_class_name" property="simpleClassName"/>
-                        <result column="method_class_package_name" property="packageName"/>
-                        
-                        <!-- 方法列表 -->
-                        <collection property="methods" ofType="com.generalbot.plugin.entity.MethodInfo">
-                            <id column="method_id" property="id"/>
-                            <result column="method_description" property="description"/>
-                            <result column="method_method_class_id" property="methodClassId"/>
-                            <result column="method_name" property="name"/>
-                            <result column="method_return_type" property="returnType"/>
-                            <result column="method_return_description" property="returnDescription"/>
-                        </collection>
-                    </collection>
-                </collection>
-            </association>
-
-            <!-- 插件版本信息 -->
-            <association property="pluginVersion" javaType="com.generalbot.plugin.entity.PluginVersion">
-                <id column="plugin_version_id" property="id"/>
-                <result column="plugin_version_plugin_id" property="pluginId"/>
-                <result column="plugin_version_version" property="version"/>
-                <result column="plugin_version_path" property="path"/>
-                <result column="plugin_version_file_size" property="fileSize"/>
-                <result column="plugin_version_file_md5" property="fileMd5"/>
-                <result column="plugin_version_create_time" property="createTime"/>
-                <result column="plugin_version_changelog" property="changelog"/>
-                <result column="plugin_version_entity_package" property="entityPackage"/>
-                <result column="plugin_version_method_package" property="methodPackage"/>
-                <result column="plugin_version_compatible_version" property="compatibleVersion"/>
-            </association>
-
-            <!-- 方法类信息 -->
-            <association property="methodClassInfo" javaType="com.generalbot.plugin.entity.MethodClassInfo">
-                <id column="method_class_id" property="id"/>
-                <result column="method_class_description" property="description"/>
-                <result column="method_class_plugin_version_id" property="pluginVersionId"/>
-                <result column="method_class_class_name" property="className"/>
-                <result column="method_class_simple_class_name" property="simpleClassName"/>
-                <result column="method_class_package_name" property="packageName"/>
-            </association>
-
-            <!-- 方法信息 -->
-            <association property="methodInfo" javaType="com.generalbot.plugin.entity.MethodInfo">
-                <id column="method_id" property="id"/>
-                <result column="method_description" property="description"/>
-                <result column="method_method_class_id" property="methodClassId"/>
-                <result column="method_name" property="name"/>
-                <result column="method_return_type" property="returnType"/>
-                <result column="method_return_description" property="returnDescription"/>
-                
-                <!-- 方法参数列表 -->
-                <collection property="parameters" ofType="com.generalbot.plugin.entity.ParameterInfo">
-                    <id column="parameter_id" property="id"/>
-                    <result column="parameter_order" property="order"/>
-                    <result column="parameter_description" property="description"/>
-                    <result column="parameter_method_id" property="methodId"/>
-                    <result column="parameter_name" property="name"/>
-                    <result column="parameter_nullable" property="nullable"/>
-                    <result column="parameter_type" property="type"/>
-                </collection>
-            </association>
-
-            <!-- 节点条件 -->
-            <association property="condition" javaType="com.generalbot.workflow.entity.Condition">
-                <id column="condition_id" property="id"/>
-                <result column="condition_node_id" property="nodeId"/>
-                <result column="condition_true_action" property="trueAction"/>
-                <result column="condition_false_action" property="falseAction"/>
-            </association>
-
-            <!-- 数据映射列表 -->
-            <collection property="dataMaps" ofType="com.generalbot.workflow.entity.DataMap">
-                <id column="data_map_id" property="id"/>
-                <result column="data_map_node_id" property="nodeId"/>
-                <result column="data_map_source_node_id" property="sourceNodeId"/>
-                <result column="data_map_source_path" property="sourcePath"/>
-                <result column="data_map_target_param_name" property="targetParamName"/>
-                <result column="data_map_param_index" property="paramIndex"/>
-                <result column="data_map_target_path" property="targetPath"/>
-                <result column="data_map_source_type" property="sourceType"/>
-                <result column="data_map_target_type" property="targetType"/>
-            </collection>
-
-            <!-- 前置节点 ID 列表 -->
-            <collection property="preNodeId" ofType="java.lang.String">
-                <result column="pre_node_id"/>
-            </collection>
-
-            <!-- 后置节点 ID 列表 -->
-            <collection property="nextNodeId" ofType="java.lang.String">
-                <result column="next_node_id"/>
-            </collection>
-
-            <!-- 节点默认值列表 -->
-            <collection property="nodeDefaults" ofType="com.generalbot.workflow.entity.NodeDefaults">
-                <id column="node_defaults_id" property="id"/>
-                <result column="node_defaults_node_id" property="nodeId"/>
-                <result column="node_defaults_param_index" property="paramIndex"/>
-                <result column="node_defaults_param_name" property="paramName"/>
-                <result column="node_defaults_field_path" property="fieldPath"/>
-                <result column="node_defaults_default_value" property="defaultValue"/>
-                <result column="node_defaults_default_value_type" property="defaultValueType"/>
-            </collection>
-        </collection>
-
-    </resultMap>
-
-    <!-- WorkflowInfoDto 结果映射 -->
-    <resultMap id="workflowInfoDtoMap" type="com.generalbot.workflow.dto.WorkflowInfoDto">
         <id column="id" property="id"/>
         <result column="user_id" property="userId"/>
         <result column="name" property="name"/>
         <result column="enabled" property="enabled"/>
         <result column="available" property="available"/>
         <result column="disable_reason" property="disableReason"/>
+        <result column="trigger_key" property="triggerKey"/>
+        <result column="definition" property="definition"
+                typeHandler="com.generalbot.workflow.typehandler.WorkflowDefinitionTypeHandler"/>
         <result column="create_time" property="createTime"/>
         <result column="update_time" property="updateTime"/>
-        <result column="node_count" property="nodeCount"/>
     </resultMap>
 
-    <sql id="select">
-        SELECT
-            -- 工作流基本信息
-            w.id as workflow_id, w.user_id as workflow_user_id,  w.name as workflow_name,
-            w.enabled as workflow_enabled,w.available as workflow_available, w.disable_reason as workflow_disable_reason,
-            w.create_time as workflow_create_time,w.update_time as workflow_update_time,
-
-            -- 工作流画布基本信息
-            wcv.workflow_id as workflow_canvas_view_workflow_id,
-            wcv.user_id as workflow_canvas_view_user_id, wcv.offset_x as workflow_canvas_view_offset_x,
-            wcv.offset_y as workflow_canvas_view_offset_y, wcv.scale as workflow_canvas_view_scale,
-
-            -- 节点基本信息
-            n.id as node_id, n.x as node_x, n.y as node_y, n.workflow_id as node_workflow_id,
-            n.plugin_id as node_plugin_id, n.plugin_version_id as node_plugin_version_id,
-            n.method_class_id as node_method_class_id, n.method_id as node_method_id,
-            n.node_type as node_node_type, n.event_type as node_event_type, n.bot_qq as node_bot_qq,
-            n.bot_action_name as node_bot_action_name, n.bot_event_name as node_bot_event_name,
-            n.scheduled_time as node_scheduled_time, n.in_degree as node_in_degree,
-
-            -- 数据映射信息
-            dm.id as data_map_id, dm.node_id as data_map_node_id,
-            dm.source_node_id as data_map_source_node_id, dm.source_path as data_map_source_path,
-            dm.target_param_name as data_map_target_param_name, dm.param_index as data_map_param_index,
-            dm.target_path as data_map_target_path, dm.source_type as data_map_source_type,
-            dm.target_type as data_map_target_type,
-
-            -- 前置节点关系
-            npr.pre_node_id,
-
-            -- 后置节点关系
-            nnr.next_node_id,
-
-            -- 节点默认值
-            nd.id as node_defaults_id, nd.node_id as node_defaults_node_id,
-            nd.param_index as node_defaults_param_index, nd.param_name as node_defaults_param_name,
-            nd.field_path as node_defaults_field_path, nd.default_value as node_defaults_default_value,
-            nd.default_value_type as node_defaults_default_value_type,
-
-            -- 插件信息
-            p.id as plugin_id, p.name as plugin_name, p.description as plugin_description,
-            p.author_id as plugin_author_id,  p.latest_version as plugin_latest_version,
-            p.version_count as plugin_version_count, p.create_time as plugin_create_time,
-            p.update_time as plugin_update_time, p.is_public as plugin_is_public,
-
-            -- 插件版本信息
-            pv.id as plugin_version_id, pv.plugin_id as plugin_version_plugin_id,
-            pv.version as plugin_version_version, pv.path as plugin_version_path,
-            pv.file_size as plugin_version_file_size, pv.file_md5 as plugin_version_file_md5,
-            pv.create_time as plugin_version_create_time, pv.changelog as plugin_version_changelog,
-            pv.entity_package as plugin_version_entity_package,
-            pv.method_package as plugin_version_method_package,
-            pv.compatible_version as plugin_version_compatible_version,
-
-            -- 方法类信息
-            mc.id as method_class_id, mc.description as method_class_description,
-            mc.plugin_version_id as method_class_plugin_version_id,
-            mc.class_name as method_class_class_name,
-            mc.simple_class_name as method_class_simple_class_name,
-            mc.package_name as method_class_package_name,
-
-            -- 方法信息
-            m.id as method_id, m.description as method_description,
-            m.method_class_id as method_method_class_id, m.name as method_name,
-            m.return_type as method_return_type, m.return_description as method_return_description,
-            
-            -- 参数信息
-            pinfo.id as parameter_id, pinfo.description as parameter_description,
-            pinfo.method_id as parameter_method_id, pinfo.name as parameter_name,
-            pinfo.nullable as parameter_nullable,
-            pinfo.type as parameter_type, pinfo.order as parameter_order,
-            
-            -- 实体类信息
-            e.id as entity_id, e.description as entity_description,
-            e.name as entity_name, e.plugin_version_id as entity_plugin_version_id,
-            e.entity_name as entity_entity_name,
-            
-            -- 属性信息
-            a.id as attribute_id, a.description as attribute_description,
-            a.entity_info_id as attribute_entity_info_id, a.type as attribute_type, a.name as attribute_name,
-
-            -- 条件信息
-            c.id as condition_id, c.node_id as condition_node_id,
-            c.true_action as condition_true_action, c.false_action as condition_false_action
-
-
-        FROM workflow_info w
-
-            -- 左连接工作流画布表
-                left join workflow_canvas_view wcv on w.id = wcv.workflow_id
-
-            -- 左连接节点表
-                 LEFT JOIN node n ON w.id = n.workflow_id
-
-            -- 左连接数据映射表
-                 LEFT JOIN data_map dm ON n.id = dm.node_id
-
-            -- 左连接前置节点关系表
-                 LEFT JOIN node_pre_relation npr ON n.id = npr.node_id
-
-            -- 左连接后置节点关系表
-                 LEFT JOIN node_next_relation nnr ON n.id = nnr.node_id
-
-            -- 左连接节点默认值表
-                 LEFT JOIN node_defaults nd ON n.id = nd.node_id
-
-            -- 左连接插件信息表
-                 LEFT JOIN plugin_info p ON n.plugin_id = p.id
-
-            -- 左连接插件版本表
-                 LEFT JOIN plugin_version pv ON n.plugin_version_id = pv.id
-
-            -- 左连接方法类信息表
-                 LEFT JOIN method_class_info mc ON n.method_class_id = mc.id
-
-            -- 左连接方法信息表
-                 LEFT JOIN method_info m ON n.method_id = m.id
-
-            -- 左连接参数信息表
-                 LEFT JOIN parameter_info pinfo ON m.id = pinfo.method_id
-
-            -- 左连接实体信息表
-                 LEFT JOIN entity_info e ON pv.id = e.plugin_version_id
-
-            -- 左连接属性信息表
-                 LEFT JOIN attribute a ON e.id = a.entity_info_id
-
-            -- 左连接条件表
-                 LEFT JOIN `condition` c ON n.id = c.node_id
-
-
+    <sql id="selectColumns">
+        SELECT id, user_id, name, enabled, available, disable_reason, trigger_key, definition, create_time, update_time
+        FROM workflow
     </sql>
 
     <insert id="insert" parameterType="com.generalbot.workflow.entity.WorkflowInfo">
-        INSERT INTO workflow_info(id, user_id, enabled,name, available, create_time, update_time)
-        VALUES (#{id}, #{userId}, #{enabled}, #{name}, true, #{createTime}, #{updateTime})
+        INSERT INTO workflow (
+            id, user_id, name, enabled, available, disable_reason, trigger_key, definition, create_time, update_time
+        ) VALUES (
+            #{id}, #{userId}, #{name}, #{enabled}, true, #{disableReason}, #{triggerKey},
+            #{definition, typeHandler=com.generalbot.workflow.typehandler.WorkflowDefinitionTypeHandler},
+            #{createTime}, #{updateTime}
+        )
     </insert>
 
-    <delete id="deleteById" parameterType="string">
-        DELETE FROM workflow_info
+    <update id="update" parameterType="com.generalbot.workflow.entity.WorkflowInfo">
+        UPDATE workflow
+        SET name = #{name},
+            enabled = #{enabled},
+            available = true,
+            disable_reason = NULL,
+            trigger_key = #{triggerKey},
+            definition = #{definition, typeHandler=com.generalbot.workflow.typehandler.WorkflowDefinitionTypeHandler},
+            update_time = #{updateTime}
         WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById" parameterType="string">
+        DELETE FROM workflow WHERE id = #{id}
     </delete>
 
-    <select id="selectAllIds" resultType="java.lang.String">
-        SELECT id FROM workflow_info
+    <select id="selectById" resultMap="workflowInfoMap" parameterType="string">
+        <include refid="selectColumns"/>
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectEnabled" resultMap="workflowInfoMap">
+        <include refid="selectColumns"/>
+        WHERE enabled = true AND available = true AND disable_reason IS NULL
+    </select>
+
+    <select id="selectAll" resultMap="workflowInfoMap">
+        <include refid="selectColumns"/>
         ORDER BY create_time DESC
     </select>
 
-    <!-- 根据ID查询工作流信息（包含完整关联数据） -->
-    <select id="getById" resultMap="workflowInfoMap" parameterType="string">
-        <include refid="select"/>
-        WHERE w.id = #{id}
+    <select id="selectIdsByUserId" resultType="string" parameterType="string">
+        SELECT id FROM workflow WHERE user_id = #{userId} ORDER BY create_time DESC
     </select>
 
-    <!-- 计算工作流总数 -->
+    <select id="selectAllIds" resultType="string">
+        SELECT id FROM workflow ORDER BY create_time DESC
+    </select>
+
     <select id="countAll" resultType="int">
-        SELECT COUNT(DISTINCT w.id) FROM workflow_info w
+        SELECT COUNT(*) FROM workflow
     </select>
-
-    <!-- 根据ID列表获取工作流信息（包含节点数量统计） -->
-    <select id="selectAll" resultMap="workflowInfoDtoMap" parameterType="list">
-        SELECT
-        w.id,
-        w.user_id,
-        w.name,
-        w.enabled,
-        w.available,
-        w.disable_reason,
-        w.create_time,
-        w.update_time,
-        COUNT(n.id) as node_count
-        FROM workflow_info w
-        LEFT JOIN node n ON w.id = n.workflow_id
-        WHERE w.id IN
-        <foreach collection="ids" item="id" open="(" separator="," close=")">
-            #{id}
-        </foreach>
-        GROUP BY w.id, w.user_id, w.name, w.enabled, w.available, w.disable_reason, w.create_time, w.update_time
-        ORDER BY w.create_time DESC
-    </select>
-
-    <!--
-        加载所有启用且有 botEvent 节点的工作流（含完整关联数据，用于本地缓存初始化）。
-        注意：节点类型过滤必须放在 EXISTS 子查询中，而非 WHERE 条件，
-        否则 LEFT JOIN node n 的结果集会丢失非 botEvent 的 pluginMethod 等执行节点，
-        导致拓扑排序时 nodeToInDegree.get(nextNodeId) 返回 null 引发 NPE。
-    -->
-    <select id="selectAllEnabledWithBotEvent" resultMap="workflowInfoMap">
-        <include refid="select"/>
-        WHERE w.enabled = true
-          AND w.available = true
-          AND w.disable_reason IS NULL
-          AND EXISTS (
-              SELECT 1 FROM node n2
-              WHERE n2.workflow_id = w.id
-                AND n2.node_type = 'botEvent'
-                AND n2.event_type != 'scheduledEvent'
-                AND n2.bot_qq IS NOT NULL
-                AND n2.event_type IS NOT NULL
-          )
-        ORDER BY w.create_time DESC
-    </select>
-
-    <select id="selectAllScheduledTask" resultType="com.generalbot.workflow.entity.WorkflowInfo">
-        <include refid="select"/>
-        WHERE w.enabled = true
-        AND w.available = true
-        AND w.disable_reason IS NULL
-        and n.scheduled_time is not null
-        ORDER BY w.create_time DESC
-    </select>
-
 </mapper>

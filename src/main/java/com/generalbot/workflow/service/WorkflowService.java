@@ -4,19 +4,17 @@ import com.generalbot.workflow.dto.WorkflowInfoDto;
 import com.generalbot.workflow.entity.WorkflowInfo;
 import com.github.pagehelper.PageInfo;
 
-import java.util.List;
-
 /**
- * 工作流服务接口
+ * 工作流服务接口。
  */
 public interface WorkflowService {
 
     /**
-     * 添加工作流
+     * 新增工作流
      * @param workflowInfo 工作流信息
-     * @return 添加结果
+     * @return 保存后的工作流
      */
-    int add(WorkflowInfo workflowInfo);
+    WorkflowInfo add(WorkflowInfo workflowInfo);
 
     /**
      * 删除工作流
@@ -33,25 +31,33 @@ public interface WorkflowService {
     int edit(WorkflowInfo workflowInfo);
 
     /**
-     * 修改工作流启用状态
+     * 修改启用状态
      * @param id 工作流ID
-     * @param enabled 启用状态
+     * @param enabled 是否启用
      * @return 修改结果
      */
     int editEnabled(String id, boolean enabled);
 
     /**
-     * 修改工作流禁用原因
+     * 禁用工作流并写入原因
      * @param id 工作流ID
      * @param disableReason 禁用原因
      */
-    void editDisableReason(String id, String disableReason);
+    void disable(String id, String disableReason);
 
     /**
-     * 查询所有工作流
+     * 禁用依赖某个插件的全部工作流
+     * @param pluginId 插件ID
+     * @param disableReason 禁用原因
+     */
+    void disableWorkflowsByPlugin(String pluginId, String disableReason);
+
+    /**
+     * 分页查询工作流
+     * @param userId 用户ID
      * @param pageNum 页码
-     * @param pageSize 页大小
-     * @return 工作流列表
+     * @param pageSize 每页数量
+     * @return 分页结果
      */
     PageInfo<WorkflowInfoDto> findAll(String userId, int pageNum, int pageSize);
 
@@ -63,15 +69,9 @@ public interface WorkflowService {
     WorkflowInfo findById(String id);
 
     /**
-     * 查询所有定时任务
-     * @return 定时任务列表
-     */
-    List<WorkflowInfo> findAllScheduledTask();
-
-    /**
      * 测试工作流
-     * @param workflowInfo 工作流信息
-     * @return 工作流执行日志 ID
+     * @param workflowId 工作流ID
+     * @return 执行记录ID
      */
-    Long test(WorkflowInfo workflowInfo) throws Exception;
+    Long test(String workflowId);
 }

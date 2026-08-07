@@ -1,113 +1,92 @@
 package com.generalbot.workflow.mapper;
 
-import com.generalbot.workflow.dto.WorkflowInfoDto;
 import com.generalbot.workflow.entity.WorkflowInfo;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
 import java.util.List;
 
 /**
- * 工作流信息Mapper
+ * 工作流信息 Mapper。
  */
 @Mapper
 public interface WorkflowInfoMapper {
 
     /**
-     * 插入工作流信息
+     * 插入工作流
      * @param workflowInfo 工作流信息
      * @return 插入结果
      */
     int insert(WorkflowInfo workflowInfo);
 
     /**
-     * 根据ID删除工作流信息
+     * 更新工作流（名称、启用状态、触发键、定义）
+     * @param workflowInfo 工作流信息
+     * @return 更新结果
+     */
+    int update(WorkflowInfo workflowInfo);
+
+    /**
+     * 删除工作流
      * @param id 工作流ID
      * @return 删除结果
      */
     int deleteById(String id);
 
     /**
-     * 更新工作流信息启用状态
+     * 更新启用状态
      * @param id 工作流ID
-     * @param enabled 是否可用
+     * @param enabled 是否启用
      * @return 更新结果
      */
-    @Update("UPDATE workflow_info SET enabled = #{enabled} WHERE id = #{id}")
-    int updateEnabled(String id, boolean enabled);
+    @Update("UPDATE workflow SET enabled = #{enabled} WHERE id = #{id}")
+    int updateEnabled(@Param("id") String id, @Param("enabled") boolean enabled);
 
     /**
-     * 禁用工作流
-     * @param pluginId 插件ID
+     * 禁用工作流并写入原因
+     *
+     * @param id            工作流ID
      * @param disableReason 禁用原因
      */
-    @Update("UPDATE workflow_info SET available = false, disable_reason = #{disableReason} " +
-            "WHERE id IN (SELECT workflow_id FROM node WHERE plugin_id = #{pluginId})")
-    void updateAvailable(String pluginId, String disableReason);
+    @Update("UPDATE workflow SET available = false, disable_reason = #{disableReason} WHERE id = #{id}")
+    void disable(@Param("id") String id, @Param("disableReason") String disableReason);
 
     /**
-     * 禁用工作流
-     * @param id 工作流ID
-     * @param disableReason 禁用原因
-     */
-    @Update("UPDATE workflow_info SET available = false, disable_reason = #{disableReason} " +
-            "WHERE id = #{id}")
-    void updateAvailableByWorkflowId(String id, String disableReason);
-
-    /**
-     * 获取所有工作流ID
-     * @return 工作流ID列表
-     */
-    List<String> selectAllIds();
-
-    /**
-     * 根据用户ID获取工作流ID列表
-     * @param userId 用户ID
-     * @return 工作流ID列表
-     */
-    @Select("SELECT id FROM workflow_info WHERE user_id = #{userId}")
-    List<String> selectIdsByUserId(String userId);
-
-    /**
-     * 根据插件ID获取工作流ID列表
-     * @param pluginId 插件ID
-     * @return 工作流ID列表
-     */
-    @Select("SELECT plugin_id FROM node WHERE plugin_id = #{pluginId}")
-    List<String> selectIdsByPluginId(String pluginId);
-
-    /**
-     * 根据ID列表获取工作流信息
-     * @param ids 工作流ID列表
-     * @return 工作流信息列表
-     */
-    List<WorkflowInfoDto> selectAll(@Param("ids") List<String> ids);
-
-    /**
-     * 根据ID获取工作流信息
+     * 根据ID查询工作流
      * @param id 工作流ID
      * @return 工作流信息
      */
-    WorkflowInfo getById(String id);
+    WorkflowInfo selectById(String id);
 
     /**
-     * 查询所有启用且有 botEvent 节点的工作流（含完整关联数据，用于本地缓存初始化）
+     * 查询启用且可用的工作流（触发注册表初始化）
      * @return 工作流列表
      */
-    List<WorkflowInfo> selectAllEnabledWithBotEvent();
+    List<WorkflowInfo> selectEnabled();
 
     /**
-     * 查询所有定时任务
-     * @return 定时任务列表
+     * 查询全部工作流（用于插件删除时扫描依赖）
+     * @return 工作流列表
      */
-    List<WorkflowInfo> selectAllScheduledTask();
+    List<WorkflowInfo> selectAll();
+
+    /**
+     * 查询用户的工作流ID列表
+     * @param userId 用户ID
+     * @return 工作流ID列表
+     */
+    List<String> selectIdsByUserId(String userId);
+
+    /**
+     * 查询全部工作流ID列表
+     * @return 工作流ID列表
+     */
+    List<String> selectAllIds();
 
     /**
      * 计算工作流总数
      * @return 工作流总数
      */
     int countAll();
-
 }

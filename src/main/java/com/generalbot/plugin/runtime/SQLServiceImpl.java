@@ -7,7 +7,7 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.generalbot.workflow.mapper.PluginDataMapper;
+import com.generalbot.plugin.mapper.PluginDataMapper;
 import com.generalbot.common.context.ThreadLocalManager;
 import com.github.zhygtx.pojo.PluginData;
 import com.github.zhygtx.service.SQLService;

@@ -1,16 +1,15 @@
 package com.generalbot.workflow.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.List;
+import com.generalbot.workflow.entity.definition.WorkflowDefinition;
 
+/**
+ * 工作流信息。定义以 JSON 形式整体保存在 definition 字段中。
+ */
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
 public class WorkflowInfo {
 
     /**
@@ -44,6 +43,16 @@ public class WorkflowInfo {
     private String disableReason;
 
     /**
+     * 触发键，例如 botEvent:{botQQ}:{EventType} 或 schedule:{cron}
+     */
+    private String triggerKey;
+
+    /**
+     * 工作流定义（节点、连线、画布视图）
+     */
+    private WorkflowDefinition definition;
+
+    /**
      * 工作流创建时间
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
@@ -54,15 +63,4 @@ public class WorkflowInfo {
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updateTime;
-
-
-    /**
-     * 工作流节点列表
-     */
-    private List<Node> nodes;
-
-    /**
-     * 工作流画布视图状态
-     */
-    private WorkflowCanvasView workflowCanvasView;
 }
