@@ -76,14 +76,14 @@
                 </choose>
             </when>
             <when test="sortField == 'executionTime'">
-                `ORDER` BY duration_ms
+                ORDER BY duration_ms
                 <choose>
                     <when test="sortOrder == 'asc'">ASC</when>
                     <otherwise>DESC</otherwise>
                 </choose>
             </when>
             <otherwise>
-                `ORDER` BY start_time DESC
+                ORDER BY start_time DESC
             </otherwise>
         </choose>
     </select>

@@ -3,6 +3,7 @@ package com.generalbot.workflow.engine;
 import com.generalbot.bot.action.BotActionService;
 import com.generalbot.common.context.ThreadLocalManager;
 import com.generalbot.plugin.entity.ParameterInfo;
+import com.generalbot.workflow.engine.convert.ValueConverterRegistry;
 import com.generalbot.workflow.entity.definition.WorkflowDefinition;
 import com.generalbot.workflow.entity.definition.WorkflowEdge;
 import com.generalbot.workflow.entity.definition.WorkflowNode;
@@ -43,6 +44,7 @@ public class WorkflowEngine {
     private final ApplicationContext applicationContext;
     private final BotActionService botActionService;
     private final CallableRegistry callableRegistry;
+    private final ValueConverterRegistry valueConverterRegistry;
     private final WorkflowExecutionMapper executionMapper;
     private final WorkflowService workflowService;
     private final ExecutorService workflowExecutor;
@@ -54,6 +56,7 @@ public class WorkflowEngine {
     public WorkflowEngine(ApplicationContext applicationContext,
                           BotActionService botActionService,
                           CallableRegistry callableRegistry,
+                          ValueConverterRegistry valueConverterRegistry,
                           WorkflowExecutionMapper executionMapper,
                           @Lazy WorkflowService workflowService,
                           @Qualifier("workflowExecutor") ExecutorService workflowExecutor,
@@ -61,6 +64,7 @@ public class WorkflowEngine {
         this.applicationContext = applicationContext;
         this.botActionService = botActionService;
         this.callableRegistry = callableRegistry;
+        this.valueConverterRegistry = valueConverterRegistry;
         this.executionMapper = executionMapper;
         this.workflowService = workflowService;
         this.workflowExecutor = workflowExecutor;
@@ -236,16 +240,17 @@ public class WorkflowEngine {
                 .filter(item -> Integer.valueOf(index).equals(item.getParamIndex()))
                 .findFirst()
                 .orElse(null);
+        Object value;
         if (input != null && input.getSource() != null && !input.getSource().isBlank()) {
-            return resolveSource(input.getSource(), context);
-        }
-        if (input != null && input.getDefaultValue() != null) {
-            return input.getDefaultValue();
-        }
-        if (param.isNullable()) {
+            value = resolveSource(input.getSource(), context);
+        } else if (input != null && input.getDefaultValue() != null) {
+            value = input.getDefaultValue();
+        } else if (param.isNullable()) {
             return null;
+        } else {
+            throw new RuntimeException("参数 " + param.getName() + " 未配置数据来源或默认值");
         }
-        throw new RuntimeException("参数 " + param.getName() + " 未配置数据来源或默认值");
+        return valueConverterRegistry.convert(value, param.getType());
     }
 
     private Object resolveSource(String source, Map<String, Object> context) {
