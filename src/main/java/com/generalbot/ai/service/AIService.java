@@ -1,7 +1,7 @@
 package com.generalbot.ai.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.generalbot.ai.dto.AIChatMessageDto;
+import com.generalbot.ai.dto.AIPluginListDto;
 import com.generalbot.ai.entity.AIChatMessage;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -27,7 +27,7 @@ public interface AIService extends IService<AIChatMessage> {
      * @param pageSize 每页数量
      * @return 排序后的所有消息记录列表
      */
-    List<AIChatMessageDto> findDtoList(String userId, Integer pageNum, Integer pageSize);
+    List<AIPluginListDto> findPluginList(String userId, Integer pageNum, Integer pageSize);
 
     /**
      * 启动流式 AI 生成任务。

@@ -75,13 +75,13 @@ public class AIController {
     }
 
     /**
-     * 根据用户 ID 查询所有消息记录。
+     * 根据用户 ID 查询 AI 插件会话列表。
      */
     @GetMapping("list")
-    public Result<?> findDtoList(@AuthenticationPrincipal UserPrincipal user,
-                                 @RequestParam(required = false,defaultValue = "1") Integer pageNum,
-                                 @RequestParam(required = false,defaultValue = "10") Integer pageSize) {
-        return Result.success(null, aiService.findDtoList(user.userId(), pageNum, pageSize));
+    public Result<?> findPluginList(@AuthenticationPrincipal UserPrincipal user,
+                                    @RequestParam(required = false,defaultValue = "1") Integer pageNum,
+                                    @RequestParam(required = false,defaultValue = "10") Integer pageSize) {
+        return Result.success(null, aiService.findPluginList(user.userId(), pageNum, pageSize));
     }
 
     /**

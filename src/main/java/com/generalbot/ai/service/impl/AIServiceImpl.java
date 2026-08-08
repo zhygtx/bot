@@ -9,7 +9,7 @@ import com.generalbot.ai.client.DynamicChatClientFactory;
 import com.generalbot.ai.stream.SseStreamFactory;
 import com.generalbot.ai.mapper.AIChatMessageMapper;
 import com.generalbot.ai.mapper.CodeMapper;
-import com.generalbot.ai.dto.AIChatMessageDto;
+import com.generalbot.ai.dto.AIPluginListDto;
 import com.generalbot.ai.entity.AIChatMessage;
 import com.generalbot.ai.entity.Code;
 import com.generalbot.ai.service.AIService;
@@ -88,9 +88,9 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
      * @return 排序后的所有消息记录列表
      */
     @Override
-    public List<AIChatMessageDto> findDtoList(String userId, Integer pageNum, Integer pageSize) {
+    public List<AIPluginListDto> findPluginList(String userId, Integer pageNum, Integer pageSize) {
         Integer offset = (pageNum - 1) * pageSize;
-        return aiChatMessageMapper.selectByUserId(userId, offset, pageSize);
+        return aiChatMessageMapper.selectPluginListByUserId(userId, offset, pageSize);
     }
 
     /**
@@ -173,7 +173,13 @@ public class AIServiceImpl extends ServiceImpl<AIChatMessageMapper, AIChatMessag
                     .set(AIChatMessage::getMessageParts, newMessage.getMessageParts())
                     .set(AIChatMessage::getPromptTokens, newMessage.getPromptTokens())
                     .eq(AIChatMessage::getId, newMessage.getId()));
-            stream.done(newMessage);
+            // 工具调用过程中 AI 可能已通过 updatePluginDescription 写入插件元信息，
+            // 重新从数据库读取最新消息，确保 done 事件里带回发布设置所需内容。
+            AIChatMessage doneMessage = aiChatMessageMapper.selectById(newMessage.getId());
+            if (doneMessage == null) {
+                throw new RuntimeException("AI 消息保存后查询失败: " + newMessage.getId());
+            }
+            stream.done(doneMessage);
 
         } catch (RuntimeException e) {
             // 失败：推送 error 事件 + 清理预处理数据

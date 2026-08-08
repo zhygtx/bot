@@ -100,4 +100,9 @@
         </foreach>
         GROUP BY workflow_id
     </select>
+
+    <delete id="deleteByWorkflowId">
+        DELETE FROM workflow_execution
+        WHERE workflow_id = #{workflowId}
+    </delete>
 </mapper>

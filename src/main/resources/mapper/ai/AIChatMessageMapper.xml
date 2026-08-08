@@ -3,22 +3,20 @@
 
 <mapper namespace="com.generalbot.ai.mapper.AIChatMessageMapper">
 
-    <resultMap id="AIChatMessageDtoResultMap" type="com.generalbot.ai.dto.AIChatMessageDto">
+    <resultMap id="AIPluginListDtoResultMap" type="com.generalbot.ai.dto.AIPluginListDto">
         <result column="conversation_id" property="conversationId"/>
-        <result column="plugin_id" property="pluginId"/>
         <result column="plugin_name" property="pluginName"/>
+        <result column="plugin_description" property="pluginDescription"/>
         <result column="status" property="status"/>
-        <result column="create_time" property="createTime"/>
         <result column="update_time" property="updateTime"/>
     </resultMap>
 
-    <select id="selectByUserId" resultMap="AIChatMessageDtoResultMap">
+    <select id="selectPluginListByUserId" resultMap="AIPluginListDtoResultMap">
         SELECT
             conv.conversation_id,
-            latest.plugin_id,
-            p.name            AS plugin_name,
+            latest.plugin_name,
+            latest.plugin_description,
             latest.status,
-            first.create_time,
             latest.create_time AS update_time
         FROM (
                  SELECT conversation_id, MAX(round) AS max_round
@@ -26,9 +24,6 @@
                  WHERE user_id = #{userId}
                  GROUP BY conversation_id
              ) conv
-                 INNER JOIN ai_chat_message first
-                            ON first.conversation_id = conv.conversation_id
-                                AND first.round = 1
                  INNER JOIN ai_chat_message latest
                             ON latest.conversation_id = conv.conversation_id
                                 AND latest.round = conv.max_round
@@ -40,7 +35,6 @@
                                     ORDER BY m.create_time DESC, m.id DESC
                                     LIMIT 1
                                 )
-                 LEFT JOIN plugin_info p ON latest.plugin_id = p.id
         ORDER BY latest.create_time DESC
         LIMIT #{offset}, #{count}
     </select>

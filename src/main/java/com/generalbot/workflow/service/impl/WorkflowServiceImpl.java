@@ -6,6 +6,7 @@ import com.generalbot.workflow.engine.CallableRegistry;
 import com.generalbot.workflow.engine.CallableDescriptor;
 import com.generalbot.workflow.engine.TriggerRegistry;
 import com.generalbot.workflow.engine.WorkflowEngine;
+import com.generalbot.workflow.entity.definition.ParamInput;
 import com.generalbot.workflow.entity.definition.WorkflowDefinition;
 import com.generalbot.workflow.entity.definition.WorkflowEdge;
 import com.generalbot.workflow.entity.definition.WorkflowNode;
@@ -24,6 +25,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -97,15 +99,25 @@ public class WorkflowServiceImpl implements WorkflowService {
     }
 
     /**
-     * 编辑工作流：整份定义原地更新，节点 ID 保持稳定，旧执行记录不丢。
+     * 编辑工作流：整份定义原地更新，节点 ID 保持稳定。
+     * 节点执行逻辑变化（节点/连线/映射/分支/触发配置等）时删除旧执行记录，避免 trace 对不上新定义；
+     * 仅位置或画布视图变化不影响历史日志。
      */
     @Override
     @Transactional
     public int edit(WorkflowInfo workflowInfo) {
+        WorkflowInfo existing = workflowInfoMapper.selectById(workflowInfo.getId());
+        if (existing == null) {
+            throw new RuntimeException("工作流不存在：" + workflowInfo.getId());
+        }
+        boolean logicChanged = isExecutionLogicChanged(existing.getDefinition(), workflowInfo.getDefinition());
         workflowInfo.setUpdateTime(LocalDateTime.now());
         workflowInfo.setTriggerKey(validateAndPrepare(workflowInfo));
         triggerRegistry.unregister(workflowInfo.getId());
         int result = workflowInfoMapper.update(workflowInfo);
+        if (result > 0 && logicChanged) {
+            executionMapper.deleteByWorkflowId(workflowInfo.getId());
+        }
         WorkflowInfo saved = workflowInfoMapper.selectById(workflowInfo.getId());
         triggerRegistry.register(saved);
         return result;
@@ -409,6 +421,78 @@ public class WorkflowServiceImpl implements WorkflowService {
         return definition.getNodes().stream().anyMatch(node -> node.getCallable() != null
                 && node.getCallable().startsWith(prefix));
     }
+
+    /**
+     * 判断新旧定义是否存在执行逻辑差异。
+     * 节点位置/画布视图不算逻辑；节点 callable、输入映射、默认值、分支、触发配置以及连线变化才算。
+     */
+    private boolean isExecutionLogicChanged(WorkflowDefinition oldDefinition, WorkflowDefinition newDefinition) {
+        if (oldDefinition == null || newDefinition == null) {
+            return oldDefinition != newDefinition;
+        }
+        return !extractNodeLogics(oldDefinition).equals(extractNodeLogics(newDefinition))
+                || !extractEdgeLogics(oldDefinition).equals(extractEdgeLogics(newDefinition));
+    }
+
+    /**
+     * 提取节点中与执行逻辑相关的字段，忽略 x/y 等纯画布信息。
+     */
+    private List<NodeLogic> extractNodeLogics(WorkflowDefinition definition) {
+        List<NodeLogic> logics = new ArrayList<>();
+        if (definition == null || definition.getNodes() == null) {
+            return logics;
+        }
+        for (WorkflowNode node : definition.getNodes()) {
+            List<InputLogic> inputs = new ArrayList<>();
+            if (node.getInputs() != null) {
+                for (ParamInput input : node.getInputs()) {
+                    inputs.add(new InputLogic(input.getParamIndex(), input.getSource(), input.getDefaultValue()));
+                }
+            }
+            inputs.sort(Comparator.comparing(InputLogic::paramIndex, Comparator.nullsFirst(Comparator.naturalOrder())));
+            logics.add(new NodeLogic(
+                    node.getId(),
+                    node.getCallable(),
+                    inputs,
+                    Boolean.TRUE.equals(node.getBranch()),
+                    node.getConfig() == null ? Map.of() : node.getConfig()));
+        }
+        logics.sort(Comparator.comparing(NodeLogic::id, Comparator.nullsFirst(Comparator.naturalOrder())));
+        return logics;
+    }
+
+    /**
+     * 提取连线逻辑，排序后比较，避免仅连线顺序变化触发误删。
+     */
+    private List<EdgeLogic> extractEdgeLogics(WorkflowDefinition definition) {
+        List<EdgeLogic> logics = new ArrayList<>();
+        if (definition == null || definition.getEdges() == null) {
+            return logics;
+        }
+        for (WorkflowEdge edge : definition.getEdges()) {
+            logics.add(new EdgeLogic(edge.getFrom(), edge.getTo(),
+                    edge.getPort() == null ? "success" : edge.getPort()));
+        }
+        logics.sort(Comparator.comparing(EdgeLogic::from, Comparator.nullsFirst(Comparator.naturalOrder()))
+                .thenComparing(EdgeLogic::to, Comparator.nullsFirst(Comparator.naturalOrder()))
+                .thenComparing(EdgeLogic::port, Comparator.nullsFirst(Comparator.naturalOrder())));
+        return logics;
+    }
+
+    /**
+     * 节点执行逻辑快照。
+     */
+    private record NodeLogic(String id, String callable, List<InputLogic> inputs, boolean branch, Map<String, Object> config) {}
+
+    /**
+     * 单个参数输入快照。
+     */
+    private record InputLogic(Integer paramIndex, String source, Object defaultValue) {}
+
+    /**
+     * 连线逻辑快照。
+     */
+    private record EdgeLogic(String from, String to, String port) {}
 
     /**
      * 统计聚合值安全转 int。

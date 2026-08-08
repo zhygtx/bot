@@ -54,4 +54,12 @@ public interface WorkflowExecutionMapper {
      * @return 统计结果
      */
     List<Map<String, Object>> selectStatsByWorkflowIds(@Param("ids") List<String> ids);
+
+    /**
+     * 删除指定工作流的全部历史执行记录。
+     * 当工作流定义发生执行逻辑变化时调用，避免旧 trace 与新定义节点对不上。
+     * @param workflowId 工作流ID
+     * @return 删除的记录数
+     */
+    int deleteByWorkflowId(@Param("workflowId") String workflowId);
 }
