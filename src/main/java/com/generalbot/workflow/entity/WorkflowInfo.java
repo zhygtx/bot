@@ -43,7 +43,7 @@ public class WorkflowInfo {
     private String disableReason;
 
     /**
-     * 触发键，例如 botEvent:{botQQ}:{EventType} 或 schedule:{cron}
+     * 触发键，例如 botEvent:{botQQ}:{事件key} 或 schedule:{cron}
      */
     private String triggerKey;
 

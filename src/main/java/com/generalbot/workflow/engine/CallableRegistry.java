@@ -148,13 +148,7 @@ public class CallableRegistry {
     public ResolvedCallable resolve(String key) {
         CallableDescriptor descriptor = describe(key);
         if (descriptor.getSource() == CallableDescriptor.CallableSource.SYSTEM) {
-            String actionName = key.substring("system:botAction:".length());
-            Method method = findMethod(com.generalbot.bot.action.BotActionService.class,
-                    actionName, descriptor.getParameters().size());
-            if (method == null) {
-                throw new RuntimeException("找不到 BOT 动作方法：" + actionName);
-            }
-            return new ResolvedCallable(descriptor, method, null, null);
+            return new ResolvedCallable(descriptor, null, null, null);
         }
 
         String[] parts = key.substring("plugin:".length()).split(":", 3);

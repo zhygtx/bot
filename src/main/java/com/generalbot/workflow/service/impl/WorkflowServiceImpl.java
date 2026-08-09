@@ -360,7 +360,7 @@ public class WorkflowServiceImpl implements WorkflowService {
     }
 
     /**
-     * 根据触发节点计算注册键，例如 botEvent:{botQQ}:{EventType} 或 schedule:{cron}。
+     * 根据触发节点计算注册键，例如 botEvent:{botQQ}:{事件key} 或 schedule:{cron}。
      */
     private String computeTriggerKey(WorkflowNode triggerNode) {
         if (triggerNode == null) {

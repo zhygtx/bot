@@ -1,18 +1,20 @@
 package com.generalbot.bot.handler;
 
 import com.generalbot.workflow.engine.TriggerRegistry;
-import com.github.zhygtx.napcat.event.BaseEvent;
+import com.github.zhygtx.napcat.event.RawBotEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
 
 /**
- * BOT 事件处理器：沿事件继承链触发注册表中的工作流。
+ * BOT 事件处理器：沿事件目录中的父类型链触发工作流。
  */
 @Slf4j
 @Component
@@ -21,9 +23,9 @@ public class BotWorkflowHandler {
     private final TriggerRegistry triggerRegistry;
 
     /**
-     * 同一事件对象因 SDK 继承分发被多次回调时去重。
+     * 同一事件对象被多次分发时去重。
      */
-    private final Map<BaseEvent, Boolean> processedEvents =
+    private final Map<RawBotEvent, Boolean> processedEvents =
             Collections.synchronizedMap(new WeakHashMap<>());
 
     public BotWorkflowHandler(TriggerRegistry triggerRegistry) {
@@ -31,21 +33,25 @@ public class BotWorkflowHandler {
     }
 
     /**
-     * 处理 BOT 事件。
+     * 处理通用 BOT 事件。
+     *
      * @param botQQ BOT QQ 号
-     * @param event 事件对象
+     * @param event 通用事件载体
      */
-    public void handleBotEvent(Long botQQ, BaseEvent event) {
+    public void handleBotEvent(Long botQQ, RawBotEvent event) {
         if (processedEvents.putIfAbsent(event, true) != null) {
             return;
         }
         try {
             Set<String> seenIds = new HashSet<>();
-            Class<?> clazz = event.getClass();
-            while (clazz != null && BaseEvent.class.isAssignableFrom(clazz)) {
-                String triggerKey = "botEvent:" + botQQ + ":" + clazz.getSimpleName();
-                triggerRegistry.fire(triggerKey, event, seenIds);
-                clazz = clazz.getSuperclass();
+            Map<String, Object> payload = event.toDataMap();
+            List<String> eventTypes = new ArrayList<>();
+            eventTypes.add(event.getEventType());
+            if (event.getParentEventTypes() != null) {
+                eventTypes.addAll(event.getParentEventTypes());
+            }
+            for (String eventType : eventTypes) {
+                triggerRegistry.fire("botEvent:" + botQQ + ":" + eventType, payload, seenIds);
             }
         } catch (Exception e) {
             log.error("处理 BOT 事件异常", e);

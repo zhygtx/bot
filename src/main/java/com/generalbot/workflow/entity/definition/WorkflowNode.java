@@ -29,7 +29,7 @@ public class WorkflowNode {
     private Integer y;
 
     /**
-     * callable 引用，例如 system:botEvent:PrivateMessageEvent、plugin:{pluginId}:{versionId}:{methodId}
+     * callable 引用，例如 system:botEvent:message:group:normal、plugin:{pluginId}:{versionId}:{methodId}
      */
     private String callable;
 

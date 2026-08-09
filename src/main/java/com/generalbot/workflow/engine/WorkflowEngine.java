@@ -1,8 +1,8 @@
 package com.generalbot.workflow.engine;
 
-import com.generalbot.bot.action.BotActionService;
 import com.generalbot.common.context.ThreadLocalManager;
 import com.generalbot.plugin.entity.ParameterInfo;
+import com.github.zhygtx.napcat.protocol.NapCatProtocolClient;
 import com.generalbot.workflow.engine.convert.ValueConverterRegistry;
 import com.generalbot.workflow.entity.definition.WorkflowDefinition;
 import com.generalbot.workflow.entity.definition.WorkflowEdge;
@@ -47,8 +47,8 @@ public class WorkflowEngine {
     /** Spring 容器，用于向插件实例注入接口类型依赖。 */
     private final ApplicationContext applicationContext;
 
-    /** BOT 动作服务，系统动作 callable 的默认调用目标。 */
-    private final BotActionService botActionService;
+    /** 通用 BOT 动作执行器，按协议目录调用 NapCat。 */
+    private final NapCatProtocolClient napCatProtocolClient;
 
     /** 统一 callable 注册表，负责描述解析与反射方法解析。 */
     private final CallableRegistry callableRegistry;
@@ -77,7 +77,7 @@ public class WorkflowEngine {
      * WorkflowService 使用 @Lazy，打断 WorkflowEngine 与 WorkflowServiceImpl 之间的循环依赖。
      */
     public WorkflowEngine(ApplicationContext applicationContext,
-                          BotActionService botActionService,
+                          NapCatProtocolClient napCatProtocolClient,
                           CallableRegistry callableRegistry,
                           ValueConverterRegistry valueConverterRegistry,
                           WorkflowExecutionMapper executionMapper,
@@ -85,7 +85,7 @@ public class WorkflowEngine {
                           @Qualifier("workflowExecutor") ExecutorService workflowExecutor,
                           @Qualifier("workflowSemaphore") Semaphore workflowSemaphore) {
         this.applicationContext = applicationContext;
-        this.botActionService = botActionService;
+        this.napCatProtocolClient = napCatProtocolClient;
         this.callableRegistry = callableRegistry;
         this.valueConverterRegistry = valueConverterRegistry;
         this.executionMapper = executionMapper;
@@ -464,7 +464,7 @@ public class WorkflowEngine {
 
     /**
      * 分发节点调用：触发节点直接返回当前载荷；插件方法从插件实例缓存获取实例并注入依赖；
-     * 其余系统节点调用 BotActionService 上的方法。
+     * BOT 动作节点通过协议目录执行器调用 NapCat。
      */
     private Object invokeNode(WorkflowNode node,
                               CallableDescriptor descriptor,
@@ -481,13 +481,21 @@ public class WorkflowEngine {
             throw new RuntimeException("未知触发节点：" + node.getCallable());
         }
 
+        if (node.getCallable().startsWith("system:botAction:")) {
+            String actionName = node.getCallable().substring("system:botAction:".length());
+            if (args.length == 0 || !(args[0] instanceof Number botQQNumber)) {
+                throw new RuntimeException("BOT 动作 " + actionName + " 缺少 botQQ 参数");
+            }
+            return napCatProtocolClient.invoke(botQQNumber.longValue(), actionName, args);
+        }
+
         CallableRegistry.ResolvedCallable resolved = callableRegistry.resolve(node.getCallable());
         if (resolved.pluginVersion() != null) {
             ThreadLocalManager.setPluginId(resolved.pluginVersion().getPluginId());
             Object instance = getOrCreatePluginInstance(resolved, pluginInstances);
             return invokeWithError(instance, resolved.method(), args, descriptor);
         }
-        return invokeWithError(botActionService, resolved.method(), args, descriptor);
+        throw new RuntimeException("未知系统节点：" + node.getCallable());
     }
 
     /**
