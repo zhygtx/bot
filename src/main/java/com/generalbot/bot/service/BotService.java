@@ -12,11 +12,13 @@ import java.util.Map;
 public interface BotService {
 
     /**
-     * 更新机器人在线状态
+     * 更新机器人在线状态，并记录本次上线时间戳。
+     * 上线时由 BotCoreEvent 传入当前时间；离线时传入 null 清空在线时长起点。
      * @param botQQ 机器人QQ
      * @param online 是否在线
+     * @param onlineSince 本次上线时间戳（毫秒），离线时为 null
      */
-    void updateOnline(Long botQQ, boolean online);
+    void updateOnline(Long botQQ, boolean online, Long onlineSince);
 
     /**
      * 插入机器人

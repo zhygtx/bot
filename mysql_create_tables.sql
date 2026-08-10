@@ -1,4 +1,8 @@
+-- 快速重建：先关闭外键检查，脚本里每个表头都有 DROP TABLE IF EXISTS，可直接整库重建；最后再恢复外键检查。
+SET FOREIGN_KEY_CHECKS = 0;
+
 -- 用户信息表
+DROP TABLE IF EXISTS `user`;
 CREATE TABLE `user` (
 `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '用户 ID',
 `name` VARCHAR(255) NOT NULL COMMENT '用户名',
@@ -14,6 +18,7 @@ INDEX `idx_QQ` (`QQ`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户信息表';
 
 -- 机器人信息表
+DROP TABLE IF EXISTS `bot`;
 CREATE TABLE `bot` (
 `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '机器人 ID',
 `name` VARCHAR(255) COMMENT '机器人名称',
@@ -22,12 +27,14 @@ CREATE TABLE `bot` (
 `token` VARCHAR(255) COMMENT '机器人Token',
 `path_suffix` VARCHAR(255) COMMENT '机器人路径后缀',
 `is_online` TINYINT(1) DEFAULT 0 NOT NULL COMMENT '机器人是否在线',
+`online_since` BIGINT COMMENT '本次上线时间戳（毫秒），离线时置空',
 FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE,
 INDEX `idx_bot_qq` (`bot_qq`),
 INDEX `idx_user_id` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4  COMMENT='机器人信息表';
 
 -- 容器信息表
+DROP TABLE IF EXISTS `docker`;
 CREATE TABLE `docker` (
 `container_id` VARCHAR(100) NOT NULL PRIMARY KEY COMMENT '容器 ID',
 `name` VARCHAR(255) NOT NULL COMMENT '容器名称',
@@ -46,6 +53,7 @@ INDEX `idx_bot_qq` (`bot_qq`)
 # ----------------------------------------------------------------------------------------------------------------------
 
 -- 插件信息表
+DROP TABLE IF EXISTS `plugin_info`;
 CREATE TABLE `plugin_info` (
   `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '插件 id',
   `name` VARCHAR(255) NOT NULL COMMENT '插件名称',
@@ -60,6 +68,7 @@ CREATE TABLE `plugin_info` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='插件信息表';
 
 -- 插件版本表
+DROP TABLE IF EXISTS `plugin_version`;
 CREATE TABLE `plugin_version` (
   `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '版本ID',
   `plugin_id` VARCHAR(36) NOT NULL COMMENT '插件ID',
@@ -76,6 +85,7 @@ CREATE TABLE `plugin_version` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='插件版本表';
 
 -- 实体类信息表
+DROP TABLE IF EXISTS `entity_info`;
 CREATE TABLE `entity_info` (
   `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '实体类id',
   `description` TEXT COMMENT '实体类描述',
@@ -86,6 +96,7 @@ CREATE TABLE `entity_info` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='实体类信息表';
 
 -- 属性信息表
+DROP TABLE IF EXISTS `attribute`;
 CREATE TABLE `attribute` (
   `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '属性id',
   `description` TEXT COMMENT '属性描述',
@@ -96,6 +107,7 @@ CREATE TABLE `attribute` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='属性信息表';
 
 -- 方法类信息表
+DROP TABLE IF EXISTS `method_class_info`;
 CREATE TABLE `method_class_info` (
   `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '方法类id',
   `description` TEXT COMMENT '类描述',
@@ -107,6 +119,7 @@ CREATE TABLE `method_class_info` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='方法类信息表';
 
 -- 方法信息表
+DROP TABLE IF EXISTS `method_info`;
 CREATE TABLE `method_info` (
   `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '方法id',
   `description` TEXT COMMENT '方法描述',
@@ -118,6 +131,7 @@ CREATE TABLE `method_info` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='方法信息表';
 
 -- 参数信息表
+DROP TABLE IF EXISTS `parameter_info`;
 CREATE TABLE `parameter_info` (
   `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '参数id',
   `description` TEXT COMMENT '参数描述',
@@ -132,6 +146,7 @@ CREATE TABLE `parameter_info` (
 # -------------------------------------------------------------------------------------------------------------
 
 -- 工作流表
+DROP TABLE IF EXISTS `workflow`;
 CREATE TABLE `workflow` (
   `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '工作流 ID',
   `user_id` VARCHAR(36) NOT NULL COMMENT '工作流创建者 ID',
@@ -149,6 +164,7 @@ CREATE TABLE `workflow` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='工作流表';
 
 -- 插件数据存储表
+DROP TABLE IF EXISTS `plugin_data`;
 CREATE TABLE `plugin_data` (
     `id` integer NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT '主键 ID',
     `user_id` VARCHAR(36) NOT NULL COMMENT '用户 ID',
@@ -167,6 +183,7 @@ CREATE TABLE `plugin_data` (
 # --------------------------------------------------------------------------------------------------------
 
 -- 工作流执行记录表
+DROP TABLE IF EXISTS `workflow_execution`;
 CREATE TABLE `workflow_execution` (
   `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT '执行记录ID（自增主键）',
   `workflow_id` VARCHAR(36) NOT NULL COMMENT '工作流ID',
@@ -187,10 +204,39 @@ CREATE TABLE `workflow_execution` (
   INDEX `idx_status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='工作流执行记录表';
 
+# ----------------------------------------------------------------------------------------------------------------
+
+-- 工作流执行日志每日统计表（凌晨定时任务把前一天执行记录聚合到这里，原始明细清理后统计仍可长期保留）
+DROP TABLE IF EXISTS `workflow_execution_daily_stat`;
+CREATE TABLE `workflow_execution_daily_stat` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT '统计记录ID（自增主键）',
+  `stat_date` DATE NOT NULL COMMENT '统计日期（服务器本地日期）',
+  `user_id` VARCHAR(36) NOT NULL COMMENT '用户ID',
+  `workflow_id` VARCHAR(36) NOT NULL COMMENT '工作流ID',
+  `workflow_name` VARCHAR(255) NOT NULL COMMENT '工作流名称快照，改名后历史统计仍显示当时的名称',
+  `execute_count` INT NOT NULL DEFAULT 0 COMMENT '当日执行次数',
+  `success_count` INT NOT NULL DEFAULT 0 COMMENT '当日成功次数',
+  `failed_count` INT NOT NULL DEFAULT 0 COMMENT '当日失败次数',
+  `total_duration_ms` BIGINT NOT NULL DEFAULT 0 COMMENT '当日总耗时（毫秒）',
+  `avg_duration_ms` BIGINT NOT NULL DEFAULT 0 COMMENT '当日平均耗时（毫秒）',
+  `max_duration_ms` BIGINT NOT NULL DEFAULT 0 COMMENT '当日最大耗时（毫秒）',
+  `min_duration_ms` BIGINT NOT NULL DEFAULT 0 COMMENT '当日最小耗时（毫秒）',
+  `total_actual_node_count` BIGINT NOT NULL DEFAULT 0 COMMENT '当日实际执行节点总数',
+  `avg_actual_node_count` DECIMAL(10,2) NOT NULL DEFAULT 0 COMMENT '当日平均实际执行节点数',
+  `last_start_time` BIGINT NOT NULL DEFAULT 0 COMMENT '当日最后一次执行开始时间戳（毫秒）',
+  `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最后更新时间',
+  FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`workflow_id`) REFERENCES `workflow` (`id`) ON DELETE CASCADE,
+  UNIQUE KEY `uk_stat_date_workflow` (`stat_date`, `user_id`, `workflow_id`),
+  INDEX `idx_stat_user_date` (`user_id`, `stat_date`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='工作流执行日志每日统计表';
+
 # --------------------------------------------------------------------------------------------------------
 -- ============================================
 -- AI Chat Message 消息表
 -- ============================================
+DROP TABLE IF EXISTS `ai_chat_message`;
 CREATE TABLE `ai_chat_message`(
     `id`                 VARCHAR(36)  NOT NULL COMMENT '记录主键（UUID，每条记录唯一）',
     `conversation_id`    VARCHAR(36)  NOT NULL COMMENT '会话 ID（同一对话中所有记录共享此值）',
@@ -218,6 +264,7 @@ CREATE TABLE `ai_chat_message`(
 -- ============================================
 -- Code 代码表（子表）
 -- ============================================
+DROP TABLE IF EXISTS `code`;
 CREATE TABLE `code`(
     `id`          VARCHAR(36)  NOT NULL COMMENT '代码 ID',
     `message_id`  VARCHAR(36)  NOT NULL COMMENT '消息 ID（外键，关联 ai_chat_message.id）',
@@ -235,6 +282,7 @@ CREATE TABLE `code`(
 -- ============================================
 -- AI Message Summary 消息摘要表（上下文压缩，只增不删）
 -- ============================================
+DROP TABLE IF EXISTS `ai_message_summary`;
 CREATE TABLE `ai_message_summary`(
     `id`              VARCHAR(36)  NOT NULL COMMENT '记录主键（UUID，每条记录唯一）',
     `conversation_id` VARCHAR(36)  NOT NULL COMMENT '会话 ID（同一对话中所有记录共享此值）',
@@ -253,6 +301,7 @@ CREATE TABLE `ai_message_summary`(
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT ='AI 消息摘要表';
 
 -- AI 配置信息表
+DROP TABLE IF EXISTS `user_ai_config`;
 CREATE TABLE `user_ai_config` (
  `id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '主键ID',
  `user_id` VARCHAR(36) NOT NULL COMMENT '用户ID',
@@ -263,3 +312,5 @@ CREATE TABLE `user_ai_config` (
  FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE,
  INDEX `idx_user_id` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='AI配置信息表';
+
+SET FOREIGN_KEY_CHECKS = 1;

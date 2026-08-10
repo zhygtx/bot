@@ -27,14 +27,17 @@ public class BotServiceImpl implements BotService {
     }
 
     /**
-     * 更新机器人是否在线
+     * 更新机器人是否在线，并同步本次上线时间戳。
+     * onlineSince 由上下线事件提供：上线写 System.currentTimeMillis()，
+     * 下线写 null；这样统计首页能直接算本次在线时长。
      * @param botQQ 机器人QQ
      * @param online 是否在线
+     * @param onlineSince 本次上线时间戳（毫秒），离线时为 null
      */
     @Override
     @Transactional
-    public void updateOnline(Long botQQ, boolean online){
-        botMapper.updateOnline(botQQ, online);
+    public void updateOnline(Long botQQ, boolean online, Long onlineSince){
+        botMapper.updateOnline(botQQ, online, onlineSince);
     }
 
     /**

@@ -10,12 +10,15 @@ import java.util.Map;
 public interface BotMapper {
 
     /**
-     * 更新机器人在线状态
+     * 更新机器人在线状态，同时记录本次上线时间。
+     * 上线时传入当前时间戳，离线时传入 null 把 online_since 清空，
+     * 这样统计首页可以通过“当前时间 - online_since”得到本次在线时长。
      * @param botQQ 机器人QQ
      * @param online 是否在线
+     * @param onlineSince 本次上线时间戳（毫秒），离线时为 null
      */
-    @Update("UPDATE bot SET is_online = #{online} WHERE bot_qq = #{botQQ}")
-    void updateOnline(Long botQQ, Boolean online);
+    @Update("UPDATE bot SET is_online = #{online}, online_since = #{onlineSince} WHERE bot_qq = #{botQQ}")
+    void updateOnline(@Param("botQQ") Long botQQ, @Param("online") Boolean online, @Param("onlineSince") Long onlineSince);
 
     /**
      * 插入机器人

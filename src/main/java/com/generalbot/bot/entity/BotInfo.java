@@ -46,4 +46,11 @@ public class BotInfo {
      * 机器人是否在线
      */
     private boolean isOnline = false;
+
+    /**
+     * 本次上线时间戳（毫秒）。
+     * 在线时记录 botOnline 事件发生的时间，离线时置空；
+     * 数据统计首页用它计算“本次已在线时长”，不依赖 SDK 是否暴露连接时长。
+     */
+    private Long onlineSince;
 }

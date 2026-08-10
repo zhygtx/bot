@@ -50,7 +50,8 @@ public class BotCoreEvent  implements BotEventListener {
      */
     @Override
     public void botOnline(Long botQQ) {
-        botService.updateOnline(botQQ, true);
+        // 记录上线状态和本次上线时间戳，统计首页据此计算“本次已在线时长”
+        botService.updateOnline(botQQ, true, System.currentTimeMillis());
     }
 
     /**
@@ -61,7 +62,8 @@ public class BotCoreEvent  implements BotEventListener {
     @Override
     public void botOffline(Long botQQ) {
         log.info("[Bot 下线] QQ: {}, 已从在线缓存移除", botQQ);
-        botService.updateOnline(botQQ, false);
+        // 离线时清空上线时间戳，避免展示上一次连接的过期时长
+        botService.updateOnline(botQQ, false, null);
         dockerService.deleteContainer(botQQ);
 
         if (serverShuttingDown) {
