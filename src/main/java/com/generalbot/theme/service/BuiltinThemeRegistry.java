@@ -30,8 +30,8 @@ public class BuiltinThemeRegistry {
 
     public BuiltinThemeRegistry() {
         builtinThemes = new LinkedHashMap<>();
-        builtinThemes.put(DEFAULT_LIGHT_ID, new ThemeDto(DEFAULT_LIGHT_ID, "默认亮色", "light", true, lightTokens()));
-        builtinThemes.put(DEFAULT_DARK_ID, new ThemeDto(DEFAULT_DARK_ID, "默认暗色", "dark", true, darkTokens()));
+        builtinThemes.put(DEFAULT_LIGHT_ID, new ThemeDto(DEFAULT_LIGHT_ID, "默认亮色", "light", true, lightTokens(), ""));
+        builtinThemes.put(DEFAULT_DARK_ID, new ThemeDto(DEFAULT_DARK_ID, "默认暗色", "dark", true, darkTokens(), ""));
     }
 
     /**
@@ -79,7 +79,7 @@ public class BuiltinThemeRegistry {
     }
 
     private ThemeDto copyTheme(ThemeDto theme) {
-        return new ThemeDto(theme.getId(), theme.getName(), theme.getMode(), theme.isBuiltin(), new LinkedHashMap<>(theme.getTokens()));
+        return new ThemeDto(theme.getId(), theme.getName(), theme.getMode(), theme.isBuiltin(), new LinkedHashMap<>(theme.getTokens()), theme.getCustomCss());
     }
 
     private Map<String, String> lightTokens() {

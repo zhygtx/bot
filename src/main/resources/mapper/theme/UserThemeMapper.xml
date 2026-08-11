@@ -4,9 +4,9 @@
 
     <insert id="insert" parameterType="com.generalbot.theme.entity.UserTheme">
         insert into user_theme (
-            id, user_id, name, mode, tokens, create_time, update_time
+            id, user_id, name, mode, tokens, custom_css, create_time, update_time
         ) values (
-            #{id}, #{userId}, #{name}, #{mode}, #{tokens}, #{createTime}, #{updateTime}
+            #{id}, #{userId}, #{name}, #{mode}, #{tokens}, #{customCss}, #{createTime}, #{updateTime}
         )
     </insert>
 
@@ -15,6 +15,7 @@
         set name = #{name},
             mode = #{mode},
             tokens = #{tokens},
+            custom_css = #{customCss},
             update_time = #{updateTime}
         where id = #{id} and user_id = #{userId}
     </update>

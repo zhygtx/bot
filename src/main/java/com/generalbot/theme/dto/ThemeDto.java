@@ -39,4 +39,9 @@ public class ThemeDto {
      * CSS 变量令牌表。
      */
     private Map<String, String> tokens;
+
+    /**
+     * 用户自定义 CSS；内置主题固定为空字符串。
+     */
+    private String customCss;
 }

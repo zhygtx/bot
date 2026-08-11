@@ -43,6 +43,12 @@ public class UserTheme {
     private String tokens;
 
     /**
+     * 用户自定义 CSS。
+     * 与 tokens 分离保存：tokens 只服务颜色快捷编辑，customCss 覆盖其余全部样式。
+     */
+    private String customCss;
+
+    /**
      * 创建时间。
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")

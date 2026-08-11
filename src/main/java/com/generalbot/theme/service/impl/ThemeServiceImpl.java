@@ -13,6 +13,7 @@ import com.generalbot.theme.mapper.UserThemeMapper;
 import com.generalbot.theme.mapper.UserThemeSettingMapper;
 import com.generalbot.theme.service.BuiltinThemeRegistry;
 import com.generalbot.theme.service.ThemeService;
+import com.generalbot.theme.util.ThemeCssValidator;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -98,6 +99,7 @@ public class ThemeServiceImpl implements ThemeService {
         theme.setName(request.getName().trim());
         theme.setMode(request.getMode());
         theme.setTokens(writeTokens(request.getTokens()));
+        theme.setCustomCss(ThemeCssValidator.validate(request.getCustomCss()));
         theme.setCreateTime(now);
         theme.setUpdateTime(now);
         userThemeMapper.insert(theme);
@@ -121,6 +123,7 @@ public class ThemeServiceImpl implements ThemeService {
         existing.setName(request.getName().trim());
         existing.setMode(request.getMode());
         existing.setTokens(writeTokens(request.getTokens()));
+        existing.setCustomCss(ThemeCssValidator.validate(request.getCustomCss()));
         existing.setUpdateTime(LocalDateTime.now());
         userThemeMapper.update(existing);
         if (wasActive && !previousMode.equals(request.getMode())) {
@@ -271,7 +274,7 @@ public class ThemeServiceImpl implements ThemeService {
     }
 
     private ThemeDto toDto(UserTheme theme) {
-        return new ThemeDto(theme.getId(), theme.getName(), theme.getMode(), false, readTokens(theme.getTokens()));
+        return new ThemeDto(theme.getId(), theme.getName(), theme.getMode(), false, readTokens(theme.getTokens()), theme.getCustomCss() == null ? "" : theme.getCustomCss());
     }
 
     private Map<String, String> readTokens(String tokens) {

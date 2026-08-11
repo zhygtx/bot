@@ -25,6 +25,7 @@ CREATE TABLE `user_theme` (
 `name` VARCHAR(100) NOT NULL COMMENT '主题名称',
 `mode` VARCHAR(20) NOT NULL COMMENT '主题模式：light/dark',
 `tokens` JSON NOT NULL COMMENT '主题 CSS 变量令牌快照',
+`custom_css` LONGTEXT NULL COMMENT '用户自定义 CSS 覆盖，语法校验后原样保存',
 `create_time` DATETIME NOT NULL COMMENT '创建时间',
 `update_time` DATETIME NOT NULL COMMENT '更新时间',
 FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE,

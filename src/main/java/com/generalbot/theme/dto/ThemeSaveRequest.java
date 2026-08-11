@@ -29,4 +29,9 @@ public class ThemeSaveRequest {
      * 用户配置的 CSS 变量令牌。
      */
     private Map<String, String> tokens;
+
+    /**
+     * 用户自定义 CSS；空字符串表示清空高级样式覆盖。
+     */
+    private String customCss;
 }
