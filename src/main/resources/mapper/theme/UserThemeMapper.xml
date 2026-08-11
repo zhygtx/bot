@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.generalbot.theme.mapper.UserThemeMapper">
+
+    <insert id="insert" parameterType="com.generalbot.theme.entity.UserTheme">
+        insert into user_theme (
+            id, user_id, name, mode, tokens, create_time, update_time
+        ) values (
+            #{id}, #{userId}, #{name}, #{mode}, #{tokens}, #{createTime}, #{updateTime}
+        )
+    </insert>
+
+    <update id="update" parameterType="com.generalbot.theme.entity.UserTheme">
+        update user_theme
+        set name = #{name},
+            mode = #{mode},
+            tokens = #{tokens},
+            update_time = #{updateTime}
+        where id = #{id} and user_id = #{userId}
+    </update>
+</mapper>

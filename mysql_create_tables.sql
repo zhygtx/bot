@@ -17,6 +17,33 @@ INDEX `idx_account` (`account`),
 INDEX `idx_QQ` (`QQ`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户信息表';
 
+-- 用户自定义主题表
+DROP TABLE IF EXISTS `user_theme`;
+CREATE TABLE `user_theme` (
+`id` VARCHAR(36) NOT NULL PRIMARY KEY COMMENT '主题 ID',
+`user_id` VARCHAR(36) NOT NULL COMMENT '主题所属用户 ID',
+`name` VARCHAR(100) NOT NULL COMMENT '主题名称',
+`mode` VARCHAR(20) NOT NULL COMMENT '主题模式：light/dark',
+`tokens` JSON NOT NULL COMMENT '主题 CSS 变量令牌快照',
+`create_time` DATETIME NOT NULL COMMENT '创建时间',
+`update_time` DATETIME NOT NULL COMMENT '更新时间',
+FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE,
+INDEX `idx_user_id` (`user_id`),
+INDEX `idx_update_time` (`update_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户自定义主题表';
+
+-- 用户当前主题设置表
+DROP TABLE IF EXISTS `user_theme_setting`;
+CREATE TABLE `user_theme_setting` (
+`user_id` VARCHAR(36) NOT NULL COMMENT '用户 ID',
+`mode` VARCHAR(20) NOT NULL COMMENT '主题模式：light/dark',
+`active_theme_type` VARCHAR(20) NOT NULL COMMENT '当前主题类型：BUILTIN/CUSTOM',
+`active_theme_key` VARCHAR(100) NOT NULL COMMENT '当前主题键：内置主题 key 或 user_theme.id',
+`update_time` DATETIME NOT NULL COMMENT '更新时间',
+PRIMARY KEY (`user_id`, `mode`),
+FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户当前主题设置表';
+
 -- 机器人信息表
 DROP TABLE IF EXISTS `bot`;
 CREATE TABLE `bot` (

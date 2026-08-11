@@ -36,6 +36,15 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * 处理业务参数异常。
+     * 服务层发现请求数据不合法时抛出 IllegalArgumentException，这类错误应返回 400 而不是系统异常。
+     */
+    @ExceptionHandler(IllegalArgumentException.class)
+    public Result<Void> handleIllegalArgumentException(IllegalArgumentException e) {
+        return Result.error(400, StringUtils.hasLength(e.getMessage()) ? e.getMessage() : "请求参数错误");
+    }
+
+    /**
      * 处理参数验证异常
      * @param ex 方法参数验证异常对象
      * @return 包含验证错误信息的响应结果
