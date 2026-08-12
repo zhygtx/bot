@@ -21,11 +21,17 @@ public interface BotService {
     void updateOnline(Long botQQ, boolean online, Long onlineSince);
 
     /**
+     * 系统关闭时将所有 Bot 标记为离线，并清空在线时长起点。
+     */
+    void markAllOffline();
+
+    /**
      * 插入机器人
      * @param name 机器人名称
      * @param botQQ 机器QQ
+     * @param token 自定义连接 token，为空时由后端随机生成
      */
-    Result<?> insert(String userId, String name, Long botQQ);
+    Result<?> insert(String userId, String name, Long botQQ, String token);
 
     /**
      * 删除机器人

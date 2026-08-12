@@ -40,14 +40,21 @@ public class BotServiceImpl implements BotService {
         botMapper.updateOnline(botQQ, online, onlineSince);
     }
 
+    @Override
+    @Transactional
+    public void markAllOffline() {
+        botMapper.markAllOffline();
+    }
+
     /**
      * 插入机器人
      * @param name 机器人名称
      * @param botQQ 机器人QQ
+     * @param token 自定义连接 token，为空时由后端随机生成
      */
     @Override
     @Transactional
-    public Result<?> insert(String userId, String name, Long botQQ) {
+    public Result<?> insert(String userId, String name, Long botQQ, String token) {
         if (botMapper.existsByBotQQ(botQQ)) {
             return Result.error(400,"该bot已被注册");
         }
@@ -57,7 +64,7 @@ public class BotServiceImpl implements BotService {
         bot.setName(name);
         bot.setUserId(userId);
         bot.setPathSuffix(botQQ.toString());
-        bot.setToken(UUID.randomUUID().toString());
+        bot.setToken(token == null || token.isBlank() ? UUID.randomUUID().toString() : token.trim());
         botMapper.insert(bot);
         botRegistrar.register(botQQ.toString(), bot.getToken());
         return Result.success("添加成功",null);

@@ -64,12 +64,13 @@ public class BotCoreEvent  implements BotEventListener {
         log.info("[Bot 下线] QQ: {}, 已从在线缓存移除", botQQ);
         // 离线时清空上线时间戳，避免展示上一次连接的过期时长
         botService.updateOnline(botQQ, false, null);
-        dockerService.deleteContainer(botQQ);
 
         if (serverShuttingDown) {
-            log.info("[Bot 下线] 服务器正在关闭，跳过邮件通知: QQ={}", botQQ);
+            log.info("[Bot 下线] 服务器正在关闭，跳过容器删除与邮件通知: QQ={}", botQQ);
             return;
         }
+
+        dockerService.deleteContainer(botQQ);
 
         String email = botService.selectEmail(botQQ);
         if (email != null) {
@@ -84,7 +85,8 @@ public class BotCoreEvent  implements BotEventListener {
     @EventListener(ContextClosedEvent.class)
     public void onServerShutdown() {
         serverShuttingDown = true;
-        log.info("[服务器关闭] 已设置关闭标志，Bot 下线时将跳过邮件通知");
+        botService.markAllOffline();
+        log.info("[服务器关闭] 已设置关闭标志，并将所有 Bot 标记为离线");
     }
     
     /**

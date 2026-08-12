@@ -29,11 +29,12 @@ public class BotController {
      * @param user 用户对象
      * @param name 机器人名称
      * @param botQQ 机器人QQ
+     * @param token 自定义连接 token，为空时由后端随机生成
      * @return 插入结果
      */
     @PostMapping
-    public Result<?> insert(@AuthenticationPrincipal UserPrincipal user, String name, Long botQQ) {
-        return botService.insert(user.userId(), name, botQQ);
+    public Result<?> insert(@AuthenticationPrincipal UserPrincipal user, String name, Long botQQ, String token) {
+        return botService.insert(user.userId(), name, botQQ, token);
     }
 
     /**
