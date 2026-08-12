@@ -46,11 +46,8 @@ public class UserController {
      */
     @PostMapping("/login")
     public Result<Map<String, Object>> login(String account, String pwd) {
-        if (!userService.isExistByAccount(account)){
-            return Result.error(400,"该账号不存在");
-        }
-        if (!userService.login(account, pwd)){
-            return Result.error(400,"密码错误");
+        if (!userService.isExistByAccount(account) || !userService.login(account, pwd)){
+            return Result.error(400,"该账号不存在或密码错误");
         }
 
         // 获取用户信息
