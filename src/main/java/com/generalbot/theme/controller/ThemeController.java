@@ -80,4 +80,13 @@ public class ThemeController {
     public Result<ThemeDto> switchCurrent(@AuthenticationPrincipal UserPrincipal user, @RequestBody ThemeSwitchRequest request) {
         return Result.success("主题已切换", themeService.switchCurrent(user.userId(), request));
     }
+
+    /**
+     * 紧急重置当前用户的亮色/暗色主题到内置默认主题。
+     */
+    @PostMapping("/reset")
+    public Result<String> reset(@AuthenticationPrincipal UserPrincipal user) {
+        themeService.reset(user.userId());
+        return Result.success("主题已重置", null);
+    }
 }

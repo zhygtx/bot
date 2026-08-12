@@ -176,6 +176,17 @@ public class ThemeServiceImpl implements ThemeService {
         throw new IllegalArgumentException("不支持的主题类型：" + request.getType());
     }
 
+    /**
+     * 紧急重置：亮色和暗色都切回内置默认主题。
+     * 不删除用户自定义主题，只修改当前激活槽位，保证页面能立即恢复正常。
+     */
+    @Override
+    @Transactional
+    public void reset(String userId) {
+        saveSetting(userId, "light", THEME_TYPE_BUILTIN, defaultThemeIdForMode("light"));
+        saveSetting(userId, "dark", THEME_TYPE_BUILTIN, defaultThemeIdForMode("dark"));
+    }
+
     private ThemeDto resolveSetting(String userId, UserThemeSetting setting, String mode) {
         if (THEME_TYPE_BUILTIN.equals(setting.getActiveThemeType())) {
             if (!builtinThemeRegistry.exists(setting.getActiveThemeKey())) {

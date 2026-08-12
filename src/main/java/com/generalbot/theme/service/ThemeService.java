@@ -39,4 +39,9 @@ public interface ThemeService {
      * 设置当前用户正在使用的主题。
      */
     ThemeDto switchCurrent(String userId, ThemeSwitchRequest request);
+
+    /**
+     * 把当前用户的亮色和暗色主题都重置回内置默认主题，用于紧急恢复。
+     */
+    void reset(String userId);
 }

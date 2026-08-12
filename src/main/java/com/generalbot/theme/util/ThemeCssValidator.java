@@ -21,7 +21,7 @@ public final class ThemeCssValidator {
      * url()、@import、expression 等会引入外部资源或旧浏览器执行能力，当前阶段统一禁止。
      */
     private static final Pattern FORBIDDEN_CSS_PATTERN = Pattern.compile(
-            "(?i)(@import|@charset|@namespace|@(?:-moz-)?document|@font-face|url\\s*\\(|expression\\s*\\(|javascript:|behavior\\s*:|\\-moz-binding|progid\\s*:)"
+            "(?i)(@import|@charset|@namespace|@(?:-moz-)?document|@font-face|url\\s*\\(|expression\\s*\\(|javascript:|behavior\\s*:|-moz-binding|progid\\s*:)"
     );
 
     private ThemeCssValidator() {
@@ -40,6 +40,9 @@ public final class ThemeCssValidator {
             throw new IllegalArgumentException("自定义 CSS 不能超过 64KB");
         }
         validateControlCharacters(normalized);
+        if (normalized.indexOf('`') >= 0) {
+            throw new IllegalArgumentException("自定义 CSS 不允许包含反引号，请移除 Markdown 代码块标记");
+        }
 
         String scanned = stripCommentsAndStrings(normalized);
         validateBalancedDelimiters(scanned);
