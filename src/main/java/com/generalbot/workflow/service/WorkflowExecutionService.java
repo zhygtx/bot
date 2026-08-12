@@ -18,6 +18,7 @@ public interface WorkflowExecutionService {
      * @param sortField 排序字段
      * @param sortOrder 排序方式
      * @param status 状态
+     * @param keyword 内容关键词，模糊匹配执行 trace 中的节点数据
      * @param pageNum 页码
      * @param pageSize 每页数量
      * @return 分页结果
@@ -30,6 +31,7 @@ public interface WorkflowExecutionService {
                                                String sortField,
                                                String sortOrder,
                                                String status,
+                                               String keyword,
                                                int pageNum,
                                                int pageSize);
 

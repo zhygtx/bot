@@ -37,6 +37,7 @@ public interface WorkflowExecutionMapper {
      * @param sortField 排序字段
      * @param sortOrder 排序方式
      * @param status 状态
+     * @param keyword 内容关键词，模糊匹配执行 trace 中的节点数据
      * @return 执行记录列表
      */
     List<WorkflowExecution> selectPage(@Param("userId") String userId,
@@ -46,7 +47,8 @@ public interface WorkflowExecutionMapper {
                                        @Param("endTime") Long endTime,
                                        @Param("sortField") String sortField,
                                        @Param("sortOrder") String sortOrder,
-                                       @Param("status") String status);
+                                       @Param("status") String status,
+                                       @Param("keyword") String keyword);
 
     /**
      * 按工作流ID聚合执行统计

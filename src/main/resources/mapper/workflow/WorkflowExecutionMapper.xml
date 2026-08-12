@@ -66,6 +66,9 @@
             <if test="status != null and status != ''">
                 AND status = #{status}
             </if>
+            <if test="keyword != null and keyword != ''">
+                AND trace LIKE CONCAT('%', #{keyword}, '%')
+            </if>
         </where>
         <choose>
             <when test="sortField == 'actualNodeCount'">

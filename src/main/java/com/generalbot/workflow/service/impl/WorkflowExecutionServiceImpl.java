@@ -35,11 +35,12 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
                                                       String sortField,
                                                       String sortOrder,
                                                       String status,
+                                                      String keyword,
                                                       int pageNum,
                                                       int pageSize) {
         PageHelper.startPage(pageNum, pageSize);
         return new PageInfo<>(executionMapper.selectPage(
-                userId, workflowId, workflowName, startTime, endTime, sortField, sortOrder, status));
+                userId, workflowId, workflowName, startTime, endTime, sortField, sortOrder, status, keyword));
     }
 
     /**

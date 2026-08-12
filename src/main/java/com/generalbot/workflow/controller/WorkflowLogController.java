@@ -28,6 +28,7 @@ public class WorkflowLogController {
      * @param sortField 排序字段
      * @param sortOrder 排序方式
      * @param status 状态
+     * @param keyword 内容关键词，模糊匹配执行 trace 中的节点数据
      * @param pageNum 页码
      * @param pageSize 每页数量
      * @return 执行记录分页
@@ -41,10 +42,11 @@ public class WorkflowLogController {
                                       String sortField,
                                       String sortOrder,
                                       String status,
+                                      String keyword,
                                       @RequestParam(defaultValue = "1") Integer pageNum,
                                       @RequestParam(defaultValue = "10") Integer pageSize) {
         return Result.success(null, executionService.findExecutions(
-                userId, workflowId, workflowName, startTime, endTime, sortField, sortOrder, status, pageNum, pageSize));
+                userId, workflowId, workflowName, startTime, endTime, sortField, sortOrder, status, keyword, pageNum, pageSize));
     }
 
     /**
