@@ -100,7 +100,7 @@ is_running() {
     fi
 }
 
-# 检查并安装 Java 21
+# 检查并安装 Java 21（包管理器失败时自动回退为下载压缩包安装，兼容 CentOS 7 等无 Java 21 包的系统）
 ensure_java21_installed() {
     local java_version
     echo_info "检查 Java 21 环境..."
@@ -117,7 +117,7 @@ ensure_java21_installed() {
         echo_warning "Java 未安装，正在安装 Java 21..."
     fi
 
-    # 尝试安装 OpenJDK 21
+    # 尝试通过包管理器安装 OpenJDK 21（部分系统仓库没有 21，安装失败不影响后续回退）
     if command -v apt-get &> /dev/null; then
         sudo apt-get update
         sudo apt-get install -y openjdk-21-jre-headless
@@ -126,22 +126,125 @@ ensure_java21_installed() {
     elif command -v dnf &> /dev/null; then
         sudo dnf install -y java-21-openjdk-headless
     else
-        echo_error "未找到包管理器，无法自动安装 Java 21"
-        exit 1
+        echo_warning "未找到可用的包管理器，将改用压缩包方式安装 Java 21"
     fi
 
-    # 验证安装
-    if ! command -v java &> /dev/null; then
-        echo_error "Java 21 安装失败"
-        exit 1
-    fi
-
-    java_version=$(java -version 2>&1 | head -n1 | cut -d'"' -f2)
-    if [[ $java_version =~ ^21\. ]]; then
-        echo_success "Java 21 安装成功 (版本: $java_version)"
+    # 验证安装，不满足则走压缩包兜底安装
+    if command -v java &> /dev/null; then
+        java_version=$(java -version 2>&1 | head -n1 | cut -d'"' -f2)
+        if [[ $java_version =~ ^21\. ]]; then
+            echo_success "Java 21 安装成功 (版本: $java_version)"
+            return 0
+        fi
+        echo_warning "当前 Java 版本: $java_version，尝试压缩包方式安装 Java 21"
     else
-        echo_error "安装的 Java 版本不是 21，当前版本: $java_version"
+        echo_warning "仓库中未找到 Java 21 或安装失败，尝试压缩包方式安装"
+    fi
+
+    install_java21_from_tarball
+    if [ $? -ne 0 ]; then
+        echo_error "Java 21 自动安装失败，请手动安装 OpenJDK 21 后重试"
         exit 1
+    fi
+}
+
+# 通过下载 OpenJDK 21 (Temurin) 压缩包安装 Java 21
+# 适用场景: CentOS 7 等系统仓库无 Java 21 包，或系统没有包管理器
+install_java21_from_tarball() {
+    local SUDO=""
+    if [ "$(id -u)" -ne 0 ]; then
+        SUDO="sudo"
+    fi
+
+    # 如果目标目录已有可用的 JDK 21 则直接复用，跳过下载
+    if [ -x "/usr/local/jdk-21/bin/java" ]; then
+        local exist_ver=$(/usr/local/jdk-21/bin/java -version 2>&1 | head -n1 | cut -d'"' -f2)
+        if [[ $exist_ver =~ ^21\. ]]; then
+            echo_success "检测到 /usr/local/jdk-21 已安装 (版本: $exist_ver)，直接配置使用"
+            $SUDO ln -sf /usr/local/jdk-21/bin/java /usr/local/bin/java
+            $SUDO ln -sf /usr/local/jdk-21/bin/javac /usr/local/bin/javac
+            export JAVA_HOME=/usr/local/jdk-21
+            export PATH=$JAVA_HOME/bin:$PATH
+            return 0
+        fi
+    fi
+
+    # 检测 CPU 架构，选择对应的 JDK 包
+    local arch=$(uname -m)
+    local jdk_arch=""
+    case "$arch" in
+        x86_64)  jdk_arch="x64" ;;
+        aarch64) jdk_arch="aarch64" ;;
+        *)
+            echo_error "暂不支持自动安装的架构: $arch，请手动安装 Java 21"
+            return 1
+            ;;
+    esac
+
+    # 检查必备下载工具
+    if ! command -v curl &> /dev/null; then
+        echo_error "未找到 curl 命令，无法下载 JDK，请先安装 curl"
+        return 1
+    fi
+
+    local mirror_url="https://mirrors.tuna.tsinghua.edu.cn/Adoptium/21/jdk/${jdk_arch}/linux"
+    local download_url=""
+    local tmp_dir=$(mktemp -d)
+
+    echo_info "正在从清华镜像获取 OpenJDK 21 最新版本信息..."
+    local tarball=$(curl -fsSL --connect-timeout 10 "$mirror_url/" 2>/dev/null \
+        | grep -oE "OpenJDK21U-jdk_${jdk_arch}_linux_hotspot_[0-9._]+\.tar\.gz" \
+        | sort -Vu | tail -n1)
+
+    if [ -n "$tarball" ]; then
+        download_url="${mirror_url}/${tarball}"
+        echo_info "发现最新版本: $tarball"
+    else
+        echo_warning "镜像信息获取失败，改用 Adoptium 官方源下载最新版..."
+        download_url="https://api.adoptium.net/v3/binary/latest/21/ga/linux/${jdk_arch}/jdk/hotspot/normal/eclipse"
+    fi
+
+    cd "$tmp_dir"
+    echo_info "正在下载 JDK 21 (约 200MB)，请耐心等待..."
+    if ! curl -fSL --connect-timeout 15 --retry 2 -o jdk21.tar.gz "$download_url"; then
+        echo_error "JDK 21 下载失败: $download_url"
+        cd / && rm -rf "$tmp_dir"
+        return 1
+    fi
+
+    echo_info "正在解压安装..."
+    tar -xzf jdk21.tar.gz || { echo_error "JDK 21 解压失败"; cd / && rm -rf "$tmp_dir"; return 1; }
+    local extracted_dir=$(find . -maxdepth 1 -type d -name "jdk-21*" | head -n1 | sed 's|^\./||')
+    if [ -z "$extracted_dir" ]; then
+        echo_error "未找到解压后的 JDK 目录"
+        cd / && rm -rf "$tmp_dir"
+        return 1
+    fi
+
+    # 安装到 /usr/local/jdk-21（旧目录先改名为备份，不直接删除）
+    if [ -d "/usr/local/jdk-21" ]; then
+        $SUDO rm -rf /usr/local/jdk-21.bak
+        $SUDO mv /usr/local/jdk-21 /usr/local/jdk-21.bak
+    fi
+    $SUDO mv "$tmp_dir/$extracted_dir" /usr/local/jdk-21
+    cd / && rm -rf "$tmp_dir"
+
+    # 创建软链接并写入全局环境变量，确保任何方式启动都能找到 java
+    $SUDO ln -sf /usr/local/jdk-21/bin/java /usr/local/bin/java
+    $SUDO ln -sf /usr/local/jdk-21/bin/javac /usr/local/bin/javac
+    echo 'export JAVA_HOME=/usr/local/jdk-21' | $SUDO tee /etc/profile.d/java.sh > /dev/null
+    echo 'export PATH=$JAVA_HOME/bin:$PATH' | $SUDO tee -a /etc/profile.d/java.sh > /dev/null
+    export JAVA_HOME=/usr/local/jdk-21
+    export PATH=$JAVA_HOME/bin:$PATH
+
+    # 验证安装结果
+    local new_ver=$(java -version 2>&1 | head -n1 | cut -d'"' -f2)
+    if [[ $new_ver =~ ^21\. ]]; then
+        echo_success "Java 21 安装成功 (版本: $new_ver, 路径: /usr/local/jdk-21)"
+        return 0
+    else
+        echo_error "Java 21 安装后验证失败，当前版本: $new_ver"
+        return 1
     fi
 }
 

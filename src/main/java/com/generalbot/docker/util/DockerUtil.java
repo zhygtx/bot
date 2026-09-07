@@ -9,7 +9,7 @@ import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.*;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientBuilder;
-import com.github.dockerjava.httpclient5.ApacheDockerHttpClient;
+import com.github.dockerjava.netty.NettyDockerCmdExecFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -40,20 +40,30 @@ public class DockerUtil {
     // 创建 Docker 客户端实例
     private final DockerClient dockerClient;
 
-    public DockerUtil() {
-        // 配置 Docker 客户端 - 使用 TCP 连接
+    /**
+     * 构造 Docker 客户端并连接 Docker 守护进程
+     * <p>
+     * 说明：withDockerCmdExecFactory 在 docker-java 3.x 已标记弃用（新 SPI 为 withDockerHttpClient），
+     * 但 3.3.0 的 transport-netty 模块仍只提供旧 API 的 NettyDockerCmdExecFactory，而新 SPI 的
+     * httpclient5/zerodep 传输层均不支持 unix socket（httpclient5 会把 unix:///var/run/docker.sock
+     * 退化为 TCP 连接 localhost:2375 导致失败），故此处必须使用弃用 API 接入 Netty 传输层；
+     * 待将来升级 docker-java 主版本后再迁移到新 SPI。
+     */
+    @SuppressWarnings("deprecation")
+    public DockerUtil(@Value("${docker.host:unix:///var/run/docker.sock}") String dockerHost) {
+        // 配置 Docker 客户端 - 默认通过本机 unix socket 连接，无需在服务器上开启 Docker TCP 2375 端口
+        // 可通过配置项 docker.host 覆盖，例如本地调试连 Docker Desktop 时改为 tcp://127.0.0.1:2375
         DefaultDockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder()
-                .withDockerHost("tcp://127.0.0.1:2375")
+                .withDockerHost(dockerHost)
                 .withDockerCertPath("")
                 .withDockerTlsVerify(false)
                 .build();
 
-        ApacheDockerHttpClient httpClient = new ApacheDockerHttpClient.Builder()
-                .dockerHost(config.getDockerHost())
-                .build();
-
+        // 使用 Netty 传输层（NettyDockerCmdExecFactory 对 unix socket 支持完善）
+        // 注意：docker-java 3.3.0 的 transport-netty 模块仍是旧版 DockerCmdExecFactory API，须用 withDockerCmdExecFactory 接入；
+        // 而 httpclient5 传输层（withDockerHttpClient）对 unix socket 有缺陷，会把 unix:///var/run/docker.sock 退化为 TCP 连接 localhost:2375
         this.dockerClient = DockerClientBuilder.getInstance(config)
-                .withDockerHttpClient(httpClient)
+                .withDockerCmdExecFactory(new NettyDockerCmdExecFactory())
                 .build();
 
         log.info("Docker客户端已初始化，Docker主机: {}", config.getDockerHost());

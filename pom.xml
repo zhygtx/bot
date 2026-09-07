@@ -198,6 +198,13 @@
             <version>3.3.0</version>
         </dependency>
 
+        <!-- Docker Java Netty 传输层 - unix socket 支持完善（httpclient5 传输层对 unix socket 支持有缺陷，会退化为 TCP 连接 localhost:2375） -->
+        <dependency>
+            <groupId>com.github.docker-java</groupId>
+            <artifactId>docker-java-transport-netty</artifactId>
+            <version>3.3.0</version>
+        </dependency>
+
         <!-- StringTemplate 4 -->
         <dependency>
             <groupId>org.antlr</groupId>
