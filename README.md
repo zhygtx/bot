@@ -268,3 +268,12 @@ mvn test
 - 文件上传默认允许较大文件，生产环境应结合 Nginx、磁盘配额和文件类型校验。
 - AI 生成代码会进入编译目录，建议使用隔离用户、容器或受限权限运行。
 - 定期备份数据库、`upload/` 插件目录和外部配置；升级前保留可回滚的 JAR 和配置版本。
+
+## 相关开源项目与依赖
+
+- [generalbot-api](https://github.com/zhygtx/generalbot-api)：GeneralBot API 配套项目，提供后端插件和机器人扩展所需的 API 能力。
+- [napcat-spring-boot-starter](https://github.com/zhygtx/napcat-spring-boot-starter)：NapCat Spring Boot 启动器，负责 NapCat WebSocket、事件、动作及相关接入能力。
+- [bot-web](https://github.com/zhygtx/bot-web)：配套 Vue 前端项目，对应当前工程的 `../web/` 目录。
+- [GeneralBot](https://github.com/zhygtx/GeneralBot)：AI 转写的单人 Python 项目版，适合独立运行或作为 Python 侧实现参考，不是当前 Java 后端的必需依赖。
+
+以上仓库均可能独立发布新版本。当前后端仍在持续更新和优化，升级配套项目时请核对 Maven 依赖、NapCat 协议、接口字段和前端请求是否兼容。
