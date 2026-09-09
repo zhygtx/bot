@@ -1,32 +1,60 @@
 package com.generalbot.workflow.engine;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.generalbot.common.util.ExceptionUtils;
+import com.generalbot.workflow.entity.execution.BigText;
 import com.generalbot.workflow.entity.execution.ExecutionTrace;
 import com.generalbot.workflow.entity.execution.NodeTrace;
 import com.generalbot.workflow.entity.execution.WorkflowExecution;
 import com.generalbot.workflow.entity.WorkflowInfo;
 import com.generalbot.workflow.entity.definition.WorkflowNode;
+import com.generalbot.workflow.mapper.BigTextMapper;
 import com.generalbot.workflow.mapper.WorkflowExecutionMapper;
+import lombok.extern.slf4j.Slf4j;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * JSON 快照式执行记录器：一次执行对应一行 workflow_execution。
  */
+@Slf4j
 public class JsonExecutionRecorder implements ExecutionRecorder {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
-    private static final int MAX_TEXT_LENGTH = 64 * 1024;
+
+    /**
+     * 超过该阈值的文本不再内嵌，而是写入 big_text 表并按引用键返回。
+     */
+    private static final int BIG_TEXT_THRESHOLD = 10 * 1024;
+
+    /**
+     * 引用键前缀，前端据此识别并懒加载内容。
+     */
+    public static final String BIG_TEXT_PREFIX = "BIG_TEXT:";
 
     private final WorkflowExecutionMapper executionMapper;
+    private final BigTextMapper bigTextMapper;
     private final WorkflowExecution execution;
     private final ExecutionTrace trace = new ExecutionTrace();
+
+    /**
+     * 本次执行期间被离线存储的大数据缓存（key -> 完整内容）。
+     */
+    private final Map<String, String> bigTextCache = new HashMap<>();
 
     /**
      * 初始化记录器，预填工作流摘要信息。
      */
     public JsonExecutionRecorder(WorkflowExecutionMapper executionMapper,
+                                 BigTextMapper bigTextMapper,
                                  WorkflowInfo workflowInfo,
                                  String triggerKey) {
         this.executionMapper = executionMapper;
+        this.bigTextMapper = bigTextMapper;
         this.execution = new WorkflowExecution();
         this.execution.setWorkflowId(workflowInfo.getId());
         this.execution.setUserId(workflowInfo.getUserId());
@@ -70,8 +98,8 @@ public class JsonExecutionRecorder implements ExecutionRecorder {
         }
         nodeTrace.setStatus("SUCCESS");
         nodeTrace.setEndTime(endTime);
-        nodeTrace.setInput(truncate(input));
-        nodeTrace.setOutput(truncate(output));
+        nodeTrace.setInput(store(input));
+        nodeTrace.setOutput(store(output));
     }
 
     /**
@@ -85,8 +113,8 @@ public class JsonExecutionRecorder implements ExecutionRecorder {
         }
         nodeTrace.setStatus("FAILED");
         nodeTrace.setEndTime(endTime);
-        nodeTrace.setInput(truncate(input));
-        nodeTrace.setError(truncateText(errorMessage(error)));
+        nodeTrace.setInput(store(input));
+        nodeTrace.setError(storeText(ExceptionUtils.fullStackTrace(error)));
     }
 
     /**
@@ -104,7 +132,7 @@ public class JsonExecutionRecorder implements ExecutionRecorder {
     @Override
     public void workflowFailed(long endTime, Throwable error) {
         execution.setStatus("FAILED");
-        execution.setErrorMessage(truncateText(errorMessage(error)));
+        execution.setErrorMessage(storeText(ExceptionUtils.brief(error)));
         finish(endTime);
     }
 
@@ -114,7 +142,29 @@ public class JsonExecutionRecorder implements ExecutionRecorder {
     @Override
     public Long save() {
         executionMapper.insert(execution);
+        if (!bigTextCache.isEmpty()) {
+            persistBigTextCache();
+        }
         return execution.getId();
+    }
+
+    /**
+     * 分批写入大数据缓存，避免单条超大 INSERT 超出数据库包大小限制。
+     */
+    private void persistBigTextCache() {
+        List<BigText> entries = new ArrayList<>(bigTextCache.size());
+        bigTextCache.forEach((key, value) -> entries.add(new BigText(key, execution.getId(), value)));
+        int batchSize = 10;
+        for (int i = 0; i < entries.size(); i += batchSize) {
+            List<BigText> batch = entries.subList(i, Math.min(i + batchSize, entries.size()));
+            try {
+                bigTextMapper.insertBatch(new ArrayList<>(batch));
+            } catch (Exception e) {
+                // 大数据写入失败不应掩盖执行记录本身的保存结果，交由日志排查。
+                log.error("工作流执行记录 {} 的大数据写入失败（第 {} 批，共 {} 条）",
+                        execution.getId(), i / batchSize + 1, batch.size(), e);
+            }
+        }
     }
 
     /**
@@ -137,44 +187,36 @@ public class JsonExecutionRecorder implements ExecutionRecorder {
     }
 
     /**
-     * 输入输出统一序列化为 JSON 并截断，避免超大文本撑爆执行记录。
+     * 输入输出统一序列化为 JSON，超过阈值时离线存储到 big_text。
      */
-    private Object truncate(Object value) {
+    private Object store(Object value) {
         if (value == null) {
             return null;
         }
         if (value instanceof String text) {
-            return truncateText(text);
+            return storeText(text);
         }
         try {
             String json = MAPPER.writeValueAsString(value);
-            return truncateText(json);
+            return storeText(json);
         } catch (Exception e) {
-            return truncateText(value.toString());
+            return storeText(value.toString());
         }
     }
 
     /**
-     * 超过阈值时截断字符串。
+     * 文本超过阈值时写入 big_text 并返回引用键，否则原样返回。
      */
-    private String truncateText(String text) {
+    private String storeText(String text) {
         if (text == null) {
             return null;
         }
-        return text.length() > MAX_TEXT_LENGTH
-                ? text.substring(0, MAX_TEXT_LENGTH) + "...[已截断]"
-                : text;
+        if (text.length() <= BIG_TEXT_THRESHOLD) {
+            return text;
+        }
+        String key = BIG_TEXT_PREFIX + UUID.randomUUID() + ":" + System.currentTimeMillis();
+        bigTextCache.put(key, text);
+        return key;
     }
 
-    /**
-     * 提取可读的错误信息，优先取真实异常 cause。
-     */
-    private String errorMessage(Throwable error) {
-        if (error == null) {
-            return "";
-        }
-        Throwable cause = error.getCause() != null ? error.getCause() : error;
-        String message = cause.getMessage();
-        return message == null || message.isBlank() ? cause.getClass().getName() : message;
-    }
 }

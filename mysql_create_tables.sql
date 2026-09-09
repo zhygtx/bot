@@ -232,6 +232,17 @@ CREATE TABLE `workflow_execution` (
   INDEX `idx_status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='工作流执行记录表';
 
+-- 大数据存储表：存放超过内嵌阈值的超大日志/堆栈，避免截断执行记录
+DROP TABLE IF EXISTS `big_text`;
+CREATE TABLE `big_text` (
+  `key` VARCHAR(128) NOT NULL PRIMARY KEY COMMENT '大数据引用键',
+  `execution_id` BIGINT NOT NULL COMMENT '所属工作流执行记录ID',
+  `value` LONGTEXT NOT NULL COMMENT '实际数据内容',
+  INDEX `idx_big_text_execution` (`execution_id`),
+  CONSTRAINT `fk_big_text_execution` FOREIGN KEY (`execution_id`)
+      REFERENCES `workflow_execution` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='大数据存储表';
+
 # ----------------------------------------------------------------------------------------------------------------
 
 -- 工作流执行日志每日统计表（凌晨定时任务把前一天执行记录聚合到这里，原始明细清理后统计仍可长期保留）

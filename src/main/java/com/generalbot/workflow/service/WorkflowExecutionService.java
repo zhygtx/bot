@@ -41,4 +41,11 @@ public interface WorkflowExecutionService {
      * @return 执行记录
      */
     WorkflowExecution findById(Long id);
+
+    /**
+     * 按引用键查询离线存储的大数据内容
+     * @param key 大数据引用键
+     * @return 大数据内容
+     */
+    String findBigText(String key);
 }

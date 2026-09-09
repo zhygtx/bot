@@ -59,4 +59,14 @@ public class WorkflowLogController {
         WorkflowExecution execution = executionService.findById(id);
         return Result.success(null, execution);
     }
+
+    /**
+     * 查询离线存储的大数据内容
+     * @param key 大数据引用键（BIG_TEXT: 前缀）
+     * @return 大数据内容
+     */
+    @GetMapping("/findBigText")
+    public Result<?> findBigText(String key) {
+        return Result.success(null, executionService.findBigText(key));
+    }
 }

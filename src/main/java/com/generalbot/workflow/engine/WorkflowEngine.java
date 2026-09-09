@@ -1,6 +1,7 @@
 package com.generalbot.workflow.engine;
 
 import com.generalbot.common.context.ThreadLocalManager;
+import com.generalbot.common.util.ExceptionUtils;
 import com.generalbot.plugin.entity.ParameterInfo;
 import com.github.zhygtx.napcat.protocol.NapCatProtocolClient;
 import com.generalbot.workflow.engine.convert.ValueConverterRegistry;
@@ -8,6 +9,7 @@ import com.generalbot.workflow.entity.definition.WorkflowDefinition;
 import com.generalbot.workflow.entity.definition.WorkflowEdge;
 import com.generalbot.workflow.entity.definition.WorkflowNode;
 import com.generalbot.workflow.entity.WorkflowInfo;
+import com.generalbot.workflow.mapper.BigTextMapper;
 import com.generalbot.workflow.mapper.WorkflowExecutionMapper;
 import com.generalbot.workflow.service.WorkflowService;
 import lombok.extern.slf4j.Slf4j;
@@ -59,6 +61,9 @@ public class WorkflowEngine {
     /** 执行记录 Mapper，用于持久化快照式 trace。 */
     private final WorkflowExecutionMapper executionMapper;
 
+    /** 大数据 Mapper，用于存放超长日志/堆栈内容。 */
+    private final BigTextMapper bigTextMapper;
+
     /** 工作流服务，执行失败时把工作流标记为不可用。 */
     private final WorkflowService workflowService;
 
@@ -81,6 +86,7 @@ public class WorkflowEngine {
                           CallableRegistry callableRegistry,
                           ValueConverterRegistry valueConverterRegistry,
                           WorkflowExecutionMapper executionMapper,
+                          BigTextMapper bigTextMapper,
                           @Lazy WorkflowService workflowService,
                           @Qualifier("workflowExecutor") ExecutorService workflowExecutor,
                           @Qualifier("workflowSemaphore") Semaphore workflowSemaphore) {
@@ -89,6 +95,7 @@ public class WorkflowEngine {
         this.callableRegistry = callableRegistry;
         this.valueConverterRegistry = valueConverterRegistry;
         this.executionMapper = executionMapper;
+        this.bigTextMapper = bigTextMapper;
         this.workflowService = workflowService;
         this.workflowExecutor = workflowExecutor;
         this.workflowSemaphore = workflowSemaphore;
@@ -142,7 +149,7 @@ public class WorkflowEngine {
         Map<String, Object> context = new HashMap<>();
         context.put("input", payload);
         Map<String, Object> pluginInstances = new HashMap<>();
-        JsonExecutionRecorder recorder = new JsonExecutionRecorder(executionMapper, workflowInfo, triggerKey);
+        JsonExecutionRecorder recorder = new JsonExecutionRecorder(executionMapper, bigTextMapper, workflowInfo, triggerKey);
         try {
             long startTime = System.currentTimeMillis();
             recorder.workflowStarted(workflowInfo, triggerKey, startTime, payload);
@@ -565,12 +572,11 @@ public class WorkflowEngine {
     }
 
     /**
-     * 提取可读错误信息：优先取 cause 的 message，无消息时退化为异常类名。
+     * 提取工作流禁用原因：保留最外层（含节点上下文）的可读信息，并适配 disable_reason 的 255 长度。
      */
     private String errorMessage(Throwable error) {
-        Throwable cause = error.getCause() != null ? error.getCause() : error;
-        String message = cause.getMessage();
-        return message == null || message.isBlank() ? cause.getClass().getName() : message;
+        String message = ExceptionUtils.brief(error);
+        return message.length() > 255 ? message.substring(0, 255) : message;
     }
 
     /**
