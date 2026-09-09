@@ -16,6 +16,24 @@ GeneralBot 后端是基于 Spring Boot 3 的 REST 服务，为前端控制台和
 - Docker Java 集成，可按 Bot 创建/删除 NapCat 容器。
 - 运行统计、主题列表、主题编辑、当前主题切换和主题紧急恢复。
 
+## 后端模块结构
+
+```text
+src/main/java/com/generalbot/
+├── user/          # 用户、登录、邮箱与密码找回
+├── bot/           # Bot 注册、在线状态、事件和动作元数据
+├── plugin/        # 插件实体、版本、反射调用和发布
+├── workflow/      # 工作流定义、执行引擎、日志和大文本存储
+├── ai/             # AI 对话、生成、审查、编译和 SSE 流
+├── docker/         # NapCat 容器创建和管理
+├── statistics/     # 统计查询和定时维护任务
+├── theme/          # 主题 CRUD、校验和内置主题
+├── security/       # JWT、用户主体和认证过滤器
+└── config/         # Spring、Redis、工作流执行器配置
+```
+
+后端统一使用 `Result<T>` 返回 `code`、`message` 和 `data`。认证采用 JWT + Redis：JWT 负责签名和过期时间，Redis 用于校验当前会话是否仍然有效。
+
 ## 技术栈
 
 - Java 21、Spring Boot 3.5、Spring Web、Spring Security
@@ -77,6 +95,21 @@ ai:
 
 NapCat 默认 WebSocket 端点为 `/ws/bot`，并启用动态 Token 注册。若前面使用 Nginx，请同时转发 `/api/`、WebSocket 和 AI SSE 路由。
 
+### 配置项说明
+
+- `server.port`：HTTP 服务端口，默认 8080。
+- `spring.datasource.*`：MySQL 连接；数据库名默认 `bot`。
+- `spring.data.redis.*`：Redis 连接，默认 `localhost:6379`。
+- `jwt.secret`、`jwt.expiration`：JWT 签名密钥和有效期；生产环境必须使用随机长密钥。
+- `upload.plugin-path`：插件上传目录，默认位于运行目录的 `upload/plugins`。
+- `docker.host`：Docker Engine 地址；Linux 通常使用 Unix Socket，Docker Desktop 可使用 TCP 地址。
+- `napcat.ws.*`：NapCat WebSocket、Token、心跳和任务线程池。
+- `workflow.executor.*`：工作流执行器线程数、队列容量和并发上限。
+- `ai.default.*`：系统默认 AI 提供商、模型、上下文窗口和代码审查策略。
+- `plugin.compiler.*`：AI 插件编译工作目录、Maven 命令和超时。
+
+配置文件中涉及数据库密码、邮箱授权码、JWT 密钥、AI API Key 和公网地址的内容都应视为敏感信息。建议通过外部配置、环境变量或密钥管理服务注入，并在凭据曾经公开后立即轮换。
+
 ## 初始化数据库
 
 ```sql
@@ -117,6 +150,28 @@ chmod +x start.sh
 
 支持通过 `--spring.config.additional-location=optional:file:./config/` 指定外部配置目录。
 
+Windows PowerShell 示例：
+
+```powershell
+cd demo
+$env:SPRING_CONFIG_ADDITIONAL_LOCATION = "optional:file:./config/"
+mvn spring-boot:run
+```
+
+Linux 生产环境示例：
+
+```bash
+cd demo
+mvn clean package -DskipTests
+cp target/bot.jar /opt/generalbot/
+cd /opt/generalbot
+java -Xms1g -Xmx2g -Dfile.encoding=UTF-8 \
+  -jar bot.jar \
+  --spring.config.additional-location=optional:file:./config/
+```
+
+运行日志默认由 Logback 输出；生产环境建议将日志目录、上传目录和配置目录放在应用包之外，并配置轮转和磁盘容量告警。
+
 ## API 概览
 
 受保护请求需要携带：
@@ -147,6 +202,17 @@ Authorization: Bearer <JWT_TOKEN>
 
 开放接口包括登录、注册、邮箱验证码和 NapCat WebSocket 握手；其余业务接口默认要求 JWT。调试 API 时请以控制器源码和最新前端调用为准。
 
+### 典型使用流程
+
+1. 调用注册接口创建账号，并通过邮箱验证码完成邮箱相关操作。
+2. 登录获取 JWT，前端或 API 客户端保存 Token。
+3. 创建 Bot，记录 Bot Token，并让 NapCat 按 `/ws/bot` 连接后端。
+4. 创建插件或工作流，先使用测试入口验证参数和节点执行结果。
+5. 启用工作流或发布插件，观察执行日志和统计页面。
+6. 需要 AI 能力时，先在 AI 配置中验证模型连接，再生成、审查和编译插件。
+
+AI 生成和编译接口使用 SSE，客户端应持续读取事件流，不要按普通 JSON 请求立即关闭连接。
+
 ## 运行检查
 
 1. 访问 `GET /actuator/health`（若网关未限制）确认服务存活。
@@ -154,6 +220,46 @@ Authorization: Bearer <JWT_TOKEN>
 3. 登录前端后创建 Bot，确认 Bot Token 与 NapCat 配置一致。
 4. 先运行简单工作流测试，再启用生产 Bot 事件触发。
 5. AI 功能需确认 API Key、模型、网络，以及编译器工作目录写权限。
+
+## NapCat 与 Docker 使用说明
+
+### 已有 NapCat 实例
+
+如果已有 NapCat/OneBot 实例，只需在 Bot 配置中使用后端登记的 Token，并将客户端 WebSocket 地址指向：
+
+```text
+ws://<后端地址>/ws/bot
+```
+
+实际路径以 `napcat.ws.server.url` 为准；使用 HTTPS 时对应改为 `wss://`。
+
+### 由后端创建容器
+
+使用 `/docker` 接口或前端相关入口创建容器时，运行后端的账号必须有 Docker 权限，且 Docker 镜像、端口范围和挂载目录可用。创建后请：
+
+1. 查询容器状态和分配端口。
+2. 打开 NapCat UI 完成扫码登录。
+3. 确认容器中的 OneBot 配置包含正确的后端地址和 Token。
+4. 在 Bot 页面确认在线状态，再启用工作流触发。
+
+删除容器前请确认不再需要其中的登录状态和本地数据。
+
+## 测试与升级
+
+```bash
+mvn test
+```
+
+当前测试覆盖工作流执行记录、主题 CSS 校验和通用异常处理等核心逻辑。升级时建议按以下顺序操作：
+
+1. 备份 MySQL 数据库、`upload/` 插件目录和外部配置。
+2. 阅读最新 SQL 和配置差异，确认是否需要迁移。
+3. 在测试环境执行 `mvn test` 并手动验证登录、Bot、工作流和 AI 链路。
+4. 替换 JAR，保留旧版本用于快速回滚。
+
+## 当前边界与演进方向
+
+当前主要执行链路是 Java 后端、Java 插件和现有工作流引擎。仓库中的 `PYTHON_EXECUTION_ARCHITECTURE.md` 描述了 Python Worker 的演进方向，相关能力仍在持续设计、开发和优化中，不应直接当作当前版本的默认运行要求。
 
 ## 安全与运维注意事项
 
